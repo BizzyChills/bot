@@ -452,16 +452,12 @@ async def mappool(interaction: discord.Interaction, action: str = "", _map: str 
     _map="The map to vote for",
     preference="Your preference for the map"
 )
-async def prefermaps(interaction: discord.Interaction, _map: str = "", preference: str = ""):
+async def prefermaps(interaction: discord.Interaction, _map: str, preference: str):
     """Mark preferences for each map"""
     global map_preferences
     global map_weights
     if (interaction.channel.id not in [bot_channel, debug_channel]):
         await interaction.response.send_message(f'You cannot vote in this channel', ephemeral=True)
-        return
-
-    if _map == "" or preference == "":
-        await interaction.response.send_message(f'Please provide a map and a preference.', ephemeral=True)
         return
 
     output = ""
