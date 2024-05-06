@@ -113,7 +113,7 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
     
     await interaction.response.send_message('\n'.join(output), ephemeral=True, silent=True)
 
-#check --------------------Useless commands--------------------------
+# --------------------Useless commands--------------------------
 @bot.tree.command(name="hello", description="Says hello. Usage: /hello", guilds=[discord.Object(id=val_server)])
 async def hello(interaction: discord.Interaction):
     """Says hello. Usage: `/hello`"""
@@ -137,53 +137,54 @@ async def unfeed(interaction: discord.Interaction):
 
     await interaction.response.send_message(f'\*looks at you with a deadpan expression\* ... \*{option}\*', ephemeral=True)
 
-#check ------------------Functional commands-------------------------
-@bot.tree.command(name="role", description="Add or remove the premier role from a member. Usage: /role {add|remove} <@member>", guilds=[discord.Object(id=val_server)])
-@discord.app_commands.choices(
-    action=[
-        discord.app_commands.Choice(name="Add", value="add"),
-        discord.app_commands.Choice(name="Remove", value="remove"),
-    ],
-)
-@discord.app_commands.describe(
-    action="What to do with the role",
-    member="The member act on"
-)
-async def role(interaction: discord.Interaction, action: str, member: discord.Member):
-    """Add or remove the premier role from a member. Usage: /role {add|remove} <display_name>"""
+# ------------------Functional commands-------------------------
 
-    usage = "Usage: `/role {add|remove} @member`"
+# role has been deprecated. perms needed to handle roles are too high to be reasoanble for a bot
+# @bot.tree.command(name="role", description="Add or remove the premier role from a member. Usage: /role {add|remove} <@member>", guilds=[discord.Object(id=val_server)])
+# @discord.app_commands.choices(
+#     action=[
+#         discord.app_commands.Choice(name="Add", value="add"),
+#         discord.app_commands.Choice(name="Remove", value="remove"),
+#     ],
+# )
+# @discord.app_commands.describe(
+#     action="What to do with the role",
+#     member="The member act on"
+# )
+# async def role(interaction: discord.Interaction, action: str, member: discord.Member):
+#     """Add or remove the premier role from a member. Usage: /role {add|remove} <display_name>"""
 
-    if (not await has_permission(interaction.user.id, interaction)):
-        return
+#     usage = "Usage: `/role {add|remove} @member`"
+
+#     if (not await has_permission(interaction.user.id, interaction)):
+#         return
     
-    if (interaction.channel.id not in [debug_channel, bot_channel]):
-        await wrong_channel(interaction)
-        return
-    
+#     # if (interaction.channel.id not in [debug_channel, bot_channel]):
+#     #     await wrong_channel(interaction)
+#     #     return
 
-    role = discord.utils.get(interaction.guild.roles, name=prem_role) if interaction.guild.id == val_server else discord.utils.get(
-        interaction.guild.roles, name=debug_role)
+#     role = discord.utils.get(interaction.guild.roles, name=prem_role) if interaction.guild.id == val_server else discord.utils.get(
+#         interaction.guild.roles, name=debug_role)
 
-    notif_channel = bot.get_channel(
-        prem_channel) if interaction.guild.id == val_server else bot.get_channel(debug_channel)
+#     notif_channel = bot.get_channel(
+#         prem_channel) if interaction.guild.id == val_server else bot.get_channel(debug_channel)
 
-    rats = discord.utils.get(interaction.guild.roles, name="Rathole").members
+#     rats = role.members
 
-    if action == "add":
-        if member in rats:
-            await interaction.response.send_message(f'{member.display_name} is already in the rathole', ephemeral=True)
-            return
-        await member.add_roles(role)
-        log(f'Added {member.display_name} to {role.name}')
-        await notif_channel.send(f'Welcome to the rathole {member.mention}')
-    elif action == "remove":
-        if member not in rats:
-            await interaction.response.send_message(f'{member.display_name} was not found in the rathole', ephemeral=True)
-            return
-        await member.remove_roles(role)
-        await interaction.response.send_message(f'{member.mention} has been removed from the rathole', ephemeral=True)
-        log(f'Removed {member.display_name} from {role.name}')
+#     if action == "add":
+#         if member in rats:
+#             await interaction.response.send_message(f'{member.display_name} is already in the rathole', ephemeral=True)
+#             return
+#         await member.add_roles(role)
+#         log(f'Added {member.display_name} to {role.name}')
+#         await notif_channel.send(f'Welcome to the rathole {member.mention}')
+#     elif action == "remove":
+#         if member not in rats:
+#             await interaction.response.send_message(f'{member.display_name} was not found in the rathole', ephemeral=True)
+#             return
+#         await member.remove_roles(role)
+#         await interaction.response.send_message(f'{member.mention} has been removed from the rathole', ephemeral=True)
+#         log(f'Removed {member.display_name} from {role.name}')
 
 @bot.tree.command(name="remind", description="Set a reminder for the target role. Usage: /remind <interval> (s)econd/(m)inute/(h)our <message>", guilds=[discord.Object(id=val_server)])
 @discord.app_commands.choices(
@@ -198,7 +199,7 @@ async def role(interaction: discord.Interaction, action: str, member: discord.Me
     unit="The unit of time associated with the interval",
     message="The reminder message to send to the premier role"
 )
-async def remind(interaction: discord.Interaction, interval: int = 0, unit: str = "", *, message: str = ""):
+async def remind(interaction: discord.Interaction, interval: int, unit: str, *, message: str):
     """Set a reminder for the target role. Usage: /remind <interval> (s)econd/(m)inute/(h)our <message>"""
     
     if (not await has_permission(interaction.user.id, interaction)):
@@ -212,6 +213,8 @@ async def remind(interaction: discord.Interaction, interval: int = 0, unit: str 
         await interaction.response.send_message(f'Please provide a valid interval greater than 0', ephemeral=True)
         return
     
+    message = message.strip()
+
     if (message == ""):
         await interaction.response.send_message(f'Please provide a reminder message', ephemeral=True)
         return
@@ -264,15 +267,11 @@ async def remind(interaction: discord.Interaction, interval: int = 0, unit: str 
 @discord.app_commands.describe(
     message_id="The ID of the message to pin"
 )
-async def pin(interaction: discord.Interaction, message_id: str = ""):
+async def pin(interaction: discord.Interaction, message_id: str):
     """Pin a message. Usage: `/pin <message_id>`"""
     if (not await has_permission(interaction.user.id, interaction)):
         return
     
-    if(message_id == ""):
-        await interaction.response.send_message(f'Please provide a message ID. Usage: `/pin <message_id>`', ephemeral=True)
-        return
-
     try:
         message_id = int(message_id)
         message = await interaction.channel.fetch_message(message_id)
@@ -280,16 +279,8 @@ async def pin(interaction: discord.Interaction, message_id: str = ""):
         await interaction.response.send_message(f'Invalid message ID. Usage: `/pin <message_id>`', ephemeral=True)
         return
 
+    interaction.response.defer(ephemeral=True, thinking=True)
     await message.pin()
-
-    # wait for the message to be pinned before deleting the command message
-    await asyncio.sleep(1)
-
-    async for message in interaction.channel.history(limit=10):
-        if message.type == discord.MessageType.pins_add and bot.user.display_name in message.content:
-            await message.delete()  # delete the pinned notification message
-            break
-
     await interaction.response.send_message(f'Message pinned', ephemeral=True)
 
     log(f'{interaction.user.display_name} pinned message {message_id}')
@@ -299,7 +290,7 @@ async def pin(interaction: discord.Interaction, message_id: str = ""):
 @discord.app_commands.describe(
     message_id="The ID of the message to unpin"
 )
-async def unpin(interaction: discord.Interaction, message_id: str = ""):
+async def unpin(interaction: discord.Interaction, message_id: str):
     """Unpin a message. Usage: `/unpin <message_id>`"""
     if (not await has_permission(interaction.user.id, interaction)):
         return
@@ -321,6 +312,25 @@ async def unpin(interaction: discord.Interaction, message_id: str = ""):
 
     log(f'{interaction.user.display_name} unpinned message {message_id}')
 
+# shouldn't need to clear_sys, just here for debug
+# @bot.tree.command(name="clear_sys", description="Clear discord system messages. Usage: /clear_sys <amount>", guilds=[discord.Object(id=val_server)])
+# @discord.app_commands.describe(
+#     amount="The number of past messages to search through (NOT the number of messages to delete)"
+# )
+# async def clear_sys(interaction: discord.Interaction, amount: int):
+#     """Clear discord system messages. Usage: `/clear_sys <amount>`"""
+#     if (not await has_permission(interaction.user.id, interaction)):
+#         return
+    
+
+#     if amount <= 0:
+#         await interaction.response.send_message(f'Please provide a valid amount greater than 0', ephemeral=True)
+#         return
+
+#     await interaction.response.send_message(f'Clearing system messages', ephemeral=True)
+
+#     await interaction.channel.purge(limit=amount, check=lambda m: m.type == discord.MessageType.pins_add)
+#     log(f'{interaction.user.display_name} cleared {amount} system messages')
 
 # --------------------Premier commands--------------------------
 @bot.tree.command(name="schedule", description="Display the premier schedule. Usage: /schedule", guilds=[discord.Object(id=val_server)])
@@ -384,7 +394,7 @@ async def mappool(interaction: discord.Interaction, action: str = "", _map: str 
         wrong_channel(interaction)
         return
 
-    if action == "" or _map == "" or action != "clear": # clear doesn't need a map
+    if action == "" or (_map == "" and action != "clear"): # clear doesn't need a map
         await interaction.response.send_message(f'Please provide an action and a map. Usage: `/mappool [clear | (add/remove <map name>]`', ephemeral=True)
         return
 
@@ -545,11 +555,6 @@ async def mapweights(interaction: discord.Interaction):
     await interaction.response.send_message(output, ephemeral=ephem)
 
 @bot.tree.command(name="addevents", description="Add all prem events to the schedule. Usage: /addevent <map_list> <date>", guilds=[discord.Object(id=val_server)])
-# @discord.app_commands.choices(
-#     map_list=[
-#         discord.app_commands.Choice(name=m, value=m) for m in map_pool
-#     ]
-# )
 @discord.app_commands.describe(
     map_list="The map order enclosed in quotes with each map separated with a space (e.g. 'map1 map2 map3')",
     date="The date (mm/dd) of the Thursday that starts the first event. Events will be added for Thursday, Saturday, and Sunday."
@@ -576,12 +581,17 @@ async def addevents(interaction: discord.Interaction, map_list: str, date: str):
     guild = interaction.guild
     events = guild.scheduled_events
     scheduledMaps = []
-    newMaps = "".join(map_list.split(",")).split() # remove commas and split by space
-    log(str(newMaps))
+    new_maps = "".join(map_list.split(",")).split() # remove commas and split by space
+    log(str(new_maps))
 
 
-    prem_length = len(newMaps)
-    input_date = tz.localize(datetime.strptime(date, "%m/%d").replace(year=datetime.now().year))
+    prem_length = len(new_maps)
+    try:
+        input_date = tz.localize(datetime.strptime(date, "%m/%d").replace(year=datetime.now().year))
+    except ValueError:
+        await interaction.response.send_message(f'Invalid date format. Please provide a Thursday date (mm/dd)', ephemeral=True)
+        return
+    
     thur_time = datetime(year=datetime.now().year, month=input_date.month, day=input_date.day, hour=22, minute=0, second=0)
     sat_time = (thur_time + timedelta(days=2)).replace(hour=23)
     sun_time = (thur_time + timedelta(days=3))
@@ -604,7 +614,7 @@ async def addevents(interaction: discord.Interaction, map_list: str, date: str):
     
     vc_object = discord.utils.get(guild.voice_channels, id=voice_channel) if interaction.channel.id == bot_channel else discord.utils.get(guild.voice_channels, id=1217649405759324236)
 
-    for _map in newMaps:
+    for _map in new_maps:
         _map = _map.lower()
         if _map not in map_pool:
             await interaction.response.send_message(f'{_map} is not in the map pool. I only add premier events. (skipping)', ephemeral=True)
@@ -623,9 +633,9 @@ async def addevents(interaction: discord.Interaction, map_list: str, date: str):
         start_times = [start_time + timedelta(days=7) for start_time in start_times]
         
     await interaction.response.send_message(f'Added {prem_length} premier map(s) to the schedule', ephemeral=True)
-    log(f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(newMaps)}')
+    log(f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
 
-#check -------------------------Tasks--------------------------------
+# -------------------------Tasks--------------------------------
 @tasks.loop(time=premier_reminder_times)
 async def eventreminders():
     """Send reminders for upcoming events"""
