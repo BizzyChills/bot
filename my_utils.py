@@ -2,6 +2,7 @@ import json
 from datetime import datetime, time, timedelta
 import pytz
 import os
+import typing
 
 def get_pool():
     with open("./local_storage/map_pool.txt", "r") as file:
@@ -53,6 +54,9 @@ def log(message: str):
 
         file.write(
             f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {message}\n')
+
+def wrong_channel(interaction):
+    return interaction.response.send_message("This command is not available in this channel.", ephemeral=True)
 
 
 def convert_to_json():
