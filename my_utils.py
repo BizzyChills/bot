@@ -55,6 +55,11 @@ def log(message: str):
         file.write(
             f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {message}\n')
 
+def debug_log(message: str):
+    with open("./local_storage/debug_log.txt", 'a') as file:
+        file.write(
+            f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {message}\n')
+
 def wrong_channel(interaction):
     return interaction.response.send_message("This command is not available in this channel.", ephemeral=True)
 
@@ -89,7 +94,7 @@ debug_server = 1217649405759324232
 debug_channel = 1217649405759324235
 bot_channel = 1218420817394925668
 prem_channel = 1193661647752003614
-voice_channel = 1100632843174031476
+val_voice_channel = 1100632843174031476
 all_channels = [debug_channel, bot_channel, prem_channel] # no voice channel, this is for channels the bot responds to
 
 my_id = 461265370813038633

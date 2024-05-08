@@ -22,11 +22,14 @@ intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
 
-async def has_permission(id: int, ctx: commands.Context = None):
+async def has_permission(id: int, ctx: commands.Context|discord.Interaction):
     """Check if caller has perms to use command. Only Sam or Bizzy can use commands that call this function."""
+    message = "You do not have permission to use this command"
     if (id not in admin_ids):
-        if (ctx != None):
+        if (type(ctx) == commands.Context):
             await ctx.send(f'You do not have permission to use this command', ephemeral=True)
+        else:
+            await ctx.response.send_message(message, ephemeral=True)
         return False
 
     return True
@@ -556,15 +559,8 @@ async def mapweights(interaction: discord.Interaction):
     date="The date (mm/dd) of the Thursday that starts the first event. Events will be added for Thursday, Saturday, and Sunday."
 )
 async def addevents(interaction: discord.Interaction, map_list: str, date: str):
-    '''Add all prem events to the schedule. Usage: /addevent "<map1> <map2> ..." <mm/dd>
-    
-        Parameters
-        ----------
-        map_list : str
-            The map order enclosed in quotes with each map separated with a space (e.g. "map1 map2 map3")
-        date : str
-            The date (mm/dd) of the Thursday that starts the first event. Events will be added for Thursday, Saturday, and Sunday.
-    '''
+    '''Add all prem events to the schedule. Usage: /addevent "<map1> <map2> ..." <mm/dd>'''
+    # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
     
     if (not await has_permission(interaction.user.id, interaction)): # don't need to send a message here, has_permission will do it
         return
@@ -573,13 +569,10 @@ async def addevents(interaction: discord.Interaction, map_list: str, date: str):
         await wrong_channel(interaction)
         return
 
-    
     guild = interaction.guild
     events = guild.scheduled_events
     scheduledMaps = []
     new_maps = "".join(map_list.split(",")).split() # remove commas and split by space
-    log(str(new_maps))
-
 
     prem_length = len(new_maps)
     try:
@@ -587,6 +580,7 @@ async def addevents(interaction: discord.Interaction, map_list: str, date: str):
     except ValueError:
         await interaction.response.send_message(f'Invalid date format. Please provide a Thursday date (mm/dd)', ephemeral=True)
         return
+    
     
     thur_time = datetime(year=datetime.now().year, month=input_date.month, day=input_date.day, hour=22, minute=0, second=0)
     sat_time = (thur_time + timedelta(days=2)).replace(hour=23)
@@ -599,37 +593,95 @@ async def addevents(interaction: discord.Interaction, map_list: str, date: str):
     if weekday != 3:
         await interaction.response.send_message(f'Invalid day. Please provide a Thursday date (mm/dd)', ephemeral=True)
         return
+    if datetime.now() > thur_time:
+        await interaction.response.send_message(f'Invalid date. Please provide a **future** Thursday date (mm/dd)', ephemeral=True)
+        return
+    
+    # await interaction.response.send_message("This is a test message", ephemeral=True)
+    
+    await interaction.response.defer(ephemeral=True, thinking=True)
 
     for event in events:
-        if(event.creator_id == bot.user.id):
-            await event.delete()
-            continue
-    
         scheduledMaps.append(event.description)
 
     
-    vc_object = discord.utils.get(guild.voice_channels, id=voice_channel) if interaction.channel.id == bot_channel else discord.utils.get(guild.voice_channels, id=1217649405759324236)
+    output = ""
+    vc_object = discord.utils.get(guild.voice_channels, id=val_voice_channel) if interaction.channel.id == bot_channel else discord.utils.get(guild.voice_channels, id=1217649405759324236)
 
     for _map in new_maps:
         _map = _map.lower()
         if _map not in map_pool:
-            await interaction.response.send_message(f'{_map} is not in the map pool. I only add premier events. (skipping)', ephemeral=True)
+            output += f'{_map} is not in the map pool. I only add premier events. (skipping)\n'
             continue
         
         _map = _map.title()
         if _map in scheduledMaps:
-            await interaction.response.send_message(f'{_map} is already in the schedule. (skipping)', ephemeral=True)
+            output += f'{_map} is already in the schedule. (skipping)\n'
             continue
 
         for start_time in start_times:
-            await guild.create_scheduled_event(name="Premier", description=_map, channel=vc_object,
+            event_name = "Premier"
+            event_desc = _map
+
+            if _map == new_maps[-1] and start_time == start_times[-1]:
+                event_name = event_desc = "Playoffs"
+
+            await guild.create_scheduled_event(name=event_name, description=event_desc, channel=vc_object,
                                             start_time=start_time, end_time=start_time + timedelta(hours=1),
                                             entity_type=discord.EntityType.voice, privacy_level=discord.PrivacyLevel.guild_only)
         
         start_times = [start_time + timedelta(days=7) for start_time in start_times]
         
-    await interaction.response.send_message(f'Added {prem_length} premier map(s) to the schedule', ephemeral=True)
     log(f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
+    await interaction.followup.send(f'{output}\nAdded {prem_length} premier map(s) to the schedule', ephemeral=True)
+
+@bot.tree.command(name="addpractices", description="Add all practice events to the schedule. Usage: /addpractices", guilds=[discord.Object(id=val_server)])
+async def addpractices(interaction: discord.Interaction):
+    '''Add all practice events to the schedule. Usage: /addpractices'''
+    # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
+    
+    if (not await has_permission(interaction.user.id, interaction)):
+        return
+    
+    if (interaction.channel.id not in [bot_channel, debug_channel]):
+        await wrong_channel(interaction)
+        return
+    
+    guild = interaction.guild
+    events = guild.scheduled_events
+
+    if len(events) == 0:
+        await interaction.response.send_message(f'Please add the premier events first using the /addevents command', ephemeral=True)
+        return
+
+    wed_hour = est_to_utc(time(hour=22)).hour
+    fri_hour = wed_hour + 1
+
+    await interaction.response.defer(ephemeral=True, thinking=True)
+
+    for event in events:
+        if event.start_time.astimezone(tz).weekday() != 3 or "premier" not in event.name.lower():
+            continue
+        
+        wed_time = fri_time = event.start_time.astimezone(pytz.utc)
+        wed_time = wed_time.replace(hour=wed_hour) - timedelta(days=1)
+        fri_time = fri_time.replace(hour=fri_hour) + timedelta(days=1)
+
+        for start_time in [wed_time, fri_time]:
+            if start_time < datetime.now().astimezone(pytz.utc):
+                continue
+
+            event_name = "Premier Practice"
+            event_desc = event.description
+
+            await guild.create_scheduled_event(name=event_name, description=event_desc, channel=event.channel,
+                                            start_time=start_time, end_time=start_time + timedelta(hours=1),
+                                            entity_type=discord.EntityType.voice, privacy_level=discord.PrivacyLevel.guild_only)
+        
+    
+    log(f'{interaction.user.display_name} has posted the premier practice schedule')
+    await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True)
+
 
 # -------------------------Tasks--------------------------------
 @tasks.loop(time=premier_reminder_times)
@@ -648,11 +700,13 @@ async def eventreminders():
 
     current_day = datetime.now().weekday() # get current day based on my timezone
 
-    if current_day not in [3,5,6]: # only check for events on thursday, saturday, and sunday
-        return  
+    # no longer using this, but keeping it here in case we want to use it again
+    # if current_day not in [3,5,6]: # only check for events on thursday, saturday, and sunday
+    #     return  
 
-    log(f"Checking for reminders at {current_time}")
     for event in list(prem_events) + list(debug_events):
+        if "premier" not in event.name.lower():
+            continue
         g = event.guild
         r = prem_role if g.id == val_server else debug_role
         role = discord.utils.get(g.roles, name=r)
