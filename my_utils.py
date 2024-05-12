@@ -36,6 +36,14 @@ def save_reminders(reminders):
     with open("./local_storage/reminders.json", "w") as file:
         json.dump(reminders, file)
 
+def get_notes():
+    with open("./local_storage/notes.json", "r") as file:
+        return json.load(file)
+
+def save_notes(notes):
+    with open("./local_storage/notes.json", "w") as file:
+        json.dump(notes, file)
+
 def est_to_utc(t: time):
     d = datetime.combine(datetime.today(), t)
     return tz.localize(d).astimezone(pytz.utc).time()
@@ -94,8 +102,9 @@ debug_server = 1217649405759324232
 debug_channel = 1217649405759324235
 bot_channel = 1218420817394925668
 prem_channel = 1193661647752003614
-val_voice_channel = 1100632843174031476
-all_channels = [debug_channel, bot_channel, prem_channel] # no voice channel, this is for channels the bot responds to
+notes_channel = 1237971459461218376
+voice_channel = 1100632843174031476
+all_channels = [debug_channel, bot_channel, prem_channel] # no voice channel, these are the general channels the bot will be in. use specific channel checks for other uses
 
 my_id = 461265370813038633
 sam_id = 180107711806046208
@@ -134,3 +143,4 @@ map_pool = get_pool()
 map_preferences = get_prefrences()
 map_weights = get_weights()
 reminders = get_reminders()
+notes = get_notes()

@@ -25,8 +25,8 @@ client = discord.Client(intents=intents)
 async def has_permission(id: int, ctx: commands.Context|discord.Interaction):
     """Check if caller has perms to use command. Only Sam or Bizzy can use commands that call this function."""
     message = "You do not have permission to use this command"
-    if (id not in admin_ids):
-        if (type(ctx) == commands.Context):
+    if id not in admin_ids:
+        if type(ctx) == commands.Context:
             await ctx.send(f'You do not have permission to use this command', ephemeral=True)
         else:
             await ctx.response.send_message(message, ephemeral=True)
@@ -62,7 +62,7 @@ async def on_ready():
 )
 async def commands(interaction: discord.Interaction, short: typing.Optional[int] = 0):
     """Displays all bot commands. Usage: `/commands`"""
-    if (interaction.channel.id not in [debug_channel, bot_channel]):
+    if interaction.channel.id not in [debug_channel, bot_channel]:
         return
 
     target_role = prem_role if interaction.guild.id == val_server else debug_role
@@ -105,11 +105,11 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
 
     output = common_commands
 
-    if(not short):
-        if (interaction.user.id in admin_ids):
+    if not short:
+        if interaction.user.id in admin_ids:
             output += admin_commands
 
-        if (interaction.user.id == my_id):
+        if interaction.user.id == my_id:
             output += my_commands
 
         output += fun_commands
@@ -159,10 +159,10 @@ async def unfeed(interaction: discord.Interaction):
 
 #     usage = "Usage: `/role {add|remove} @member`"
 
-#     if (not await has_permission(interaction.user.id, interaction)):
+#     if not await has_permission(interaction.user.id, interaction):
 #         return
     
-#     # if (interaction.channel.id not in [debug_channel, bot_channel]):
+#     # if interaction.channel.id not in [debug_channel, bot_channel]:
 #     #     await wrong_channel(interaction)
 #     #     return
 
@@ -205,20 +205,20 @@ async def unfeed(interaction: discord.Interaction):
 async def remind(interaction: discord.Interaction, interval: int, unit: str, *, message: str):
     """Set a reminder for the target role. Usage: /remind <interval> (s)econd/(m)inute/(h)our <message>"""
     
-    if (not await has_permission(interaction.user.id, interaction)):
+    if not await has_permission(interaction.user.id, interaction):
         return
     
-    if (interaction.channel.id not in [bot_channel, debug_channel]):
+    if interaction.channel.id not in [bot_channel, debug_channel]:
         await wrong_channel(interaction)
         return
 
-    if (interval <= 0):
+    if interval <= 0:
         await interaction.response.send_message(f'Please provide a valid interval greater than 0', ephemeral=True)
         return
     
     message = message.strip()
 
-    if (message == ""):
+    if message == "":
         await interaction.response.send_message(f'Please provide a reminder message', ephemeral=True)
         return
 
@@ -272,7 +272,7 @@ async def remind(interaction: discord.Interaction, interval: int, unit: str, *, 
 )
 async def pin(interaction: discord.Interaction, message_id: str):
     """Pin a message. Usage: `/pin <message_id>`"""
-    if (not await has_permission(interaction.user.id, interaction)):
+    if not await has_permission(interaction.user.id, interaction):
         return
     
     try:
@@ -295,10 +295,10 @@ async def pin(interaction: discord.Interaction, message_id: str):
 )
 async def unpin(interaction: discord.Interaction, message_id: str):
     """Unpin a message. Usage: `/unpin <message_id>`"""
-    if (not await has_permission(interaction.user.id, interaction)):
+    if not await has_permission(interaction.user.id, interaction):
         return
     
-    if(message_id == ""):
+    if message_id == "":
         await interaction.response.send_message(f'Please provide a message ID. Usage: `/unpin <message_id>`', ephemeral=True)
         return
 
@@ -322,7 +322,7 @@ async def unpin(interaction: discord.Interaction, message_id: str):
 # )
 # async def clear_sys(interaction: discord.Interaction, amount: int):
 #     """Clear discord system messages. Usage: `/clear_sys <amount>`"""
-#     if (not await has_permission(interaction.user.id, interaction)):
+#     if not await has_permission(interaction.user.id, interaction):
 #         return
     
 
@@ -339,7 +339,7 @@ async def unpin(interaction: discord.Interaction, message_id: str):
 @bot.tree.command(name="schedule", description="Display the premier schedule. Usage: /schedule", guilds=[discord.Object(id=val_server)])
 async def schedule(interaction: discord.Interaction):
     """Display the premier schedule. Usage: /schedule"""
-    if (interaction.channel.id not in all_channels):
+    if interaction.channel.id not in all_channels:
         await wrong_channel(interaction)
         return
 
@@ -354,7 +354,6 @@ async def schedule(interaction: discord.Interaction):
     ephem = True if interaction.channel.id == bot_channel else False
 
     await interaction.response.send_message(message, ephemeral=ephem)
-
 
 @bot.tree.command(name="mappool", description="Add or remove maps from the map pool. Usage: /mappool [clear | (add/remove <map name>]", guilds=[discord.Object(id=val_server)])
 @discord.app_commands.choices(
@@ -375,14 +374,14 @@ async def schedule(interaction: discord.Interaction):
 )
 async def mappool(interaction: discord.Interaction, action: str = "", _map: str = ""):
     """Add or remove maps from the map pool. Usage: /mappool [clear | (add/remove <map name>]"""
-    if (interaction.channel.id not in all_channels):
+    if interaction.channel.id not in all_channels:
         await wrong_channel(interaction)
         return
 
     if action == "" and _map == "":
         ephem = True if interaction.channel.id == bot_channel else False # when listing the map pool, don't make it ephemeral in the premier channel so it can be seen by everyone
         
-        if (len(map_pool) == 0):
+        if len(map_pool) == 0:
             output = f'The map pool is empty'
         else:
             output = f'Current map pool: {", ".join(map_pool)}'
@@ -390,7 +389,7 @@ async def mappool(interaction: discord.Interaction, action: str = "", _map: str 
         await interaction.response.send_message(output, ephemeral=ephem)
         return
 
-    if (not await has_permission(interaction.user.id, interaction)):
+    if not await has_permission(interaction.user.id, interaction):
         return
     
     if interaction.channel.id != bot_channel:
@@ -428,7 +427,7 @@ async def mappool(interaction: discord.Interaction, action: str = "", _map: str 
         return
 
     ephem = True
-    if (interaction.channel.id == prem_channel):
+    if interaction.channel.id == prem_channel:
         ephem = False  # when modifying/listing the map pool, don't make it ephemeral in the premier channel so it can be seen by everyone
 
     await interaction.response.send_message(output, ephemeral=ephem)
@@ -459,7 +458,7 @@ async def prefermaps(interaction: discord.Interaction, _map: str, preference: st
     """Mark preferences for each map"""
     global map_preferences
     global map_weights
-    if (interaction.channel.id not in [bot_channel, debug_channel]):
+    if interaction.channel.id not in [bot_channel, debug_channel]:
         await interaction.response.send_message(f'You cannot vote in this channel', ephemeral=True)
         return
 
@@ -469,9 +468,9 @@ async def prefermaps(interaction: discord.Interaction, _map: str, preference: st
     _map = _map.lower()
 
     old_preferences = ""
-    if (str(interaction.user.id) in map_preferences[_map]): # if you've voted for this map before
+    if str(interaction.user.id) in map_preferences[_map]: # if you've voted for this map before
         old_preferences = map_preferences[_map][str(interaction.user.id)]
-        if (old_preferences == preference):
+        if old_preferences == preference:
             await interaction.response.send_message(f'{interaction.user.mention} you have already marked {_map.title()} with a weight of {preferences[preference]}', ephemeral=True)
             return
 
@@ -480,7 +479,7 @@ async def prefermaps(interaction: discord.Interaction, _map: str, preference: st
         map_weights[_map] -= old_preferences
 
     map_preferences[_map][str(interaction.user.id)] = preference
-    if (old_preferences == ""):
+    if old_preferences == "":
         output = f'{interaction.user.mention} voted for {_map.title()} with a weight of {preference}'
     preference = 1 if preference == "+" else 0 if preference == "~" else -1
     map_weights[_map] += preference
@@ -497,7 +496,7 @@ async def prefermaps(interaction: discord.Interaction, _map: str, preference: st
 async def mapvotes(interaction: discord.Interaction):
     """Display the map votes for each user. Usage: /mapvotes"""
     global map_preferences
-    if (interaction.channel.id not in all_channels):
+    if interaction.channel.id not in all_channels:
         await wrong_channel(interaction)
         return
 
@@ -513,13 +512,13 @@ async def mapvotes(interaction: discord.Interaction):
             if str(user.id) in map_preferences[_map]:
                 body += f' - {user.mention}: {map_preferences[_map][str(user.id)]}\n'
             
-            if (body == ""):
+            if body == "":
                 body = "No votes for this map."
             
         output += header + body
         
 
-    if (output == ""):
+    if output == "":
         output = "No votes for any maps in the map pool."
 
     ephem = True if interaction.channel.id == bot_channel else False
@@ -531,7 +530,7 @@ async def mapvotes(interaction: discord.Interaction):
 async def mapweights(interaction: discord.Interaction):
     """Display the map weights (sorted). Usage: /mapweights"""
     global map_weights
-    if (interaction.channel.id not in all_channels):
+    if interaction.channel.id not in all_channels:
         await wrong_channel(interaction)
         return
 
@@ -546,7 +545,7 @@ async def mapweights(interaction: discord.Interaction):
 
         output += f'{_map.title()}: {map_weights[_map]}\n'
 
-    if (output == ""):
+    if output == "":
         output = "No weights to show for maps in the map pool."
 
     ephem = True if interaction.channel.id == bot_channel else False
@@ -562,10 +561,10 @@ async def addevents(interaction: discord.Interaction, map_list: str, date: str):
     '''Add all prem events to the schedule. Usage: /addevent "<map1> <map2> ..." <mm/dd>'''
     # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
     
-    if (not await has_permission(interaction.user.id, interaction)): # don't need to send a message here, has_permission will do it
+    if not await has_permission(interaction.user.id, interaction): # don't need to send a message here, has_permission will do it
         return
     
-    if (interaction.channel.id not in [bot_channel, debug_channel]):
+    if interaction.channel.id not in [bot_channel, debug_channel]:
         await wrong_channel(interaction)
         return
 
@@ -606,7 +605,7 @@ async def addevents(interaction: discord.Interaction, map_list: str, date: str):
 
     
     output = ""
-    vc_object = discord.utils.get(guild.voice_channels, id=val_voice_channel) if interaction.channel.id == bot_channel else discord.utils.get(guild.voice_channels, id=1217649405759324236)
+    vc_object = discord.utils.get(guild.voice_channels, id=voice_channel) if interaction.channel.id == bot_channel else discord.utils.get(guild.voice_channels, id=1217649405759324236)
 
     for _map in new_maps:
         _map = _map.lower()
@@ -640,10 +639,10 @@ async def addpractices(interaction: discord.Interaction):
     '''Add all practice events to the schedule. Usage: /addpractices'''
     # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
     
-    if (not await has_permission(interaction.user.id, interaction)):
+    if not await has_permission(interaction.user.id, interaction):
         return
     
-    if (interaction.channel.id not in [bot_channel, debug_channel]):
+    if interaction.channel.id not in [bot_channel, debug_channel]:
         await wrong_channel(interaction)
         return
     
@@ -682,6 +681,96 @@ async def addpractices(interaction: discord.Interaction):
     log(f'{interaction.user.display_name} has posted the premier practice schedule')
     await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True)
 
+@bot.tree.command(name="addnote", description="Add a practice note", guilds=[discord.Object(id=val_server)])
+@discord.app_commands.describe(
+    # _map="The map to add a note for",
+    note_id="The message ID of the note to add",
+    description="Provide a short description of the note. Used to identify the note when using `/notes`"
+)
+async def addnote(interaction: discord.Interaction, note_id: str, description: str):
+    '''Add a practice note. Usage: /addnote <message_id>'''
+    if not await has_permission(interaction.user.id, interaction):
+        return
+    
+    if interaction.channel.id != notes_channel:
+        await wrong_channel(interaction)
+        return
+
+    note_id = int(note_id)
+    try:
+        note = await interaction.channel.fetch_message(note_id)
+    except discord.errors.NotFound:
+        await interaction.response.send_message(f'Invalid message ID. Usage: `/addnote <message_id>`', ephemeral=True)
+        return
+
+    _map = note.content.split("\n")[0].lower()
+    
+    if _map not in map_pool:
+        await interaction.response.send_message(f'{_map} is not in the map pool. I only add notes for premier maps.', ephemeral=True)
+        return
+    
+    notes[_map][str(note_id)] = {"description": description}
+
+    save_notes(notes)
+
+    log(f'{interaction.user.display_name} has added a practice note. Note ID: {note_id}')
+
+    await interaction.response.send_message(f'Added a practice note for {_map.title()}. Access using `/notes {_map}`', ephemeral=True)
+
+@bot.tree.command(name="notes", description="Display a practice note. Usage: /notes <map> [note_number]", guilds=[discord.Object(id=val_server)])
+@discord.app_commands.choices(
+    _map=[
+        discord.app_commands.Choice(name=s.title(), value=s) for s in notes.keys()
+    ],
+    announce=[
+        discord.app_commands.Choice(name="Yes", value="yes"),
+    ]
+)
+@discord.app_commands.describe(
+    _map="The map to display the note for",
+    note_number="The note number to display (1-indexed)",
+    announce="Return the note so that it is visible to everyone (default is visible only to you)"
+)
+async def notes(interaction: discord.Interaction, _map: str, note_number: int = 0, announce: str = ""):
+    '''Display a practice note. Usage: /notes <map> [note_number]'''
+    if interaction.channel.id != notes_channel:
+        await wrong_channel(interaction)
+        return
+
+    if _map not in notes:
+        await interaction.response.send_message(f'There are no notes for {_map.title()}', ephemeral=True)
+        return
+
+    if note_number < 0 or note_number > len(notes[_map]):
+        await interaction.response.send_message(f'Invalid note number. Usage: `/notes {_map} [note_number]`', ephemeral=True)
+        return
+
+    await interaction.response.defer(ephemeral=True, thinking=True)
+
+    if note_number == 0:
+        notes_list = notes[_map]
+        output = f'Practice notes for {_map.title()}:\n'
+        for i, note_id in enumerate(notes_list.keys()):
+            output += f' - Note {i+1}: {notes_list[note_id]["description"]}\n'
+        
+        await interaction.followup.send(output, ephemeral=True)
+        return
+
+    note_id = list(notes[_map].keys())[note_number - 1]
+    try:
+        note = await interaction.channel.fetch_message(int(note_id))
+    except discord.errors.NotFound:
+        await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True)
+        notes[_map].pop(note_id)
+        save_notes(notes)
+        return
+    
+    output = f'Practice note for {_map.title()} (created by {note.author.display_name}):\n\n{note.content}'
+
+    if announce == "yes":
+        await interaction.followup.send(output, ephemeral=False)
+    else:
+        await interaction.followup.send(output, ephemeral=True)
 
 # -------------------------Tasks--------------------------------
 @tasks.loop(time=premier_reminder_times)
@@ -744,7 +833,7 @@ async def eventreminders():
             with open(last_log, "r") as file:
                 log_contents = file.read()
             
-            if(log_message in log_contents): # if the reminder has already been posted, skip it
+            if log_message in log_contents: # if the reminder has already been posted, skip it
                     continue
 
             message = reminder_messages[reminder_class]
@@ -754,7 +843,7 @@ async def eventreminders():
             
             is_silent = True if len(subbed_users) >= 5 and reminder_class == "hour" else False
 
-            if (len(subbed_users) < 5): # if we don't have enough people, actually ping the role
+            if len(subbed_users) < 5: # if we don't have enough people, actually ping the role
                 message += f"\nWe don't have enough people for {event.name} on _{event.description}_ yet!"
                 message += " Please RSVP before it's too late!" if reminder_class not in ["start", "prestart"] else " Please join the VC so we can start!"
                 is_silent = False
@@ -790,7 +879,7 @@ async def syncreminders():
 
             time_dt = datetime.fromisoformat(time)
 
-            if (time_dt < datetime.now()):
+            if time_dt < datetime.now():
                 await channel.send(message + "\n(bot was offline when this reminder was supposed to go off at " + discord_local_time(time_dt) + ".")
                 log("Bot missed a reminder during its downtime, but sent it now. Message: " + message)
                 reminders[server].pop(time)
@@ -820,33 +909,29 @@ async def latest_log():
         sys.stdout = open(last_log, 'a')
 
 #check -----------------Bizzy/Delicate Commands----------------------
-@bot.tree.command(name="cancelevent", description="Cancel an event. Usage: /cancelevent <map_name> [all]", guilds=[discord.Object(id=val_server)])
+@bot.tree.command(name="cancelpractice", description="Cancel a practice. Usage: /cancelpractice <map_name> [all]", guilds=[discord.Object(id=val_server)])
 @discord.app_commands.choices(
     amount=[
         discord.app_commands.Choice(name="(Optional) All", value="all"),
     ]
 )
 @discord.app_commands.describe(
-    _map="The map to cancel the latest event for",
+    _map="The map to cancel the closest practice for",
     amount="Cancel all events for the specified map"
 )
-async def cancelevent(interaction: discord.Interaction, _map: str = "", amount: typing.Optional[str] = ""):
-    """Cancel an event. Usage: /cancelevent <map_name> [all]"""
+async def cancelevent(interaction: discord.Interaction, _map: str, amount: typing.Optional[str] = ""):
+    """Cancel a practice. Usage: /cancelpractice <map_name> [all]"""
 
-    if (not await has_permission(interaction.user.id, interaction)):
+    if not await has_permission(interaction.user.id, interaction):
         return
     
-    if (interaction.channel.id not in [bot_channel, debug_channel]):
+    if interaction.channel.id not in [bot_channel, debug_channel]:
         await wrong_channel(interaction)
         return
     
 
     _map = _map.lower()
     amount = amount.lower()
-
-    if _map == "":
-        await interaction.response.send_message(f'Please provide a map. Usage: `/cancelevent <map_name> [all]`', ephemeral=True)
-        return
 
     if _map not in map_pool:
         await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only cancel premier events.', ephemeral=True)
@@ -855,21 +940,71 @@ async def cancelevent(interaction: discord.Interaction, _map: str = "", amount: 
     guild = interaction.guild
     events = guild.scheduled_events
 
-    if (amount != "all" and amount != ""):
-        await interaction.response.send_message(
-            f"Invalid amount. Usage: `/cancelevent <map_name> [all]`.", ephemeral=True)
-        return
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    message = "Practice not found in the schedule."
 
     for event in events:
-        if event.description.lower() == _map:
+        if event.name == "Premier Practice" and event.description == _map:
             await event.cancel()
-            await event.end()
-            log(f'{interaction.user.display_name} cancelled event - {event.name} on {event.description} for {event.start_time.date()}')
-            if (amount != "all"):
+            log(f'{interaction.user.display_name} cancelled {event.name} on {event.description} for {event.start_time.date()}')
+            if amount != "all":
+                e_name = event.name
+                e_date = event.start_time.date()
+                message = f'{e_name} on {_map} for {e_date} has been cancelled'
                 break
+            else:
+                message = f'All practices on {_map} have been cancelled'
     
-    message = f'{event.name} on {event.description} for {event.start_time.date()} has been cancelled' if amount != "all" else f'All events on {event.description} have been cancelled'
-    await interaction.response.send_message(message, ephemeral=True)
+    await interaction.followup.send(message)
+
+    log(f"{interaction.user.display_name} cancelled event - {event.name} on {event.description} for {event.start_time.date()}")
+
+
+@bot.tree.command(name="cancelevent", description="Cancel an event. Usage: /cancelevent <map_name> [all]", guilds=[discord.Object(id=val_server)])
+@discord.app_commands.choices(
+    amount=[
+        discord.app_commands.Choice(name="(Optional) All", value="all"),
+    ]
+)
+@discord.app_commands.describe(
+    _map="The map to cancel the closest event for",
+    amount="Cancel all events for the specified map"
+)
+async def cancelevent(interaction: discord.Interaction, _map: str, amount: typing.Optional[str] = ""):
+    """Cancel an event. Usage: /cancelevent <map_name> [all]"""
+
+    if not await has_permission(interaction.user.id, interaction):
+        return
+
+    if interaction.channel.id not in [bot_channel, debug_channel]:
+        await wrong_channel(interaction)
+        return
+
+    _map = _map.lower()
+    amount = amount.lower()
+
+    if _map not in map_pool:
+        await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only cancel premier events.', ephemeral=True)
+        return
+
+    guild = interaction.guild
+    events = guild.scheduled_events
+
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    message = "Event not found in the schedule."
+
+    for event in events:
+        if event.name == "Premier" and event.description == _map:
+            await event.cancel()
+            log(f'{interaction.user.display_name} cancelled event - {event.name} on {event.description} for {event.start_time.date()}')
+            if amount != "all":
+                e_name = event.name
+                e_date = event.start_time.date()
+                message = f'{e_name} on {_map} for {e_date} has been cancelled'
+                break
+            else:
+                message = f'All events on {_map} have been cancelled'
+    await interaction.followup.send(message)
 
     log(f"{interaction.user.display_name} cancelled event - {event.name} on {event.description} for {event.start_time.date()}")
 
@@ -878,39 +1013,39 @@ async def cancelevent(interaction: discord.Interaction, _map: str = "", amount: 
 @discord.app_commands.guilds(discord.Object(id=val_server))
 async def clear(ctx, amount: int = 1, usertype: str = "both"):
     """Clear chats from <usertype> in the last 200 messages. Usage: `/clear <amount> [bot/user/both]`"""
-    if (ctx.channel.id == debug_channel):  # just nuke the debug channel
+    if ctx.channel.id == debug_channel:  # just nuke the debug channel
         await ctx.channel.purge()
         return
     
     if not await has_permission(ctx.author.id, ctx):
         return
 
-    if (ctx.channel.id not in all_channels):
+    if ctx.channel.id not in all_channels:
         await wrong_channel(ctx)
         return
 
-    if (usertype not in ["bot", "user", "both"]):
+    if usertype not in ["bot", "user", "both"]:
         await ctx.send(f'Invalid type. Usage: `/clear <amount> [bot/user/both]`', ephemeral=True)
         return
 
     amount += 1  # include the command message
 
-    if (amount < 1):
+    if amount < 1:
         return
 
     messages = []
     async for message in ctx.channel.history(limit=200):
         # don't delete reminders
-        if (usertype == "bot" and message.author == bot.user and message.content[0:10] != "(reminder)"):
+        if usertype == "bot" and message.author == bot.user and message.content[0:10] != "(reminder)":
             messages.append(message)
-        elif (usertype == "user" or usertype == "both"):
+        elif usertype == "user" or usertype == "both":
             # don't delete regular chat
             # if a message is from a user and not a command, don't delete it
-            if (not message.content.startswith("!") and message.author.id != bot.user.id):
+            if not message.content.startswith("!") and message.author.id != bot.user.id:
                 continue
             messages.append(message)
 
-        if (len(messages) >= amount):
+        if len(messages) >= amount:
             break
 
     await ctx.channel.delete_messages(messages)
@@ -934,20 +1069,20 @@ async def clearlogs(ctx, all_logs: str = ""):
     """Clear the stdout log for today, or all logs. Usage: `/clear_log [all/all_logs]`"""
     global last_log
 
-    if (ctx.author.id != my_id):
+    if ctx.author.id != my_id:
         await ctx.send(f'You do not have permission to use this command', ephemeral=True)
         return
 
-    if (ctx.channel.id not in [debug_channel, bot_channel]):
+    if ctx.channel.id not in [debug_channel, bot_channel]:
         return
 
-    if (all_logs != "" and all_logs not in ["all", "all_logs"]):
+    if all_logs != "" and all_logs not in ["all", "all_logs"]:
         await ctx.send(f'Invalid argument. Usage: `/clear_logs [all/all_logs]`', ephemeral=True)
         return
 
     message = "Log cleared"
 
-    if (all_logs):  # empty string is false and we already checked for "all" if it's not empty
+    if all_logs:  # empty string is false and we already checked for "all" if it's not empty
         for file in os.listdir('./logs'):
             if not file.endswith("stdout.log"):
                 continue
@@ -965,7 +1100,7 @@ async def clearlogs(ctx, all_logs: str = ""):
 @bot.command()
 async def clearslash(ctx):
     """Clear all slash commands. Usage: `!clearslash`"""
-    if (ctx.author.id != my_id or ctx.channel.id not in [debug_channel, bot_channel]):
+    if ctx.author.id != my_id or ctx.channel.id not in [debug_channel, bot_channel]:
         await ctx.send(f'You do not have permission to use this command', ephemeral=True)
         return
 
@@ -984,7 +1119,7 @@ async def clearslash(ctx):
 @discord.app_commands.guilds(discord.Object(id=val_server))
 async def sync(ctx):
     """Add slash commands specific to this server. Only run this when commands are updated Usage: `!sync`"""
-    if (ctx.channel.id not in [debug_channel, bot_channel] or ctx.author.id != my_id):
+    if ctx.channel.id not in [debug_channel, bot_channel] or ctx.author.id != my_id:
         return
 
     synced = await ctx.bot.tree.sync(guild=discord.Object(id=val_server))
