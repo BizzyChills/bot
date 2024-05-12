@@ -34,6 +34,8 @@ async def has_permission(id: int, ctx: commands.Context|discord.Interaction):
 
     return True
 
+bot.remove_command('help') # remove the default help command. Now using /commands it doesn't work anyway for user-facing commands
+
 @bot.event
 async def on_ready():
     global last_log_date
@@ -70,18 +72,16 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
 
     common_commands = [   "**Commands**:",
                           "- **HELP**:",
-                          " - **/commands** - _Display all bot commands_",
-                          " - **!help** - _(WIP. use at your own risk) Displays better and more detailed help message_",
+                          " - **/commands** - _Displays this message_",
 
                           "- **INFO**:",
-                          " - **/schedule** - _Display the premier event schedule_",
+                          " - **/schedule** - _Display the premier event and practice schedules_",
                           " - **/mappool** - _Display the current competitive map pool_",
-                          " - **/mapvotes** - _Display each member's map vote_",
+                          " - **/mapvotes** - _Display each member's map preferences_",
                           " - **/mapweights** - _Display the total weights for each map_",
 
                           "- **VOTING**:",
-                          " - **prefermaps <map name> +/~/-** - _Vote for a map with a weight of +/~/- (want/neutral/don't want)_",
-                          " - **prefermaps maps** - _Display all maps available for voting (all maps in the game, not just the competitive map pool)_",]
+                          " - **/prefermaps** - _Declare your preferences for each map for premier playoffs_",]
     
     fun_commands = [      '- **"FUN"**:',
                           " - **/hello** - _Say hello_",
@@ -89,19 +89,18 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
                           " - **/unfeed** - _Unfeed the bot_",]
 
     admin_commands = [    "- **ADMIN ONLY**:",
-                          f" - **/role add/remove <@member>** (__admin__) - _Add or remove the '{target_role.mention}' role from a member_",
-                          f" - **/remind <interval> (s)econd/(m)inute/(h)our <message>** (__admin__) - _Set a reminder for the '{target_role.mention}' role_",
-                          " - **/mappool [clear | (add/remove <map name>]** (__admin__) - _Modify the map pool_",
-                          " - **/cancelevent <map_name> [all]** (__admin__) - _Cancel a premier map for today/all days_",
-                          " - **/clear <amount> [bot/user/both]** (__admin__) - _Clear the last <amount> **commands** from the chat from the bot, user, or both. Defaults to last message sent._",]
+                          f" - **/role** (__admin__) - _Add or remove the '{target_role.mention}' role from a member_",
+                          f" - **/remind** (__admin__) - _Set a reminder for the '{target_role.mention}' role_",
+                          " - **/mappool** (__admin__) - _Modify the map pool_",
+                          " - **/cancelevent** (__admin__) - _Cancel a premier map for today/all days_",]
 
     my_commands = [       "- **BIZZY ONLY**:",
                           " - **!sync** (__Bizzy__) - _Initialize the slash commands_",
                           " - **/sync** (__Bizzy__) - _Update the slash commands (ensure that they have been initialized first)_",
                           " - **!clearslash** (__Bizzy__) - _Clear all slash commands_",
+                          " - **/clear <amount> [bot/user/both]** (__Bizzy__) - _Clear the last <amount> **commands** in the chat from the bot, user, or both. Defaults to last message sent._",
                           " - **/clearlogs [all/all_logs]** (__Bizzy__) - _Clear the stdout log(s)_",
-                          " - **/kill [reason]** (__Bizzy__) - _Kill the bot_"
-                   ]
+                          " - **/kill [reason]** (__Bizzy__) - _Kill the bot_",]
 
     output = common_commands
 
@@ -347,13 +346,35 @@ async def schedule(interaction: discord.Interaction):
         val_server) if interaction.guild.id == val_server else bot.get_guild(debug_server)
     events = guild.scheduled_events
 
-    message = "Upcoming Premier Events:\n"
+    event_header = "**Upcoming Premier Events:**"
+    practice_header = "\n\n**Upcoming Premier Practices:**"
+    message = []
+    practice_message = []
+
+    await interaction.response.defer(ephemeral=True, thinking=True)
+
     for event in events:
-        message += f"{event.name}: {event.description} at {discord_local_time(event.start_time)}\n"
+        if "premier practice" in event.name.lower():
+            practice_message.append((f" - {discord_local_time(event.start_time, _datetime=True)}", event.start_time, event.description))
+        elif "premier" in event.name.lower():
+            desc = "Playoffs" if "playoffs" in event.name.lower() else event.description
+            message.append((f" - {discord_local_time(event.start_time, _datetime=True)}", event.start_time, desc))
 
     ephem = True if interaction.channel.id == bot_channel else False
+    
+    if message == []:
+        message = "**No premier events scheduled**"
+    else:
+        message = format_schedule(message, event_header)
 
-    await interaction.response.send_message(message, ephemeral=ephem)
+    if practice_message == []:
+        practice_message = "\n\n**No premier practices scheduled**"
+    else:
+        practice_message = format_schedule(practice_message, practice_header)
+    
+    message += practice_message
+
+    await interaction.followup.send(message, ephemeral=ephem)
 
 @bot.tree.command(name="mappool", description="Add or remove maps from the map pool. Usage: /mappool [clear | (add/remove <map name>]", guilds=[discord.Object(id=val_server)])
 @discord.app_commands.choices(
@@ -683,11 +704,16 @@ async def addpractices(interaction: discord.Interaction):
 
 @bot.tree.command(name="addnote", description="Add a practice note", guilds=[discord.Object(id=val_server)])
 @discord.app_commands.describe(
-    # _map="The map to add a note for",
+    _map="The map to add a note for",
     note_id="The message ID of the note to add",
     description="Provide a short description of the note. Used to identify the note when using `/notes`"
 )
-async def addnote(interaction: discord.Interaction, note_id: str, description: str):
+@discord.app_commands.choices(
+    _map=[
+        discord.app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
+    ]
+)
+async def addnote(interaction: discord.Interaction, _map: str, note_id: str, description: str):
     '''Add a practice note. Usage: /addnote <message_id>'''
     if not await has_permission(interaction.user.id, interaction):
         return
@@ -698,20 +724,17 @@ async def addnote(interaction: discord.Interaction, note_id: str, description: s
 
     note_id = int(note_id)
     try:
-        note = await interaction.channel.fetch_message(note_id)
+        await interaction.channel.get_partial_message(note_id)
     except discord.errors.NotFound:
         await interaction.response.send_message(f'Invalid message ID. Usage: `/addnote <message_id>`', ephemeral=True)
         return
-
-    _map = note.content.split("\n")[0].lower()
     
-    if _map not in map_pool:
-        await interaction.response.send_message(f'{_map} is not in the map pool. I only add notes for premier maps.', ephemeral=True)
-        return
+    if _map not in practice_notes:
+        practice_notes[_map] = {}
     
-    notes[_map][str(note_id)] = {"description": description}
+    practice_notes[_map][note_id] = description
 
-    save_notes(notes)
+    save_notes(practice_notes)
 
     log(f'{interaction.user.display_name} has added a practice note. Note ID: {note_id}')
 
@@ -720,7 +743,7 @@ async def addnote(interaction: discord.Interaction, note_id: str, description: s
 @bot.tree.command(name="notes", description="Display a practice note. Usage: /notes <map> [note_number]", guilds=[discord.Object(id=val_server)])
 @discord.app_commands.choices(
     _map=[
-        discord.app_commands.Choice(name=s.title(), value=s) for s in notes.keys()
+        discord.app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
     ],
     announce=[
         discord.app_commands.Choice(name="Yes", value="yes"),
@@ -736,33 +759,36 @@ async def notes(interaction: discord.Interaction, _map: str, note_number: int = 
     if interaction.channel.id != notes_channel:
         await wrong_channel(interaction)
         return
+    
+    _map = _map.lower()
 
-    if _map not in notes:
+
+    if _map not in practice_notes: # user gave a valid map, but there are no notes for it
         await interaction.response.send_message(f'There are no notes for {_map.title()}', ephemeral=True)
         return
-
-    if note_number < 0 or note_number > len(notes[_map]):
+    
+    if note_number < 0 or note_number > len(practice_notes[_map]):
         await interaction.response.send_message(f'Invalid note number. Usage: `/notes {_map} [note_number]`', ephemeral=True)
         return
 
     await interaction.response.defer(ephemeral=True, thinking=True)
 
     if note_number == 0:
-        notes_list = notes[_map]
+        notes_list = practice_notes[_map]
         output = f'Practice notes for {_map.title()}:\n'
         for i, note_id in enumerate(notes_list.keys()):
-            output += f' - Note {i+1}: {notes_list[note_id]["description"]}\n'
+            output += f' - Note {i+1}: {notes_list[note_id]}\n'
         
         await interaction.followup.send(output, ephemeral=True)
         return
 
-    note_id = list(notes[_map].keys())[note_number - 1]
+    note_id = list(practice_notes[_map].keys())[note_number - 1]
     try:
         note = await interaction.channel.fetch_message(int(note_id))
     except discord.errors.NotFound:
         await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True)
-        notes[_map].pop(note_id)
-        save_notes(notes)
+        practice_notes[_map].pop(note_id)
+        save_notes(practice_notes)
         return
     
     output = f'Practice note for {_map.title()} (created by {note.author.display_name}):\n\n{note.content}'
@@ -994,7 +1020,7 @@ async def cancelevent(interaction: discord.Interaction, _map: str, amount: typin
     message = "Event not found in the schedule."
 
     for event in events:
-        if event.name == "Premier" and event.description == _map:
+        if event.name == "Premier" and event.description.lower() == _map:
             await event.cancel()
             log(f'{interaction.user.display_name} cancelled event - {event.name} on {event.description} for {event.start_time.date()}')
             if amount != "all":

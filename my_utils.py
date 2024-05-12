@@ -40,17 +40,18 @@ def get_notes():
     with open("./local_storage/notes.json", "r") as file:
         return json.load(file)
 
-def save_notes(notes):
+def save_notes(practice_notes):
     with open("./local_storage/notes.json", "w") as file:
-        json.dump(notes, file)
+        json.dump(practice_notes, file)
 
 def est_to_utc(t: time):
     d = datetime.combine(datetime.today(), t)
     return tz.localize(d).astimezone(pytz.utc).time()
 
-def discord_local_time(time: datetime):
+def discord_local_time(time: datetime, _datetime=False):
     epoch_time = time.timestamp()
-    formatted = "<t:" + str(int(epoch_time)) + ":t>"
+    style = "F" if _datetime else "t" # F for full date and time
+    formatted = f"<t:{str(int(epoch_time))}:{style}>"
     return formatted
 
 def log(message: str):
@@ -70,6 +71,19 @@ def debug_log(message: str):
 
 def wrong_channel(interaction):
     return interaction.response.send_message("This command is not available in this channel.", ephemeral=True)
+
+def format_schedule(schedule: list, header: str = None):
+    schedule = sorted(schedule, key=lambda x: x[1])
+
+    subheaders = {m[2]: [] for m in schedule}
+
+    for m in schedule:
+        subheaders[m[2]].append(m[0])
+
+    schedule = [f"- ___{k}___:\n" + "\n".join(v) for k, v in subheaders.items()]
+    schedule = "\n".join(([header] + schedule)) if header else "\n".join(schedule)
+
+    return schedule
 
 
 def convert_to_json():
@@ -143,4 +157,4 @@ map_pool = get_pool()
 map_preferences = get_prefrences()
 map_weights = get_weights()
 reminders = get_reminders()
-notes = get_notes()
+practice_notes = get_notes()
