@@ -79,6 +79,7 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
                           " - **/mappool** - _Display the current competitive map pool_",
                           " - **/mapvotes** - _Display each member's map preferences_",
                           " - **/mapweights** - _Display the total weights for each map_",
+                          " - **/notes** - _Display a practice note from the notes channel_",
 
                           "- **VOTING**:",
                           " - **/prefermaps** - _Declare your preferences for each map for premier playoffs_",]
@@ -92,7 +93,13 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
                           f" - **/role** (__admin__) - _Add or remove the '{target_role.mention}' role from a member_",
                           f" - **/remind** (__admin__) - _Set a reminder for the '{target_role.mention}' role_",
                           " - **/mappool** (__admin__) - _Modify the map pool_",
-                          " - **/cancelevent** (__admin__) - _Cancel a premier map for today/all days_",]
+                          " - **/addevents** (__admin__) - _Add all premier events to the schedule_",
+                          " - **/addpractices** (__admin__) - _Add all premier practices to the schedule (must use /addevents first)_",
+                          " - **/cancelevent** (__admin__) - _Cancel a premier map for today/all days_",
+                          " - **cancelpractice** (__admin__) - _Cancel a premier practice for today/all days_",
+                          " - **/addnote** (__admin__) - _Add a practice note in the notes channel_",
+                          " - **/pin <message_id>** (__admin__) - _Pin a message_",
+                          " - **/unpin <message_id>** (__admin__) - _Unpin a message_",]
 
     my_commands = [       "- **BIZZY ONLY**:",
                           " - **!sync** (__Bizzy__) - _Initialize the slash commands_",
