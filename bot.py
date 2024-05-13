@@ -34,6 +34,10 @@ async def has_permission(id: int, ctx: commands.Context|discord.Interaction):
 
     return True
 
+async def sync_commands():
+    """Sync the commands with the discord API"""
+    return bot.tree.sync(guild=discord.Object(id=val_server))
+
 bot.remove_command('help') # remove the default help command. Now using /commands it doesn't work anyway for user-facing commands
 
 @bot.event
@@ -49,6 +53,8 @@ async def on_ready():
     log(f'Bot "{bot.user.name}" has connected to Discord. Starting log')
 
     log("Syncing reminders and events\n")
+
+    await sync_commands()
 
 
 #check ---------------------Command List-----------------------------
@@ -1155,7 +1161,7 @@ async def sync(ctx):
     if ctx.channel.id not in [debug_channel, bot_channel] or ctx.author.id != my_id:
         return
 
-    synced = await ctx.bot.tree.sync(guild=discord.Object(id=val_server))
+    synced = await sync_commands()
     await ctx.send(f'Commands synced: {len(synced)}', ephemeral=True)
 
     log(f"Bot commands synced for {ctx.guild.name}")
