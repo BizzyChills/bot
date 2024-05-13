@@ -36,7 +36,8 @@ async def has_permission(id: int, ctx: commands.Context|discord.Interaction):
 
 async def sync_commands():
     """Sync the commands with the discord API"""
-    return bot.tree.sync(guild=discord.Object(id=val_server))
+    synced = await bot.tree.sync(guild=discord.Object(id=val_server))
+    return synced
 
 bot.remove_command('help') # remove the default help command. Now using /commands it doesn't work anyway for user-facing commands
 
@@ -54,7 +55,7 @@ async def on_ready():
 
     log("Syncing reminders and events\n")
 
-    await sync_commands()
+    # await sync_commands()
 
 
 #check ---------------------Command List-----------------------------
@@ -62,13 +63,16 @@ async def on_ready():
 @discord.app_commands.choices(
     short=[
         discord.app_commands.Choice(name="(Optional) Shorten", value=1),
+    ],
+    announce=[
+        discord.app_commands.Choice(name="(Optional) Announce", value=1),
     ]
 )
 @discord.app_commands.describe(
-    short="Whether to display the full list of commands or a shortened list"
-
+    short="Whether to display the full list of commands or a shortened list",
+    announce="Whether to allow others to see the returned command list in the channel"
 )
-async def commands(interaction: discord.Interaction, short: typing.Optional[int] = 0):
+async def commands(interaction: discord.Interaction, short: typing.Optional[int] = 0, announce: int = 0):
     """Displays all bot commands. Usage: `/commands`"""
     if interaction.channel.id not in [debug_channel, bot_channel]:
         return
@@ -83,12 +87,12 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
                           "- **INFO**:",
                           " - **/schedule** - _Display the premier event and practice schedules_",
                           " - **/mappool** - _Display the current competitive map pool_",
-                          " - **/mapvotes** - _Display each member's map preferences_",
-                          " - **/mapweights** - _Display the total weights for each map_",
                           " - **/notes** - _Display a practice note from the notes channel_",
 
                           "- **VOTING**:",
-                          " - **/prefermaps** - _Declare your preferences for each map for premier playoffs_",]
+                          " - **/prefermaps** - _Declare your preferences for each map for premier playoffs_",
+                          " - **/mapvotes** - _Display each member's map preferences_",
+                          " - **/mapweights** - _Display the total weights for each map_",]
     
     fun_commands = [      '- **"FUN"**:',
                           " - **/hello** - _Say hello_",
@@ -96,7 +100,7 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
                           " - **/unfeed** - _Unfeed the bot_",]
 
     admin_commands = [    "- **ADMIN ONLY**:",
-                          f" - **/role** (__admin__) - _Add or remove the '{target_role.mention}' role from a member_",
+                        #   f" - **/role** (__admin__) - _Add or remove the '{target_role.mention}' role from a member_", # role has been deprecated
                           f" - **/remind** (__admin__) - _Set a reminder for the '{target_role.mention}' role_",
                           " - **/mappool** (__admin__) - _Modify the map pool_",
                           " - **/addevents** (__admin__) - _Add all premier events to the schedule_",
@@ -124,9 +128,11 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
         if interaction.user.id == my_id:
             output += my_commands
 
-        output += fun_commands
     
-    await interaction.response.send_message('\n'.join(output), ephemeral=True, silent=True)
+    output += fun_commands
+    
+    ephem = True if announce == 0 else False
+    await interaction.response.send_message('\n'.join(output), ephemeral=ephem, silent=True)
 
 # --------------------Useless commands--------------------------
 @bot.tree.command(name="hello", description="Says hello. Usage: /hello", guilds=[discord.Object(id=val_server)])
@@ -1163,6 +1169,7 @@ async def sync(ctx):
 
     synced = await sync_commands()
     await ctx.send(f'Commands synced: {len(synced)}', ephemeral=True)
+
 
     log(f"Bot commands synced for {ctx.guild.name}")
 
