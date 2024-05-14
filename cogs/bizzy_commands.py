@@ -24,7 +24,7 @@ class BizzyCommands(commands.Cog):
         all_logs="Clear all logs"
     )
     async def clearlogs(self, interaction: discord.Interaction, all_logs: str = ""):
-        """Clear the stdout log for today, or all logs. Usage: `/clear_log [all/all_logs]`"""
+        """Clear the stdout log for today, or all logs"""
         global last_log
 
         if interaction.user.id != my_id:
@@ -32,10 +32,6 @@ class BizzyCommands(commands.Cog):
             return
 
         if interaction.channel.id not in [debug_channel, bot_channel]:
-            return
-
-        if all_logs != "" and all_logs not in ["all", "all_logs"]:
-            await interaction.response.send_message(f'Invalid argument. Usage: `/clear_logs [all/all_logs]`', ephemeral=True)
             return
 
         message = "Log cleared"
@@ -57,7 +53,7 @@ class BizzyCommands(commands.Cog):
 
     @app_commands.command(name="clearslash", description=command_descriptions["clearslash"])
     async def clearslash(self, interaction: discord.Interaction):
-        """Clear all slash commands. Usage: `/clearslash`"""
+        """Clear all slash commands."""
         if interaction.user.id != my_id or interaction.channel.id not in [debug_channel, bot_channel]:
             await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
             return
@@ -74,7 +70,7 @@ class BizzyCommands(commands.Cog):
     @commands.hybrid_command(name="sync", description=command_descriptions["sync"])
     @app_commands.guilds(Object(id=val_server), Object(debug_server))
     async def sync(self, ctx):
-        """Add slash commands specific to this server. Only run this when commands are updated Usage: `!sync`"""
+        """Add slash commands specific to this server. Only run this when commands are updated"""
         if ctx.channel.id not in [debug_channel, bot_channel] or ctx.author.id != my_id:
             return
 
@@ -95,7 +91,7 @@ class BizzyCommands(commands.Cog):
         sync="Sync commands after reloading"
     )
     async def reload(self, ctx, sync: int = 0):
-        """Reload all cogs. Usage: `/reload`"""
+        """Reload all cogs."""
         if ctx.author.id != my_id:
             await ctx.send(f'You do not have permission to use this command', ephemeral=True)
             return
@@ -122,7 +118,7 @@ class BizzyCommands(commands.Cog):
     @commands.hybrid_command(name="kill", description=command_descriptions["kill"])
     @app_commands.guilds(Object(id=val_server), Object(debug_server))
     async def kill(self, ctx, *, reason: str = "no reason given"):
-        """Kill the bot. Usage: `/kill`"""
+        """Kill the bot."""
         if not await has_permission(ctx.author.id, ctx):
             return
 

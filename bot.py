@@ -30,7 +30,7 @@ async def on_ready():
 
 
 # ---------------------Command List-----------------------------
-@bot.tree.command(name="commands", description="Display all bot commands. Usage: /commands", guilds=[discord.Object(id=val_server)])
+@bot.tree.command(name="commands", description="Display all bot commands", guilds=[discord.Object(id=val_server)])
 @discord.app_commands.choices(
     short=[
         discord.app_commands.Choice(name="(Optional) Shorten", value=1),
@@ -44,7 +44,7 @@ async def on_ready():
     announce="Whether to allow others to see the returned command list in the channel"
 )
 async def commands(interaction: discord.Interaction, short: int = 0, announce: int = 0):
-    """Displays all bot commands. Usage: `/commands`"""
+    """Displays all bot commands."""
     if interaction.channel.id not in [debug_channel, bot_channel]:
         wrong_channel(interaction)
         return
