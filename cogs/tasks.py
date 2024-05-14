@@ -17,7 +17,7 @@ class Tasks(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-        log("Tasks cog loaded")
+        # log("Tasks cog loaded")
         self.eventreminders.add_exception_type(asyncpg.PostgresConnectionError)
         self.eventreminders.start()
         self.syncreminders.start()
@@ -75,7 +75,7 @@ class Tasks(commands.Cog):
                         await event.cancel()
                     except ValueError:
                         await event.end()
-                        
+
             elif time_remaining <= 60 * 10:
                 reminder_class = "prestart"
             elif time_remaining <= 3600:
