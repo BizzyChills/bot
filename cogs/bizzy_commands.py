@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord import Interaction, errors, Object
 
 from my_utils import *
 
@@ -96,12 +95,18 @@ class BizzyCommands(commands.Cog):
             await ctx.send(f'You do not have permission to use this command', ephemeral=True)
             return
 
-        if ctx.channel.id not in [debug_channel, bot_channel]:
-            wrong_channel(ctx)
-            return
+        # if ctx.channel.id not in [debug_channel, bot_channel]:
+        #     wrong_channel(ctx)
+        #     return
         
-        if type(ctx) == Interaction:
+        if type(ctx) == discord.Interaction:
+            log(type(ctx))
             await ctx.response.defer(ephemeral=True, thinking=True)
+
+        right_now = (datetime.now().replace(
+            microsecond=0) + timedelta(seconds=5)).time()
+        
+        premier_reminder_times[0] = est_to_utc(right_now)
 
         for file in os.listdir('./cogs'):
             if file.endswith('.py'):
@@ -110,7 +115,7 @@ class BizzyCommands(commands.Cog):
         if sync:
             await sync_commands(self.bot)
         
-        if type(ctx) == Interaction:
+        if type(ctx) == discord.Interaction:
             await ctx.followup.send(f'All cogs reloaded', ephemeral=True)
         else:
             await ctx.send(f'All cogs reloaded', ephemeral=True)

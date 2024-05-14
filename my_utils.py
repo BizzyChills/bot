@@ -151,7 +151,7 @@ tz = pytz.timezone("US/Eastern")
 
 # debug, 5 seconds from right now to trigger the eventreminders task on startup
 right_now = (datetime.now().replace(
-    microsecond=0) + timedelta(seconds=10)).time()
+    microsecond=0) + timedelta(seconds=5)).time()
 
 premier_reminder_times = [ # add 2 seconds to each time to ensure time_remaining logic works
     right_now,  # debug,
@@ -182,7 +182,7 @@ command_descriptions = {
     "schedule": "Display the premier event and practice schedules",
     "mappool_common": "Display the current competitive map pool",
     "mappool_admin": "Modify the map pool",
-    "notes": "Display a practice note from the notes channel",
+    "notes": "Display a practice note from the notes channel. Leave note_id blank to display all options",
     "prefermap": "Declare your preference for a map to play for premier playoffs",
     "mapvotes": "Display each member's map preferences",
     "mapweights": "Display the total weights for each map",
@@ -195,12 +195,14 @@ command_descriptions = {
     "cancelevent": "Cancel a premier map for today/all days",
     "cancelpractice": "Cancel a premier practice for today/all days",
     "clearschedule": "Clear the schedule of all premier events AND practices",
-    "addnote": "Add a practice note in the notes channel",
+    "addnote": "Add a reference/link to a practice note in the notes channel",
+    "removenote": "Remove a reference/link to practice note in the notes channel (this does not delete the note itself)",
     "pin": "Pin a message",
     "unpin": "Unpin a message",
     "sync": "Update the slash commands (ensure that they have been initialized first)",
     "clearslash": "Clear all slash commands",
-    "clear": "Clear the last <amount> **commands** from the bot, user, or both. Defaults to last command.",
+    "clear": "Clear the last <amount> **commands** from the bot, user, or both (defaults to last command)",
+    "deletemessage": "Delete a message by ID",
     "clearlogs": "Clear the stdout log(s)",
     "reload": "Reload the bot's cogs",
     "kill": "Kill the bot",

@@ -74,9 +74,11 @@ async def commands(interaction: discord.Interaction, short: int = 0, announce: i
                           f" - **/cancelpractice** (__admin__) - _{command_descriptions['cancelpractice']}_",
                           f" - **/clearschedule** (__admin__) - _{command_descriptions['clearschedule']}_",
                           f" - **/addnote** (__admin__) - _{command_descriptions['addnote']}_",
+                          f" - **/removenote** (__admin__) - _{command_descriptions['removenote']}_",
                           f" - **/remind** (__admin__) - _{command_descriptions['remind']}_",
                           f" - **/pin** (__admin__) - _{command_descriptions['pin']}_",
-                          f" - **/unpin** (__admin__) - _{command_descriptions['unpin']}_",]
+                          f" - **/unpin** (__admin__) - _{command_descriptions['unpin']}_",
+                          f" - **/deletemessage** (__admin__) - _{command_descriptions['deletemessage']}_",]
 
     my_commands = [       "- **BIZZY ONLY**:",
                           f" - **!sync** (__Bizzy__) - _{command_descriptions['sync']}_",
@@ -84,6 +86,7 @@ async def commands(interaction: discord.Interaction, short: int = 0, announce: i
                           f" - **!clearslash** (__Bizzy__) - _{command_descriptions['clearslash']}_",
                           f" - **/clear** (__Bizzy__) - _{command_descriptions['clear']}_",
                           f" - **/clearlogs** (__Bizzy__) - _{command_descriptions['clearlogs']}_",
+                          f" - **/reload** (__Bizzy__) - _{command_descriptions['reload']}_",
                           f" - **/kill** (__Bizzy__) - _{command_descriptions['kill']}_",]
     
     useless_commands = ['- **MISC**:',

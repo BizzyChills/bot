@@ -36,7 +36,6 @@ class AdminPremierCommands(commands.Cog):
         # remove commas and split by space
         new_maps = "".join(map_list.split(",")).split()
 
-        prem_length = len(new_maps)
         try:
             input_date = tz.localize(datetime.strptime(
                 date, "%m/%d").replace(year=datetime.now().year))
@@ -300,15 +299,15 @@ class AdminPremierCommands(commands.Cog):
         await interaction.followup.send(f'Cleared the premier schedule', ephemeral=True)
 
     @app_commands.command(name="addnote", description=command_descriptions["addnote"])
-    @app_commands.describe(
-        _map="The map to add a note for",
-        note_id="The message ID of the note to add",
-        description="Provide a short description of the note. Used to identify the note when using `/notes`"
-    )
     @app_commands.choices(
         _map=[
             app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
         ]
+    )
+    @app_commands.describe(
+        _map="The map to add a note for",
+        note_id="The message ID of the note to add a reference to",
+        description="Provide a short description of the note. Used to identify the note when using `/notes`"
     )
     async def addnote(self, interaction: discord.Interaction, _map: str, note_id: str, description: str):
         """Create a practice note from a pre-existing note message"""
@@ -336,6 +335,53 @@ class AdminPremierCommands(commands.Cog):
         log(f'{interaction.user.display_name} has added a practice note. Note ID: {note_id}')
 
         await interaction.response.send_message(f'Added a practice note for {_map.title()}. Access using `/notes {_map}`', ephemeral=True)
+
+    @app_commands.command(name="removenote", description=command_descriptions["removenote"])
+    @app_commands.choices(
+        _map=[
+            app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
+        ]
+    )
+    @app_commands.describe(
+        _map="The map to remove the note reference from",
+        note_number = "The note number to remove (1-indexed). Leave empty to see options."
+    )
+    async def removenote(self, interaction: discord.Interaction, _map: str, note_number: int = 0):
+        """Remove a practice note from the notes list"""
+        if not await has_permission(interaction.user.id, interaction):
+            return
+
+        if interaction.channel.id != notes_channel:
+            await wrong_channel(interaction)
+            return
+        
+        if _map not in practice_notes or len(practice_notes[_map]) == 0:
+            await interaction.response.send_message(f'No notes found for {_map.title()}', ephemeral=True)
+            return
+        
+        if note_number < 0 or note_number > len(practice_notes[_map]):
+            await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
+            return
+        
+        if note_number == 0:
+            notes_list = practice_notes[_map]
+            output = f'**Practice notes for _{_map.title()}_:**\n'
+            for i, note_id in enumerate(notes_list.keys()):
+                output += f'- **Note {i+1}**: _{notes_list[note_id]}_\n'
+
+            await interaction.response.send_message(output, ephemeral=True)
+            return
+
+
+        note_id = list(practice_notes[_map].keys())[note_number - 1]
+        del practice_notes[_map][note_id]
+
+        await interaction.response.send_message(f'Removed a practice note for {_map.title()}', ephemeral=True)
+
+
+        save_notes(practice_notes)
+        log(f'{interaction.user.display_name} has removed a practice note. Note ID: {note_id}')
+
 
 
 class AdminManageCommands(commands.Cog):
@@ -462,8 +508,7 @@ class AdminManageCommands(commands.Cog):
             return
 
         try:
-            message_id = int(message_id)
-            message = await interaction.channel.fetch_message(message_id)
+            message = interaction.channel.get_partial_message(int(message_id))
         except (ValueError, discord.errors.NotFound):
             await interaction.response.send_message(f'Invalid message ID.', ephemeral=True)
             return
@@ -531,6 +576,28 @@ class AdminManageCommands(commands.Cog):
                     f'[{creation_time} EST] {message.author}: "{message.content}"\t| deleted by {interaction.user} at {deletion_time} EST\n')
 
         await interaction.followup.send(f'Deleted {len(messages)} messages', ephemeral=True)
+
+    @app_commands.command(name="deletemessage", description=command_descriptions["deletemessage"])
+    @app_commands.describe(
+        message_id="The ID of the message to delete"
+    )
+    async def deletemessage(self, interaction: discord.Interaction, message_id: str):
+        """Delete a message by ID"""
+        if not await has_permission(interaction.user.id, interaction):
+            return
+
+        try:
+            message_id = int(message_id)
+            message = interaction.channel.get_partial_message(message_id)
+        except (ValueError, discord.errors.NotFound):
+            await interaction.response.send_message(f'Invalid message ID.', ephemeral=True)
+            return
+
+        await message.delete()
+
+        await interaction.response.send_message(f'Message deleted', ephemeral=True)
+
+        log(f'{interaction.user.display_name} deleted message {message_id}')
 
 
 async def setup(bot):

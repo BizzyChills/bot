@@ -146,15 +146,15 @@ class InfoCommands(commands.Cog):
             app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
         ],
         announce=[
-            app_commands.Choice(name="Yes", value="yes"),
+            app_commands.Choice(name="Yes", value=1),
         ]
     )
     @app_commands.describe(
         _map="The map to display the note for",
         note_number="The note number to display (1-indexed). Leave empty to see options.",
-        announce="Return the note so that it is visible to everyone (default is visible only to you)"
+        announce="Return the note so that it is visible to everyone"
     )
-    async def notes(self, interaction: Interaction, _map: str, note_number: int = 0, announce: str = ""):
+    async def notes(self, interaction: Interaction, _map: str, note_number: int = 0, announce: int = 0):
         """Display a practice note for a map"""
 
         if interaction.channel.id != notes_channel:
@@ -163,7 +163,7 @@ class InfoCommands(commands.Cog):
 
         _map = _map.lower()
 
-        if _map not in practice_notes:  # user gave a valid map, but there are no notes for it
+        if _map not in practice_notes or len(practice_notes[_map]) == 0:  # user gave a valid map, but there are no notes for it
             await interaction.response.send_message(f'There are no notes for {_map.title()}', ephemeral=True)
             return
 
@@ -171,13 +171,14 @@ class InfoCommands(commands.Cog):
             await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
             return
 
-        await interaction.response.defer(ephemeral=True, thinking=True)
+        ephem = False if announce else True # has to explicitly be bool for lib, so can't use announce
+        await interaction.response.defer(ephemeral=ephem, thinking=True)
 
         if note_number == 0:
             notes_list = practice_notes[_map]
-            output = f'Practice notes for {_map.title()}:\n'
+            output = f'**Practice notes for _{_map.title()}_:**\n'
             for i, note_id in enumerate(notes_list.keys()):
-                output += f' - Note {i+1}: {notes_list[note_id]}\n'
+                output += f'- **Note {i+1}**: _{notes_list[note_id]}_\n'
 
             await interaction.followup.send(output, ephemeral=True)
             return
@@ -193,10 +194,7 @@ class InfoCommands(commands.Cog):
 
         output = f'Practice note for {_map.title()} (created by {note.author.display_name}):\n\n{note.content}'
 
-        if announce == "yes":
-            await interaction.followup.send(output, ephemeral=False)
-        else:
-            await interaction.followup.send(output, ephemeral=True)
+        await interaction.followup.send(output, ephemeral=ephem)
 
 
 async def setup(bot):
