@@ -8,7 +8,6 @@ import random
 from copy import deepcopy
 
 import discord
-import discord.ext.commands as extra
 from discord.ext import commands, tasks
 
 from my_utils import *
@@ -17,29 +16,21 @@ from my_utils import *
 sys.stdout = open(last_log, 'a')
 # redirect stderr after connecting to discord to avoid spamming the error log with connection messages
 
-bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
+bot = commands.Bot(command_prefix='!', intents=discord.Intents.all(), help_command=None)
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
-
-async def has_permission(id: int, ctx: commands.Context|discord.Interaction):
-    """Check if caller has perms to use command. Only Sam or Bizzy can use commands that call this function."""
-    message = "You do not have permission to use this command"
-    if id not in admin_ids:
-        if type(ctx) == commands.Context:
-            await ctx.send(f'You do not have permission to use this command', ephemeral=True)
-        else:
-            await ctx.response.send_message(message, ephemeral=True)
-        return False
-
-    return True
-
 async def sync_commands():
     """Sync the commands with the discord API"""
+    synced = await bot.tree.sync(guild=discord.Object(id=debug_server))
     synced = await bot.tree.sync(guild=discord.Object(id=val_server))
     return synced
 
-bot.remove_command('help') # remove the default help command. Now using /commands it doesn't work anyway for user-facing commands
+
+async def load():
+    for file in os.listdir('./cogs'):
+        if file.endswith('.py'):
+            await bot.load_extension(f'cogs.{file[:-3]}')
 
 @bot.event
 async def on_ready():
@@ -75,49 +66,54 @@ async def on_ready():
 async def commands(interaction: discord.Interaction, short: typing.Optional[int] = 0, announce: int = 0):
     """Displays all bot commands. Usage: `/commands`"""
     if interaction.channel.id not in [debug_channel, bot_channel]:
+        wrong_channel(interaction)
         return
 
-    target_role = prem_role if interaction.guild.id == val_server else debug_role
-    target_role = discord.utils.get(interaction.guild.roles, name=target_role)
+    # target_role = prem_role if interaction.guild.id == val_server else debug_role
+    # target_role = discord.utils.get(interaction.guild.roles, name=target_role)
+
+    ephem = False if announce else True
+
+    await interaction.response.defer(ephemeral=ephem, thinking=True)
 
     common_commands = [   "**Commands**:",
                           "- **HELP**:",
-                          " - **/commands** - _Displays this message_",
+                          f" - **/commands** - _{command_descriptions['commands']}_",
 
-                          "- **INFO**:",
-                          " - **/schedule** - _Display the premier event and practice schedules_",
-                          " - **/mappool** - _Display the current competitive map pool_",
-                          " - **/notes** - _Display a practice note from the notes channel_",
+                          f"- **INFO**:",
+                          f" - **/schedule** - _{command_descriptions['schedule']}_",
+                          f" - **/mappool** - _{command_descriptions['mappool_common']}_",
+                          f" - **notes** - _{command_descriptions['notes']}_",
 
-                          "- **VOTING**:",
-                          " - **/prefermaps** - _Declare your preferences for each map for premier playoffs_",
-                          " - **/mapvotes** - _Display each member's map preferences_",
-                          " - **/mapweights** - _Display the total weights for each map_",]
+                          f"- **VOTING**:",
+                          f" - **/prefermap** - _{command_descriptions['prefermap']}_",
+                          f" - **/mapvotes** - _{command_descriptions['mapvotes']}_",
+                          f" - **/mapweights** - _{command_descriptions['mapweights']}_",]
     
     fun_commands = [      '- **"FUN"**:',
-                          " - **/hello** - _Say hello_",
-                          " - **/feed** - _Feed the bot_",
-                          " - **/unfeed** - _Unfeed the bot_",]
+                          f" - **/hello** - _{command_descriptions['hello']}_",
+                          f" - **/feed** - _{command_descriptions['feed']}_",
+                          f" - **/unfeed** - _{command_descriptions['unfeed']}_",]
 
     admin_commands = [    "- **ADMIN ONLY**:",
                         #   f" - **/role** (__admin__) - _Add or remove the '{target_role.mention}' role from a member_", # role has been deprecated
-                          f" - **/remind** (__admin__) - _Set a reminder for the '{target_role.mention}' role_",
-                          " - **/mappool** (__admin__) - _Modify the map pool_",
-                          " - **/addevents** (__admin__) - _Add all premier events to the schedule_",
-                          " - **/addpractices** (__admin__) - _Add all premier practices to the schedule (must use /addevents first)_",
-                          " - **/cancelevent** (__admin__) - _Cancel a premier map for today/all days_",
-                          " - **cancelpractice** (__admin__) - _Cancel a premier practice for today/all days_",
-                          " - **/addnote** (__admin__) - _Add a practice note in the notes channel_",
-                          " - **/pin <message_id>** (__admin__) - _Pin a message_",
-                          " - **/unpin <message_id>** (__admin__) - _Unpin a message_",]
+                          f" - **/remind** (__admin__) - _{command_descriptions['remind']}_",
+                          f" - **/mappool** (__admin__) - _{command_descriptions['mappool_admin']}_",
+                          f" - **/addevents** (__admin__) - _{command_descriptions['addevents']}_",
+                          f" - **/addpractices** (__admin__) - _{command_descriptions['addpractices']}_",
+                          f" - **/cancelevent** (__admin__) - _{command_descriptions['cancelevent']}_",
+                          f" - **/cancelpractice** (__admin__) - _{command_descriptions['cancelpractice']}_",
+                          f" - **/addnote** (__admin__) - _{command_descriptions['addnote']}_",
+                          f" - **/pin** (__admin__) - _{command_descriptions['pin']}_",
+                          f" - **/unpin** (__admin__) - _{command_descriptions['unpin']}_",]
 
     my_commands = [       "- **BIZZY ONLY**:",
-                          " - **!sync** (__Bizzy__) - _Initialize the slash commands_",
-                          " - **/sync** (__Bizzy__) - _Update the slash commands (ensure that they have been initialized first)_",
-                          " - **!clearslash** (__Bizzy__) - _Clear all slash commands_",
-                          " - **/clear <amount> [bot/user/both]** (__Bizzy__) - _Clear the last <amount> **commands** in the chat from the bot, user, or both. Defaults to last message sent._",
-                          " - **/clearlogs [all/all_logs]** (__Bizzy__) - _Clear the stdout log(s)_",
-                          " - **/kill [reason]** (__Bizzy__) - _Kill the bot_",]
+                          f" - **!sync** (__Bizzy__) - _{command_descriptions['sync']}_",
+                          f" - **/sync** (__Bizzy__) - _{command_descriptions['sync']}_",
+                          f" - **!clearslash** (__Bizzy__) - _{command_descriptions['clearslash']}_",
+                          f" - **/clear** (__Bizzy__) - _{command_descriptions['clear']}_",
+                          f" - **/clearlogs** (__Bizzy__) - _{command_descriptions['clearlogs']}_",
+                          f" - **/kill** (__Bizzy__) - _{command_descriptions['kill']}_",]
 
     output = common_commands
 
@@ -131,32 +127,32 @@ async def commands(interaction: discord.Interaction, short: typing.Optional[int]
     
     output += fun_commands
     
-    ephem = True if announce == 0 else False
-    await interaction.response.send_message('\n'.join(output), ephemeral=ephem, silent=True)
+    # await interaction.response.send_message('\n'.join(output), ephemeral=ephem, silent=True)
+    await interaction.followup.send('\n'.join(output), ephemeral=ephem, silent=True)
 
 # --------------------Useless commands--------------------------
-@bot.tree.command(name="hello", description="Says hello. Usage: /hello", guilds=[discord.Object(id=val_server)])
-async def hello(interaction: discord.Interaction):
-    """Says hello. Usage: `/hello`"""
+# @bot.tree.command(name="hello", description="Says hello. Usage: /hello", guilds=[discord.Object(id=val_server)])
+# async def hello(interaction: discord.Interaction):
+#     """Says hello. Usage: `/hello`"""
 
-    await interaction.response.send_message(f'Hello {interaction.user.mention}!', ephemeral=True)
-
-
-@bot.tree.command(name="feed", description="Feed the bot. Usage: /feed", guilds=[discord.Object(id=val_server)])
-async def feed(interaction: discord.Interaction):
-    """Feed the bot. Usage: `/feed`"""
-    await interaction.response.send_message(f'Yum yum! Thanks for the food!', ephemeral=True)
+#     await interaction.response.send_message(f'Hello {interaction.user.mention}!', ephemeral=True)
 
 
-@bot.tree.command(name="unfeed", description="Unfeed the bot. Usage: /unfeed", guilds=[discord.Object(id=val_server)])
-async def unfeed(interaction: discord.Interaction):
-    """Unfeed the bot. Usage: `/unfeed`"""
+# @bot.tree.command(name="feed", description="Feed the bot. Usage: /feed", guilds=[discord.Object(id=val_server)])
+# async def feed(interaction: discord.Interaction):
+#     """Feed the bot. Usage: `/feed`"""
+#     await interaction.response.send_message(f'Yum yum! Thanks for the food!', ephemeral=True)
 
-    options = ["pukes", "poops", "performs own liposuction"]
 
-    option = options[random.randint(0, len(options) - 1)]
+# @bot.tree.command(name="unfeed", description="Unfeed the bot. Usage: /unfeed", guilds=[discord.Object(id=val_server)])
+# async def unfeed(interaction: discord.Interaction):
+#     """Unfeed the bot. Usage: `/unfeed`"""
 
-    await interaction.response.send_message(f'\*looks at you with a deadpan expression\* ... \*{option}\*', ephemeral=True)
+#     options = ["pukes", "poops", "performs own liposuction"]
+
+#     option = options[random.randint(0, len(options) - 1)]
+
+#     await interaction.response.send_message(f'\*looks at you with a deadpan expression\* ... \*{option}\*', ephemeral=True)
 
 # ------------------Functional commands-------------------------
 
@@ -354,243 +350,243 @@ async def unpin(interaction: discord.Interaction, message_id: str):
 #     log(f'{interaction.user.display_name} cleared {amount} system messages')
 
 # --------------------Premier commands--------------------------
-@bot.tree.command(name="schedule", description="Display the premier schedule. Usage: /schedule", guilds=[discord.Object(id=val_server)])
-async def schedule(interaction: discord.Interaction):
-    """Display the premier schedule. Usage: /schedule"""
-    if interaction.channel.id not in all_channels:
-        await wrong_channel(interaction)
-        return
+# @bot.tree.command(name="schedule", description="Display the premier schedule. Usage: /schedule", guilds=[discord.Object(id=val_server)])
+# async def schedule(interaction: discord.Interaction):
+#     """Display the premier schedule. Usage: /schedule"""
+#     if interaction.channel.id not in all_channels:
+#         await wrong_channel(interaction)
+#         return
 
-    guild = bot.get_guild(
-        val_server) if interaction.guild.id == val_server else bot.get_guild(debug_server)
-    events = guild.scheduled_events
+#     guild = bot.get_guild(
+#         val_server) if interaction.guild.id == val_server else bot.get_guild(debug_server)
+#     events = guild.scheduled_events
 
-    event_header = "**Upcoming Premier Events:**"
-    practice_header = "\n\n**Upcoming Premier Practices:**"
-    message = []
-    practice_message = []
+#     event_header = "**Upcoming Premier Events:**"
+#     practice_header = "\n\n**Upcoming Premier Practices:**"
+#     message = []
+#     practice_message = []
 
-    await interaction.response.defer(ephemeral=True, thinking=True)
+#     await interaction.response.defer(ephemeral=True, thinking=True)
 
-    for event in events:
-        if "premier practice" in event.name.lower():
-            practice_message.append((f" - {discord_local_time(event.start_time, _datetime=True)}", event.start_time, event.description))
-        elif "premier" in event.name.lower():
-            desc = "Playoffs" if "playoffs" in event.name.lower() else event.description
-            message.append((f" - {discord_local_time(event.start_time, _datetime=True)}", event.start_time, desc))
+#     for event in events:
+#         if "premier practice" in event.name.lower():
+#             practice_message.append((f" - {discord_local_time(event.start_time, _datetime=True)}", event.start_time, event.description))
+#         elif "premier" in event.name.lower():
+#             desc = "Playoffs" if "playoffs" in event.name.lower() else event.description
+#             message.append((f" - {discord_local_time(event.start_time, _datetime=True)}", event.start_time, desc))
 
-    ephem = True if interaction.channel.id == bot_channel else False
+#     ephem = True if interaction.channel.id == bot_channel else False
     
-    if message == []:
-        message = "**No premier events scheduled**"
-    else:
-        message = format_schedule(message, event_header)
+#     if message == []:
+#         message = "**No premier events scheduled**"
+#     else:
+#         message = format_schedule(message, event_header)
 
-    if practice_message == []:
-        practice_message = "\n\n**No premier practices scheduled**"
-    else:
-        practice_message = format_schedule(practice_message, practice_header)
+#     if practice_message == []:
+#         practice_message = "\n\n**No premier practices scheduled**"
+#     else:
+#         practice_message = format_schedule(practice_message, practice_header)
     
-    message += practice_message
+#     message += practice_message
 
-    await interaction.followup.send(message, ephemeral=ephem)
+#     await interaction.followup.send(message, ephemeral=ephem)
 
-@bot.tree.command(name="mappool", description="Add or remove maps from the map pool. Usage: /mappool [clear | (add/remove <map name>]", guilds=[discord.Object(id=val_server)])
-@discord.app_commands.choices(
-    action=[
-        discord.app_commands.Choice(name="Add", value="add"),
-        discord.app_commands.Choice(name="Remove", value="remove"),
-        discord.app_commands.Choice(name="Clear", value="clear"),
-    ],
+# @bot.tree.command(name="mappool", description="Add or remove maps from the map pool. Usage: /mappool [clear | (add/remove <map name>]", guilds=[discord.Object(id=val_server)])
+# @discord.app_commands.choices(
+#     action=[
+#         discord.app_commands.Choice(name="(admin) Add", value="add"),
+#         discord.app_commands.Choice(name="(admin) Remove", value="remove"),
+#         discord.app_commands.Choice(name="(admin) Clear", value="clear"),
+#     ],
 
-    _map=[
-        # mappool only has maps that are currently playable, need to get all maps
-        discord.app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
-    ]
-)
-@discord.app_commands.describe(
-    action="The action to take on the map pool",
-    _map="The map to add or remove"
-)
-async def mappool(interaction: discord.Interaction, action: str = "", _map: str = ""):
-    """Add or remove maps from the map pool. Usage: /mappool [clear | (add/remove <map name>]"""
-    if interaction.channel.id not in all_channels:
-        await wrong_channel(interaction)
-        return
+#     _map=[
+#         # mappool only has maps that are currently playable, need to get all maps
+#         discord.app_commands.Choice(name=f"(admin) {s.title()}", value=s) for s in map_preferences.keys()
+#     ]
+# )
+# @discord.app_commands.describe(
+#     action="The action to take on the map pool",
+#     _map="The map to add or remove"
+# )
+# async def mappool(interaction: discord.Interaction, action: str = "", _map: str = ""):
+#     """Add or remove maps from the map pool. Usage: /mappool [clear | (add/remove <map name>]"""
+#     if interaction.channel.id not in all_channels:
+#         await wrong_channel(interaction)
+#         return
 
-    if action == "" and _map == "":
-        ephem = True if interaction.channel.id == bot_channel else False # when listing the map pool, don't make it ephemeral in the premier channel so it can be seen by everyone
+#     if action == "" and _map == "":
+#         ephem = True if interaction.channel.id == bot_channel else False # when listing the map pool, don't make it ephemeral in the premier channel so it can be seen by everyone
         
-        if len(map_pool) == 0:
-            output = f'The map pool is empty'
-        else:
-            output = f'Current map pool: {", ".join(map_pool)}'
+#         if len(map_pool) == 0:
+#             output = f'The map pool is empty'
+#         else:
+#             output = f'Current map pool: {", ".join(map_pool)}'
         
-        await interaction.response.send_message(output, ephemeral=ephem)
-        return
+#         await interaction.response.send_message(output, ephemeral=ephem)
+#         return
 
-    if not await has_permission(interaction.user.id, interaction):
-        return
+#     if not await has_permission(interaction.user.id, interaction):
+#         return
     
-    if interaction.channel.id != bot_channel:
-        wrong_channel(interaction)
-        return
+#     if interaction.channel.id != bot_channel:
+#         wrong_channel(interaction)
+#         return
 
-    if action == "" or (_map == "" and action != "clear"): # clear doesn't need a map
-        await interaction.response.send_message(f'Please provide an action and a map. Usage: `/mappool [clear | (add/remove <map name>]`', ephemeral=True)
-        return
+#     if action == "" or (_map == "" and action != "clear"): # clear doesn't need a map
+#         await interaction.response.send_message(f'Please provide an action and a map. Usage: `/mappool [clear | (add/remove <map name>]`', ephemeral=True)
+#         return
 
-    output = ""
+#     output = ""
 
-    if action == "clear":
-        map_pool.clear()
-        output = f'The map pool has been cleared'
-        log_message = f'{interaction.user.display_name} has cleared the map pool'
-    elif action == "add":
-        if _map not in map_pool:
-            map_pool.append(_map)
-            output = f'{_map} has been added to the map pool'
-            log_message = f'{interaction.user.display_name} has added {_map} to the map pool'
-        else:
-            await interaction.response.send_message(f'{_map} is already in the map pool', ephemeral=True)
-            return
-    elif action == "remove":
-        if _map in map_pool:
-            map_pool.remove(_map)
-            output = f'{_map} has been removed from the map pool'
-            log_message = f'{interaction.user.display_name} has removed {_map} from the map pool'
-        else:
-            await interaction.response.send_message(f'{_map} is not in the map pool', ephemeral=True)
-            return
-    else:
-        await interaction.response.send_message(f'Invalid action. Usage: `/mappool [clear | (add/remove <map name>]`', ephemeral=True)
-        return
+#     if action == "clear":
+#         map_pool.clear()
+#         output = f'The map pool has been cleared'
+#         log_message = f'{interaction.user.display_name} has cleared the map pool'
+#     elif action == "add":
+#         if _map not in map_pool:
+#             map_pool.append(_map)
+#             output = f'{_map} has been added to the map pool'
+#             log_message = f'{interaction.user.display_name} has added {_map} to the map pool'
+#         else:
+#             await interaction.response.send_message(f'{_map} is already in the map pool', ephemeral=True)
+#             return
+#     elif action == "remove":
+#         if _map in map_pool:
+#             map_pool.remove(_map)
+#             output = f'{_map} has been removed from the map pool'
+#             log_message = f'{interaction.user.display_name} has removed {_map} from the map pool'
+#         else:
+#             await interaction.response.send_message(f'{_map} is not in the map pool', ephemeral=True)
+#             return
+#     else:
+#         await interaction.response.send_message(f'Invalid action. Usage: `/mappool [clear | (add/remove <map name>]`', ephemeral=True)
+#         return
 
-    ephem = True
-    if interaction.channel.id == prem_channel:
-        ephem = False  # when modifying/listing the map pool, don't make it ephemeral in the premier channel so it can be seen by everyone
+#     ephem = True
+#     if interaction.channel.id == prem_channel:
+#         ephem = False  # when modifying/listing the map pool, don't make it ephemeral in the premier channel so it can be seen by everyone
 
-    await interaction.response.send_message(output, ephemeral=ephem)
+#     await interaction.response.send_message(output, ephemeral=ephem)
 
-    log(log_message)
+#     log(log_message)
 
-    save_pool(map_pool)
+#     save_pool(map_pool)
 
 
-@bot.tree.command(name="prefermaps", description="Mark your preferences for each map. Usage: /prefermaps <map name> +/~/-", guilds=[discord.Object(id=val_server)])
-@discord.app_commands.choices(
-    _map=[
-        discord.app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
-    ],
+# @bot.tree.command(name="prefermap", description="Mark your preferences for each map. Usage: /prefermaps <map name> +/~/-", guilds=[discord.Object(id=val_server)])
+# @discord.app_commands.choices(
+#     _map=[
+#         discord.app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
+#     ],
 
-    preference=[
-        discord.app_commands.Choice(name="Like/Will Play", value="+"),
-        discord.app_commands.Choice(name="Neutral/Don't Care", value="~"),
-        discord.app_commands.Choice(name="Dislike/Won't Play", value="-"),
-    ]
+#     preference=[
+#         discord.app_commands.Choice(name="Like/Will Play", value="+"),
+#         discord.app_commands.Choice(name="Neutral/Don't Care", value="~"),
+#         discord.app_commands.Choice(name="Dislike/Won't Play", value="-"),
+#     ]
 
-)
-@discord.app_commands.describe(
-    _map="The map to vote for",
-    preference="Your preference for the map"
-)
-async def prefermaps(interaction: discord.Interaction, _map: str, preference: str):
-    """Mark preferences for each map"""
-    global map_preferences
-    global map_weights
-    if interaction.channel.id not in [bot_channel, debug_channel]:
-        await interaction.response.send_message(f'You cannot vote in this channel', ephemeral=True)
-        return
+# )
+# @discord.app_commands.describe(
+#     _map="The map to vote for",
+#     preference="Your preference for the map"
+# )
+# async def prefermaps(interaction: discord.Interaction, _map: str, preference: str):
+#     """Mark preferences for each map"""
+#     global map_preferences
+#     global map_weights
+#     if interaction.channel.id not in [bot_channel, debug_channel]:
+#         await interaction.response.send_message(f'You cannot vote in this channel', ephemeral=True)
+#         return
 
-    output = ""
-    preferences = {"+":"like", "~":"neutral", "-":"dislike"}
+#     output = ""
+#     preferences = {"+":"like", "~":"neutral", "-":"dislike"}
 
-    _map = _map.lower()
+#     _map = _map.lower()
 
-    old_preferences = ""
-    if str(interaction.user.id) in map_preferences[_map]: # if you've voted for this map before
-        old_preferences = map_preferences[_map][str(interaction.user.id)]
-        if old_preferences == preference:
-            await interaction.response.send_message(f'{interaction.user.mention} you have already marked {_map.title()} with a weight of {preferences[preference]}', ephemeral=True)
-            return
+#     old_preferences = ""
+#     if str(interaction.user.id) in map_preferences[_map]: # if you've voted for this map before
+#         old_preferences = map_preferences[_map][str(interaction.user.id)]
+#         if old_preferences == preference:
+#             await interaction.response.send_message(f'{interaction.user.mention} you have already marked {_map.title()} with a weight of {preferences[preference]}', ephemeral=True)
+#             return
 
-        output = f'{interaction.user.mention}\'s vote for {_map.title()} has been changed from {preferences[old_preferences]} to {preferences[preference]}'
-        old_preferences = 1 if old_preferences == "" else 0 if old_preferences == "~" else -1
-        map_weights[_map] -= old_preferences
+#         output = f'{interaction.user.mention}\'s vote for {_map.title()} has been changed from {preferences[old_preferences]} to {preferences[preference]}'
+#         old_preferences = 1 if old_preferences == "" else 0 if old_preferences == "~" else -1
+#         map_weights[_map] -= old_preferences
 
-    map_preferences[_map][str(interaction.user.id)] = preference
-    if old_preferences == "":
-        output = f'{interaction.user.mention} voted for {_map.title()} with a weight of {preference}'
-    preference = 1 if preference == "+" else 0 if preference == "~" else -1
-    map_weights[_map] += preference
+#     map_preferences[_map][str(interaction.user.id)] = preference
+#     if old_preferences == "":
+#         output = f'{interaction.user.mention} voted for {_map.title()} with a weight of {preference}'
+#     preference = 1 if preference == "+" else 0 if preference == "~" else -1
+#     map_weights[_map] += preference
 
-    await interaction.response.send_message(output, ephemeral=True)
+#     await interaction.response.send_message(output, ephemeral=True)
     
-    log(output)
+#     log(output)
 
-    save_prefrences(map_preferences)
-    save_weights(map_weights)
+#     save_prefrences(map_preferences)
+#     save_weights(map_weights)
 
 
-@bot.tree.command(name="mapvotes", description="Display the map votes for each user. Usage: /mapvotes", guilds=[discord.Object(id=val_server)])
-async def mapvotes(interaction: discord.Interaction):
-    """Display the map votes for each user. Usage: /mapvotes"""
-    global map_preferences
-    if interaction.channel.id not in all_channels:
-        await wrong_channel(interaction)
-        return
+# @bot.tree.command(name="mapvotes", description="Display the map votes for each user. Usage: /mapvotes", guilds=[discord.Object(id=val_server)])
+# async def mapvotes(interaction: discord.Interaction):
+#     """Display the map votes for each user. Usage: /mapvotes"""
+#     global map_preferences
+#     if interaction.channel.id not in all_channels:
+#         await wrong_channel(interaction)
+#         return
 
-    role = prem_role if interaction.guild.id == val_server else debug_role
-    all_users = discord.utils.get(interaction.guild.roles, name=role).members
+#     role = prem_role if interaction.guild.id == val_server else debug_role
+#     all_users = discord.utils.get(interaction.guild.roles, name=role).members
 
-    output = ""
+#     output = ""
 
-    for _map in map_pool:
-        header = f'- {_map.title()}:\n'
-        body = ""
-        for user in all_users:
-            if str(user.id) in map_preferences[_map]:
-                body += f' - {user.mention}: {map_preferences[_map][str(user.id)]}\n'
+#     for _map in map_pool:
+#         header = f'- {_map.title()}:\n'
+#         body = ""
+#         for user in all_users:
+#             if str(user.id) in map_preferences[_map]:
+#                 body += f' - {user.mention}: {map_preferences[_map][str(user.id)]}\n'
             
-            if body == "":
-                body = "No votes for this map."
+#             if body == "":
+#                 body = "No votes for this map."
             
-        output += header + body
+#         output += header + body
         
 
-    if output == "":
-        output = "No votes for any maps in the map pool."
+#     if output == "":
+#         output = "No votes for any maps in the map pool."
 
-    ephem = True if interaction.channel.id == bot_channel else False
+#     ephem = True if interaction.channel.id == bot_channel else False
 
-    await interaction.response.send_message(output, ephemeral=ephem, silent=True)
+#     await interaction.response.send_message(output, ephemeral=ephem, silent=True)
 
 
-@bot.tree.command(name="mapweights", description="Display the map weights (sorted). Usage: /mapweights", guilds=[discord.Object(id=val_server)])
-async def mapweights(interaction: discord.Interaction):
-    """Display the map weights (sorted). Usage: /mapweights"""
-    global map_weights
-    if interaction.channel.id not in all_channels:
-        await wrong_channel(interaction)
-        return
+# @bot.tree.command(name="mapweights", description="Display the map weights (sorted). Usage: /mapweights", guilds=[discord.Object(id=val_server)])
+# async def mapweights(interaction: discord.Interaction):
+#     """Display the map weights (sorted). Usage: /mapweights"""
+#     global map_weights
+#     if interaction.channel.id not in all_channels:
+#         await wrong_channel(interaction)
+#         return
 
-    output = ""
+#     output = ""
 
-    map_weights = dict(sorted(map_weights.items(
-    ), key=lambda item: item[1], reverse=True))  # sort the weights in descending order
+#     map_weights = dict(sorted(map_weights.items(
+#     ), key=lambda item: item[1], reverse=True))  # sort the weights in descending order
 
-    for _map in map_weights.keys():
-        if _map not in map_pool:
-            continue
+#     for _map in map_weights.keys():
+#         if _map not in map_pool:
+#             continue
 
-        output += f'{_map.title()}: {map_weights[_map]}\n'
+#         output += f'{_map.title()}: {map_weights[_map]}\n'
 
-    if output == "":
-        output = "No weights to show for maps in the map pool."
+#     if output == "":
+#         output = "No weights to show for maps in the map pool."
 
-    ephem = True if interaction.channel.id == bot_channel else False
+#     ephem = True if interaction.channel.id == bot_channel else False
 
-    await interaction.response.send_message(output, ephemeral=ephem)
+#     await interaction.response.send_message(output, ephemeral=ephem)
 
 @bot.tree.command(name="addevents", description="Add all prem events to the schedule. Usage: /addevent <map_list> <date>", guilds=[discord.Object(id=val_server)])
 @discord.app_commands.describe(
@@ -759,63 +755,63 @@ async def addnote(interaction: discord.Interaction, _map: str, note_id: str, des
 
     await interaction.response.send_message(f'Added a practice note for {_map.title()}. Access using `/notes {_map}`', ephemeral=True)
 
-@bot.tree.command(name="notes", description="Display a practice note. Usage: /notes <map> [note_number]", guilds=[discord.Object(id=val_server)])
-@discord.app_commands.choices(
-    _map=[
-        discord.app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
-    ],
-    announce=[
-        discord.app_commands.Choice(name="Yes", value="yes"),
-    ]
-)
-@discord.app_commands.describe(
-    _map="The map to display the note for",
-    note_number="The note number to display (1-indexed)",
-    announce="Return the note so that it is visible to everyone (default is visible only to you)"
-)
-async def notes(interaction: discord.Interaction, _map: str, note_number: int = 0, announce: str = ""):
-    '''Display a practice note. Usage: /notes <map> [note_number]'''
-    if interaction.channel.id != notes_channel:
-        await wrong_channel(interaction)
-        return
+# @bot.tree.command(name="notes", description="Display a practice note. Usage: /notes <map> [note_number]", guilds=[discord.Object(id=val_server)])
+# @discord.app_commands.choices(
+#     _map=[
+#         discord.app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
+#     ],
+#     announce=[
+#         discord.app_commands.Choice(name="Yes", value="yes"),
+#     ]
+# )
+# @discord.app_commands.describe(
+#     _map="The map to display the note for",
+#     note_number="The note number to display (1-indexed)",
+#     announce="Return the note so that it is visible to everyone (default is visible only to you)"
+# )
+# async def notes(interaction: discord.Interaction, _map: str, note_number: int = 0, announce: str = ""):
+#     '''Display a practice note. Usage: /notes <map> [note_number]'''
+#     if interaction.channel.id != notes_channel:
+#         await wrong_channel(interaction)
+#         return
     
-    _map = _map.lower()
+#     _map = _map.lower()
 
 
-    if _map not in practice_notes: # user gave a valid map, but there are no notes for it
-        await interaction.response.send_message(f'There are no notes for {_map.title()}', ephemeral=True)
-        return
+#     if _map not in practice_notes: # user gave a valid map, but there are no notes for it
+#         await interaction.response.send_message(f'There are no notes for {_map.title()}', ephemeral=True)
+#         return
     
-    if note_number < 0 or note_number > len(practice_notes[_map]):
-        await interaction.response.send_message(f'Invalid note number. Usage: `/notes {_map} [note_number]`', ephemeral=True)
-        return
+#     if note_number < 0 or note_number > len(practice_notes[_map]):
+#         await interaction.response.send_message(f'Invalid note number. Usage: `/notes {_map} [note_number]`', ephemeral=True)
+#         return
 
-    await interaction.response.defer(ephemeral=True, thinking=True)
+#     await interaction.response.defer(ephemeral=True, thinking=True)
 
-    if note_number == 0:
-        notes_list = practice_notes[_map]
-        output = f'Practice notes for {_map.title()}:\n'
-        for i, note_id in enumerate(notes_list.keys()):
-            output += f' - Note {i+1}: {notes_list[note_id]}\n'
+#     if note_number == 0:
+#         notes_list = practice_notes[_map]
+#         output = f'Practice notes for {_map.title()}:\n'
+#         for i, note_id in enumerate(notes_list.keys()):
+#             output += f' - Note {i+1}: {notes_list[note_id]}\n'
         
-        await interaction.followup.send(output, ephemeral=True)
-        return
+#         await interaction.followup.send(output, ephemeral=True)
+#         return
 
-    note_id = list(practice_notes[_map].keys())[note_number - 1]
-    try:
-        note = await interaction.channel.fetch_message(int(note_id))
-    except discord.errors.NotFound:
-        await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True)
-        practice_notes[_map].pop(note_id)
-        save_notes(practice_notes)
-        return
+#     note_id = list(practice_notes[_map].keys())[note_number - 1]
+#     try:
+#         note = await interaction.channel.fetch_message(int(note_id))
+#     except discord.errors.NotFound:
+#         await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True)
+#         practice_notes[_map].pop(note_id)
+#         save_notes(practice_notes)
+#         return
     
-    output = f'Practice note for {_map.title()} (created by {note.author.display_name}):\n\n{note.content}'
+#     output = f'Practice note for {_map.title()} (created by {note.author.display_name}):\n\n{note.content}'
 
-    if announce == "yes":
-        await interaction.followup.send(output, ephemeral=False)
-    else:
-        await interaction.followup.send(output, ephemeral=True)
+#     if announce == "yes":
+#         await interaction.followup.send(output, ephemeral=False)
+#     else:
+#         await interaction.followup.send(output, ephemeral=True)
 
 # -------------------------Tasks--------------------------------
 @tasks.loop(time=premier_reminder_times)
@@ -1192,4 +1188,9 @@ async def kill(ctx, *, reason: str = "no reason given"):
     await bot.close()
 
 
-bot.run(bot_token)
+async def main():
+    await load()
+    await bot.start(bot_token)
+
+asyncio.run(main())
+# bot.run(bot_token)

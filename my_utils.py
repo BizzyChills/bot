@@ -3,6 +3,8 @@ from datetime import datetime, time, timedelta
 import pytz
 import os
 import typing
+from discord import Interaction as discord_Interaction
+from discord.ext.commands import Context as commands_Context # reduce bloat, only for type hints
 
 def get_pool():
     with open("./local_storage/map_pool.txt", "r") as file:
@@ -86,6 +88,18 @@ def format_schedule(schedule: list, header: str = None):
     return schedule
 
 
+async def has_permission(id: int, ctx: commands_Context | discord_Interaction):
+    """Check if caller has perms to use command. Only Sam or Bizzy can use commands that call this function."""
+    message = "You do not have permission to use this command"
+    if id not in admin_ids:
+        if type(ctx) == commands_Context:
+            await ctx.send(f'You do not have permission to use this command', ephemeral=True)
+        else:
+            await ctx.response.send_message(message, ephemeral=True)
+        return False
+
+    return True
+
 def convert_to_json():
     with open("./local_storage/map_preferences.txt", "r") as file:
         mp = eval(file.read())
@@ -158,3 +172,30 @@ map_preferences = get_prefrences()
 map_weights = get_weights()
 reminders = get_reminders()
 practice_notes = get_notes()
+
+command_descriptions = {
+    "commands": "Display this message",
+    "schedule": "Display the premier event and practice schedules",
+    "mappool_common": "Display the current competitive map pool",
+    "mappool_admin": "Modify the map pool",
+    "notes": "Display a practice note from the notes channel",
+    "prefermap": "Declare your preference for a map to play for premier playoffs",
+    "mapvotes": "Display each member's map preferences",
+    "mapweights": "Display the total weights for each map",
+    "hello": "Say hello",
+    "feed": "Feed the bot",
+    "unfeed": "Unfeed the bot",
+    "remind": "Set a reminder for the premier role",
+    "addevents": "Add all premier events to the schedule",
+    "addpractices": "Add all premier practices to the schedule (must use /addevents first)",
+    "cancelevent": "Cancel a premier map for today/all days",
+    "cancelpractice": "Cancel a premier practice for today/all days",
+    "addnote": "Add a practice note in the notes channel",
+    "pin": "Pin a message",
+    "unpin": "Unpin a message",
+    "sync": "Update the slash commands (ensure that they have been initialized first)",
+    "clearslash": "Clear all slash commands",
+    "clear": "Clear the last <amount> **commands** in the chat from the bot, user, or both. Defaults to last message sent.",
+    "clearlogs": "Clear the stdout log(s)",
+    "kill": "Kill the bot",
+}
