@@ -2,9 +2,8 @@ import json
 from datetime import datetime, time, timedelta
 import pytz
 import os
-import typing
-from discord import Interaction as discord_Interaction
-from discord.ext.commands import Context as commands_Context # reduce bloat, only for type hints
+from discord import Interaction as discord_Interaction, Object
+from discord.ext.commands import Context as commands_Context, Bot # reduce bloat, only for type hints
 
 def get_pool():
     with open("./local_storage/map_pool.txt", "r") as file:
@@ -87,7 +86,6 @@ def format_schedule(schedule: list, header: str = None):
 
     return schedule
 
-
 async def has_permission(id: int, ctx: commands_Context | discord_Interaction):
     """Check if caller has perms to use command. Only Sam or Bizzy can use commands that call this function."""
     message = "You do not have permission to use this command"
@@ -99,6 +97,13 @@ async def has_permission(id: int, ctx: commands_Context | discord_Interaction):
         return False
 
     return True
+
+async def sync_commands(bot: Bot):
+    """Sync the commands with the discord API"""
+    synced = await bot.tree.sync(guild=Object(id=debug_server))
+    synced = await bot.tree.sync(guild=Object(id=val_server))
+    return synced
+
 
 def convert_to_json():
     with open("./local_storage/map_preferences.txt", "r") as file:
@@ -144,9 +149,9 @@ prem_role = "The Valorats"
 
 tz = pytz.timezone("US/Eastern")
 
-# debug, 7 seconds from right now to trigger the eventreminders task on startup
+# debug, 5 seconds from right now to trigger the eventreminders task on startup
 right_now = (datetime.now().replace(
-    microsecond=0) + timedelta(seconds=5)).time()
+    microsecond=0) + timedelta(seconds=10)).time()
 
 premier_reminder_times = [ # add 2 seconds to each time to ensure time_remaining logic works
     right_now,  # debug,
@@ -165,7 +170,6 @@ premier_reminder_times = [ # add 2 seconds to each time to ensure time_remaining
 premier_reminder_times = [est_to_utc(t) for t in premier_reminder_times]
 
 premier_reminder_classes = ["start", "prestart", "hour", "day"]
-p = premier_reminder_times
 
 map_pool = get_pool()
 map_preferences = get_prefrences()
@@ -190,12 +194,14 @@ command_descriptions = {
     "addpractices": "Add all premier practices to the schedule (must use /addevents first)",
     "cancelevent": "Cancel a premier map for today/all days",
     "cancelpractice": "Cancel a premier practice for today/all days",
+    "clearschedule": "Clear the schedule of all premier events AND practices",
     "addnote": "Add a practice note in the notes channel",
     "pin": "Pin a message",
     "unpin": "Unpin a message",
     "sync": "Update the slash commands (ensure that they have been initialized first)",
     "clearslash": "Clear all slash commands",
-    "clear": "Clear the last <amount> **commands** in the chat from the bot, user, or both. Defaults to last message sent.",
+    "clear": "Clear the last <amount> **commands** from the bot, user, or both. Defaults to last command.",
     "clearlogs": "Clear the stdout log(s)",
+    "reload": "Reload the bot's cogs",
     "kill": "Kill the bot",
 }

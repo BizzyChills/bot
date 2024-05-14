@@ -10,7 +10,8 @@ class VotingCommands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Voting cog loaded")
+        # print("Voting cog loaded")
+        pass
 
     @app_commands.command(name="prefermap", description=command_descriptions["prefermap"])
     @app_commands.choices(

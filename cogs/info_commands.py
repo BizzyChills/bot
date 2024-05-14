@@ -11,7 +11,8 @@ class InfoCommands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Info cog loaded")
+        # print("Info cog loaded")
+        pass
 
     @app_commands.command(name="schedule", description=command_descriptions["schedule"])
     async def schedule(self, interaction: Interaction):

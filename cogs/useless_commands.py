@@ -12,7 +12,8 @@ class UselessCommands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Useless cog loaded")
+        # print("Useless cog loaded")
+        pass
 
     @app_commands.command(name="hello", description=command_descriptions["hello"])
     async def hello(self, interaction: Interaction):
