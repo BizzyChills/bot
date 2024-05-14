@@ -321,7 +321,7 @@ class AdminPremierCommands(commands.Cog):
 
         note_id = int(note_id)
         try:
-            await interaction.channel.get_partial_message(note_id)
+            interaction.channel.get_partial_message(note_id)
         except discord.errors.NotFound:
             await interaction.response.send_message(f'Invalid message ID.', ephemeral=True)
             return
@@ -436,7 +436,7 @@ class AdminManageCommands(commands.Cog):
 
         try:
             message_id = int(message_id)
-            message = await interaction.channel.get_partial_message(message_id)
+            message = interaction.channel.get_partial_message(message_id)
         except (ValueError, discord.errors.NotFound):
             await interaction.response.send_message(f'Invalid message ID.', ephemeral=True)
             return
@@ -519,8 +519,6 @@ class AdminManageCommands(commands.Cog):
                 break
 
         await interaction.channel.delete_messages(messages)
-
-        messages.pop(0)  # don't log the command message
 
         for message in messages:  # log the deleted messages
             with open(f"./logs/chat_deletion.log", 'a') as file:

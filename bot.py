@@ -12,9 +12,6 @@ sys.stdout = open(last_log, 'a')
 # redirect stderr after connecting to discord to avoid spamming the error log with connection messages
 
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.all(), help_command=None)
-intents = discord.Intents.default()
-client = discord.Client(intents=intents)
-
 
 async def load():
     for file in os.listdir('./cogs'):
@@ -61,18 +58,13 @@ async def commands(interaction: discord.Interaction, short: int = 0, announce: i
                           f"- **INFO**:",
                           f" - **/schedule** - _{command_descriptions['schedule']}_",
                           f" - **/mappool** - _{command_descriptions['mappool_common']}_",
-                          f" - **notes** - _{command_descriptions['notes']}_",
+                          f" - **/notes** - _{command_descriptions['notes']}_",
 
                           "- **VOTING**:",
                           f" - **/prefermap** - _{command_descriptions['prefermap']}_",
                           f" - **/mapvotes** - _{command_descriptions['mapvotes']}_",
                           f" - **/mapweights** - _{command_descriptions['mapweights']}_",]
     
-    useless_commands = [  '- **Miscellaneous**:',
-                          f" - **/hello** - _{command_descriptions['hello']}_",
-                          f" - **/feed** - _{command_descriptions['feed']}_",
-                          f" - **/unfeed** - _{command_descriptions['unfeed']}_",]
-
     admin_commands = [    "- **ADMIN ONLY**:",
                         #   f" - **/role** (__admin__) - _Add or remove the '{target_role.mention}' role from a member_", # role has been deprecated
                           f" - **/mappool** (__admin__) - _{command_descriptions['mappool_admin']}_",
@@ -93,6 +85,12 @@ async def commands(interaction: discord.Interaction, short: int = 0, announce: i
                           f" - **/clear** (__Bizzy__) - _{command_descriptions['clear']}_",
                           f" - **/clearlogs** (__Bizzy__) - _{command_descriptions['clearlogs']}_",
                           f" - **/kill** (__Bizzy__) - _{command_descriptions['kill']}_",]
+    
+    useless_commands = ['- **MISC**:',
+                        f" - **/hello** - _{command_descriptions['hello']}_",
+                        f" - **/feed** - _{command_descriptions['feed']}_",
+                        f" - **/unfeed** - _{command_descriptions['unfeed']}_",]
+
 
     output = common_commands
 
