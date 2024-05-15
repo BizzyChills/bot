@@ -11,12 +11,15 @@ from my_utils import *
 sys.stdout = open(last_log, 'a')
 # redirect stderr after connecting to discord to avoid spamming the error log with connection messages
 
-bot = commands.Bot(command_prefix='!', intents=discord.Intents.all(), help_command=None)
+bot = commands.Bot(command_prefix='!',
+                   intents=discord.Intents.all(), help_command=None)
+
 
 async def load():
     for file in os.listdir('./cogs'):
         if file.endswith('.py'):
             await bot.load_extension(f'cogs.{file[:-3]}')
+
 
 @bot.event
 async def on_ready():
@@ -50,50 +53,49 @@ async def commands(interaction: discord.Interaction, short: int = 0, announce: i
 
     await interaction.response.defer(ephemeral=ephem, thinking=True)
 
-    common_commands = [   "**Commands**:",
-                          
-                          "- **HELP**:",
-                          f" - **/commands** - _{command_descriptions['commands']}_",
+    common_commands = ["**Commands**:",
 
-                          f"- **INFO**:",
-                          f" - **/schedule** - _{command_descriptions['schedule']}_",
-                          f" - **/mappool** - _{command_descriptions['mappool_common']}_",
-                          f" - **/notes** - _{command_descriptions['notes']}_",
+                       "- **HELP**:",
+                       f" - **/commands** - _{command_descriptions['commands']}_",
 
-                          "- **VOTING**:",
-                          f" - **/prefermap** - _{command_descriptions['prefermap']}_",
-                          f" - **/mapvotes** - _{command_descriptions['mapvotes']}_",
-                          f" - **/mapweights** - _{command_descriptions['mapweights']}_",]
-    
-    admin_commands = [    "- **ADMIN ONLY**:",
-                        #   f" - **/role** (__admin__) - _Add or remove the '{target_role.mention}' role from a member_", # role has been deprecated
-                          f" - **/mappool** (__admin__) - _{command_descriptions['mappool_admin']}_",
-                          f" - **/addevents** (__admin__) - _{command_descriptions['addevents']}_",
-                          f" - **/cancelevent** (__admin__) - _{command_descriptions['cancelevent']}_",
-                          f" - **/addpractices** (__admin__) - _{command_descriptions['addpractices']}_",
-                          f" - **/cancelpractice** (__admin__) - _{command_descriptions['cancelpractice']}_",
-                          f" - **/clearschedule** (__admin__) - _{command_descriptions['clearschedule']}_",
-                          f" - **/addnote** (__admin__) - _{command_descriptions['addnote']}_",
-                          f" - **/removenote** (__admin__) - _{command_descriptions['removenote']}_",
-                          f" - **/remind** (__admin__) - _{command_descriptions['remind']}_",
-                          f" - **/pin** (__admin__) - _{command_descriptions['pin']}_",
-                          f" - **/unpin** (__admin__) - _{command_descriptions['unpin']}_",
-                          f" - **/deletemessage** (__admin__) - _{command_descriptions['deletemessage']}_",]
+                       f"- **INFO**:",
+                       f" - **/schedule** - _{command_descriptions['schedule']}_",
+                       f" - **/mappool** - _{command_descriptions['mappool_common']}_",
+                       f" - **/notes** - _{command_descriptions['notes']}_",
 
-    my_commands = [       "- **BIZZY ONLY**:",
-                          f" - **!sync** (__Bizzy__) - _{command_descriptions['sync']}_",
-                          f" - **/sync** (__Bizzy__) - _{command_descriptions['sync']}_",
-                          f" - **!clearslash** (__Bizzy__) - _{command_descriptions['clearslash']}_",
-                          f" - **/clear** (__Bizzy__) - _{command_descriptions['clear']}_",
-                          f" - **/clearlogs** (__Bizzy__) - _{command_descriptions['clearlogs']}_",
-                          f" - **/reload** (__Bizzy__) - _{command_descriptions['reload']}_",
-                          f" - **/kill** (__Bizzy__) - _{command_descriptions['kill']}_",]
-    
+                       "- **VOTING**:",
+                       f" - **/prefermap** - _{command_descriptions['prefermap']}_",
+                       f" - **/mapvotes** - _{command_descriptions['mapvotes']}_",
+                       f" - **/mapweights** - _{command_descriptions['mapweights']}_",]
+
+    admin_commands = ["- **ADMIN ONLY**:",
+                      #   f" - **/role** (__admin__) - _Add or remove the '{target_role.mention}' role from a member_", # role has been deprecated
+                      f" - **/mappool** (__admin__) - _{command_descriptions['mappool_admin']}_",
+                      f" - **/addevents** (__admin__) - _{command_descriptions['addevents']}_",
+                      f" - **/cancelevent** (__admin__) - _{command_descriptions['cancelevent']}_",
+                      f" - **/addpractices** (__admin__) - _{command_descriptions['addpractices']}_",
+                      f" - **/cancelpractice** (__admin__) - _{command_descriptions['cancelpractice']}_",
+                      f" - **/clearschedule** (__admin__) - _{command_descriptions['clearschedule']}_",
+                      f" - **/addnote** (__admin__) - _{command_descriptions['addnote']}_",
+                      f" - **/removenote** (__admin__) - _{command_descriptions['removenote']}_",
+                      f" - **/remind** (__admin__) - _{command_descriptions['remind']}_",
+                      f" - **/pin** (__admin__) - _{command_descriptions['pin']}_",
+                      f" - **/unpin** (__admin__) - _{command_descriptions['unpin']}_",
+                      f" - **/deletemessage** (__admin__) - _{command_descriptions['deletemessage']}_",]
+
+    my_commands = ["- **BIZZY ONLY**:",
+                   f" - **!sync** (__Bizzy__) - _{command_descriptions['sync']}_",
+                   f" - **/sync** (__Bizzy__) - _{command_descriptions['sync']}_",
+                   f" - **!clearslash** (__Bizzy__) - _{command_descriptions['clearslash']}_",
+                   f" - **/clear** (__Bizzy__) - _{command_descriptions['clear']}_",
+                   f" - **/clearlogs** (__Bizzy__) - _{command_descriptions['clearlogs']}_",
+                   f" - **/reload** (__Bizzy__) - _{command_descriptions['reload']}_",
+                   f" - **/kill** (__Bizzy__) - _{command_descriptions['kill']}_",]
+
     useless_commands = ['- **MISC**:',
                         f" - **/hello** - _{command_descriptions['hello']}_",
                         f" - **/feed** - _{command_descriptions['feed']}_",
                         f" - **/unfeed** - _{command_descriptions['unfeed']}_",]
-
 
     output = common_commands
 
@@ -104,9 +106,8 @@ async def commands(interaction: discord.Interaction, short: int = 0, announce: i
         if interaction.user.id == my_id:
             output += my_commands
 
-    
     output += useless_commands
-    
+
     # await interaction.response.send_message('\n'.join(output), ephemeral=ephem, silent=True)
     await interaction.followup.send('\n'.join(output), ephemeral=ephem, silent=True)
 

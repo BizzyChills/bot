@@ -10,11 +10,11 @@ import sys
 
 from my_utils import *
 
+
 class Tasks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    
     @commands.Cog.listener()
     async def on_ready(self):
         # log("Tasks cog loaded")
@@ -22,7 +22,6 @@ class Tasks(commands.Cog):
         self.eventreminders.start()
         self.syncreminders.start()
         self.latest_log.start()
-
 
     @tasks.loop(time=premier_reminder_times)
     async def eventreminders(self):
@@ -38,7 +37,6 @@ class Tasks(commands.Cog):
 
         current_time = datetime.now(pytz.utc).time()
 
-
         # no longer using this, but keeping it here in case we want to use it again
         # current_day = datetime.now().weekday()  # get current day based on my timezone
         # if current_day not in [3,5,6]: # only check for events on thursday, saturday, and sunday
@@ -48,7 +46,7 @@ class Tasks(commands.Cog):
         for event in list(debug_events):
             if "premier" not in event.name.lower():
                 continue
-            
+
             g = event.guild
             r = prem_role if g.id == val_server else debug_role
             role = discord.utils.get(g.roles, name=r)
@@ -62,9 +60,9 @@ class Tasks(commands.Cog):
             time_remaining = (start_time - current_time).total_seconds()
 
             reminder_messages = {premier_reminder_classes[0]: f"(reminder) {role.mention} {event.name} on _{event.description}_ has started (at {discord_local_time(start_time)}). JOIN THE VC!",
-                                premier_reminder_classes[1]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 10 minutes (at {discord_local_time(start_time)})! JOIN THE VC!",
-                                premier_reminder_classes[2]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 1 hour (at {discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
-                                premier_reminder_classes[3]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is today at {discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
+                                 premier_reminder_classes[1]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 10 minutes (at {discord_local_time(start_time)})! JOIN THE VC!",
+                                 premier_reminder_classes[2]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 1 hour (at {discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
+                                 premier_reminder_classes[3]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is today at {discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
 
             reminder_class = ""
             if time_remaining <= 0:  # allow this reminder until 30 minutes after the event has already started
@@ -115,14 +113,14 @@ class Tasks(commands.Cog):
 
                 if len(subbed_users) > 0:
                     message = " RSVP'ed users: \n" + \
-                        "- " + "\n- ".join([user.mention for user in subbed_users])
+                        "- " + \
+                        "\n- ".join([user.mention for user in subbed_users])
                 else:
                     message = "No one has RSVP'ed yet."
 
                 message += "\n\n(This message was sent silently)"
 
                 await channel.send(message, silent=True)
-
 
     @tasks.loop(count=1)
     async def syncreminders(self):
@@ -151,8 +149,6 @@ class Tasks(commands.Cog):
             save_reminders(reminders)
 
     # wait until 1 minute after midnight to start new log in case of delay
-
-
     @tasks.loop(time=est_to_utc(time(hour=0, minute=1, second=0)))
     async def latest_log(self):
         """Create a new log file at midnight"""

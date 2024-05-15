@@ -163,7 +163,8 @@ class InfoCommands(commands.Cog):
 
         _map = _map.lower()
 
-        if _map not in practice_notes or len(practice_notes[_map]) == 0:  # user gave a valid map, but there are no notes for it
+        # user gave a valid map, but there are no notes for it
+        if _map not in practice_notes or len(practice_notes[_map]) == 0:
             await interaction.response.send_message(f'There are no notes for {_map.title()}', ephemeral=True)
             return
 
@@ -171,7 +172,8 @@ class InfoCommands(commands.Cog):
             await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
             return
 
-        ephem = False if announce else True # has to explicitly be bool for lib, so can't use announce
+        # has to explicitly be bool for lib, so can't use announce
+        ephem = False if announce else True
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
         if note_number == 0:

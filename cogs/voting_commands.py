@@ -80,14 +80,15 @@ class VotingCommands(commands.Cog):
     )
     async def mapvotes(self, interaction: discord.Interaction, announce: int = 0):
         """Display the map votes for each user"""
-        
+
         global map_preferences
         if interaction.channel.id not in all_channels:
             await wrong_channel(interaction)
             return
 
         role = prem_role if interaction.guild.id == val_server else debug_role
-        all_users = discord.utils.get(interaction.guild.roles, name=role).members
+        all_users = discord.utils.get(
+            interaction.guild.roles, name=role).members
 
         output = ""
 
@@ -97,13 +98,13 @@ class VotingCommands(commands.Cog):
             for user in all_users:
                 if str(user.id) in map_preferences[_map]:
                     encoded_weight = map_preferences[_map][str(user.id)]
-                    weight = {"+": "like", "~": "neutral", "-": "dislike"}[encoded_weight]
+                    weight = {"+": "like", "~": "neutral",
+                              "-": "dislike"}[encoded_weight]
 
                     body += f' - {user.mention}: {weight}\n'
 
             if body == "":
                 body = "No votes for this map."
-
 
             output += header + body
 
@@ -148,6 +149,7 @@ class VotingCommands(commands.Cog):
         ephem = False if announce and interaction.channel.id == prem_channel else True
 
         await interaction.response.send_message(output, ephemeral=ephem)
+
 
 async def setup(bot):
     await bot.add_cog(VotingCommands(bot), guilds=[discord.Object(val_server), discord.Object(debug_server)])

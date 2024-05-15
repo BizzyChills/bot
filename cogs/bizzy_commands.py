@@ -4,6 +4,7 @@ from discord.ext import commands
 
 from my_utils import *
 
+
 class BizzyCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -12,7 +13,7 @@ class BizzyCommands(commands.Cog):
     async def on_ready(self):
         # print("Bizzy cog loaded")
         pass
-    
+
     @app_commands.command(name="clearlogs", description=command_descriptions["clearlogs"])
     @app_commands.choices(
         all_logs=[
@@ -49,7 +50,6 @@ class BizzyCommands(commands.Cog):
 
         await interaction.response.send_message(message, ephemeral=True)
 
-
     @app_commands.command(name="clearslash", description=command_descriptions["clearslash"])
     async def clearslash(self, interaction: discord.Interaction):
         """Clear all slash commands."""
@@ -78,7 +78,6 @@ class BizzyCommands(commands.Cog):
 
         log(f"Bot commands synced for {ctx.guild.name}")
 
-
     @commands.hybrid_command(name="reload", description=command_descriptions["reload"])
     @app_commands.guilds(Object(id=val_server), Object(debug_server))
     @app_commands.choices(
@@ -98,14 +97,14 @@ class BizzyCommands(commands.Cog):
         # if ctx.channel.id not in [debug_channel, bot_channel]:
         #     wrong_channel(ctx)
         #     return
-        
+
         if type(ctx) == discord.Interaction:
             log(type(ctx))
             await ctx.response.defer(ephemeral=True, thinking=True)
 
         right_now = (datetime.now().replace(
             microsecond=0) + timedelta(seconds=5)).time()
-        
+
         premier_reminder_times[0] = est_to_utc(right_now)
 
         for file in os.listdir('./cogs'):
@@ -114,7 +113,7 @@ class BizzyCommands(commands.Cog):
 
         if sync:
             await sync_commands(self.bot)
-        
+
         if type(ctx) == discord.Interaction:
             await ctx.followup.send(f'All cogs reloaded', ephemeral=True)
         else:
@@ -140,4 +139,3 @@ class BizzyCommands(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(BizzyCommands(bot), guilds=[Object(val_server), Object(debug_server)])
-

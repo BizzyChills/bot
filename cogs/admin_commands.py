@@ -5,15 +5,16 @@ import asyncio
 
 from my_utils import *
 
+
 class AdminPremierCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
+
     @commands.Cog.listener()
     async def on_ready(self):
         # print("AdminPremier cog loaded")
         pass
-    
+
     @app_commands.command(name="addevents", description=command_descriptions["addevents"])
     @app_commands.describe(
         map_list="The map order enclosed in quotes with each map separated with a space (e.g. 'map1 map2 map3')",
@@ -78,16 +79,16 @@ class AdminPremierCommands(commands.Cog):
                 event_desc = _map.title()
 
                 if _map == new_maps[-1].lower() and start_time == start_times[-1]:
-                    event_name = "Premier Playoffs" 
+                    event_name = "Premier Playoffs"
                     event_desc = "Playoffs"
 
                 await guild.create_scheduled_event(name=event_name, description=event_desc, channel=vc_object,
-                                                start_time=start_time, end_time=start_time +
-                                                timedelta(hours=1),
-                                                entity_type=discord.EntityType.voice, privacy_level=discord.PrivacyLevel.guild_only)
+                                                   start_time=start_time, end_time=start_time +
+                                                   timedelta(hours=1),
+                                                   entity_type=discord.EntityType.voice, privacy_level=discord.PrivacyLevel.guild_only)
 
             start_times = [start_time + timedelta(days=7)
-                        for start_time in start_times]
+                           for start_time in start_times]
 
         log(f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
         await interaction.followup.send(f'{output}\nPremier schedule has been created.', ephemeral=True)
@@ -191,9 +192,9 @@ class AdminPremierCommands(commands.Cog):
                 event_desc = event.description
 
                 await guild.create_scheduled_event(name=event_name, description=event_desc, channel=event.channel,
-                                                start_time=start_time, end_time=start_time +
-                                                timedelta(hours=1),
-                                                entity_type=discord.EntityType.voice, privacy_level=discord.PrivacyLevel.guild_only)
+                                                   start_time=start_time, end_time=start_time +
+                                                   timedelta(hours=1),
+                                                   entity_type=discord.EntityType.voice, privacy_level=discord.PrivacyLevel.guild_only)
 
         log(f'{interaction.user.display_name} has posted the premier practice schedule')
         await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True)
@@ -278,11 +279,9 @@ class AdminPremierCommands(commands.Cog):
             await wrong_channel(interaction)
             return
 
-
         await interaction.response.defer(ephemeral=True, thinking=True)
         guild = interaction.guild
         events = guild.scheduled_events
-
 
         for event in events:
             if "Premier" in event.name:
@@ -344,7 +343,7 @@ class AdminPremierCommands(commands.Cog):
     )
     @app_commands.describe(
         _map="The map to remove the note reference from",
-        note_number = "The note number to remove (1-indexed). Leave empty to see options."
+        note_number="The note number to remove (1-indexed). Leave empty to see options."
     )
     async def removenote(self, interaction: discord.Interaction, _map: str, note_number: int = 0):
         """Remove a practice note from the notes list"""
@@ -354,15 +353,15 @@ class AdminPremierCommands(commands.Cog):
         if interaction.channel.id != notes_channel:
             await wrong_channel(interaction)
             return
-        
+
         if _map not in practice_notes or len(practice_notes[_map]) == 0:
             await interaction.response.send_message(f'No notes found for {_map.title()}', ephemeral=True)
             return
-        
+
         if note_number < 0 or note_number > len(practice_notes[_map]):
             await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
             return
-        
+
         if note_number == 0:
             notes_list = practice_notes[_map]
             output = f'**Practice notes for _{_map.title()}_:**\n'
@@ -372,28 +371,24 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(output, ephemeral=True)
             return
 
-
         note_id = list(practice_notes[_map].keys())[note_number - 1]
         del practice_notes[_map][note_id]
 
         await interaction.response.send_message(f'Removed a practice note for {_map.title()}', ephemeral=True)
 
-
         save_notes(practice_notes)
         log(f'{interaction.user.display_name} has removed a practice note. Note ID: {note_id}')
-
 
 
 class AdminManageCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    
     @commands.Cog.listener()
     async def on_ready(self):
         # print("AdminManage cog loaded")
         pass
-    
+
     @app_commands.command(name="remind", description=command_descriptions["remind"])
     @app_commands.choices(
         unit=[
@@ -470,7 +465,6 @@ class AdminManageCommands(commands.Cog):
         del reminders[str(g.id)][dt_when]
         save_reminders(reminders)
 
-
     @app_commands.command(name="pin", description=command_descriptions["pin"])
     @app_commands.describe(
         message_id="The ID of the message to pin"
@@ -492,7 +486,6 @@ class AdminManageCommands(commands.Cog):
         await interaction.response.send_message(f'Message pinned', ephemeral=True)
 
         log(f'{interaction.user.display_name} pinned message {message_id}')
-
 
     @app_commands.command(name="unpin", description=command_descriptions["unpin"])
     @app_commands.describe(
@@ -531,7 +524,7 @@ class AdminManageCommands(commands.Cog):
         amount="The number of messages to clear",
         usertype="The type of messages to clear"
     )
-    async def clear(self, interaction: discord.Interaction, amount: app_commands.Range[int, 1, 200] = 1, usertype: str="both"):
+    async def clear(self, interaction: discord.Interaction, amount: app_commands.Range[int, 1, 200] = 1, usertype: str = "both"):
         """Clear chats from <usertype> in the last 200 messages."""
         if interaction.channel.id == debug_channel:  # just nuke the debug channel
             await interaction.channel.purge()
@@ -570,7 +563,8 @@ class AdminManageCommands(commands.Cog):
                 creation_time = message.created_at.astimezone(
                     tz).strftime("%Y-%m-%d %H:%M:%S")
 
-                deletion_time = datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
+                deletion_time = datetime.now(
+                    tz=tz).strftime("%Y-%m-%d %H:%M:%S")
 
                 file.write(
                     f'[{creation_time} EST] {message.author}: "{message.content}"\t| deleted by {interaction.user} at {deletion_time} EST\n')
