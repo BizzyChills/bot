@@ -1,5 +1,4 @@
-import discord
-from discord import app_commands
+from discord import Interaction, Object, app_commands
 from discord.ext import commands
 
 from my_utils import *
@@ -14,6 +13,13 @@ class BizzyCommands(commands.Cog):
         # print("Bizzy cog loaded")
         pass
 
+    async def sync_commands(self):
+        """Sync the commands with the discord API"""
+        synced = await self.bot.tree.sync(guild=Object(id=debug_server))
+        synced = await self.bot.tree.sync(guild=Object(id=val_server))
+        return synced
+
+
     @app_commands.command(name="clearlogs", description=command_descriptions["clearlogs"])
     @app_commands.choices(
         all_logs=[
@@ -23,7 +29,7 @@ class BizzyCommands(commands.Cog):
     @app_commands.describe(
         all_logs="Clear all logs"
     )
-    async def clearlogs(self, interaction: discord.Interaction, all_logs: str = ""):
+    async def clearlogs(self, interaction: Interaction, all_logs: str = ""):
         """Clear the stdout log for today, or all logs"""
         global last_log
 
@@ -51,7 +57,7 @@ class BizzyCommands(commands.Cog):
         await interaction.response.send_message(message, ephemeral=True)
 
     @app_commands.command(name="clearslash", description=command_descriptions["clearslash"])
-    async def clearslash(self, interaction: discord.Interaction):
+    async def clearslash(self, interaction: Interaction):
         """Clear all slash commands."""
         if interaction.user.id != my_id or interaction.channel.id not in [debug_channel, bot_channel]:
             await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
@@ -73,7 +79,7 @@ class BizzyCommands(commands.Cog):
         if ctx.channel.id not in [debug_channel, bot_channel] or ctx.author.id != my_id:
             return
 
-        synced = await sync_commands(self.bot)
+        synced = await self.sync_commands()
         await ctx.send(f'Commands synced: {len(synced)}', ephemeral=True)
 
         log(f"Bot commands synced for {ctx.guild.name}")
@@ -98,7 +104,7 @@ class BizzyCommands(commands.Cog):
         #     wrong_channel(ctx)
         #     return
 
-        if type(ctx) == discord.Interaction:
+        if type(ctx) == Interaction:
             log(type(ctx))
             await ctx.response.defer(ephemeral=True, thinking=True)
 
@@ -112,9 +118,9 @@ class BizzyCommands(commands.Cog):
                 await self.bot.reload_extension(f'cogs.{file[:-3]}')
 
         if sync:
-            await sync_commands(self.bot)
+            await self.sync_commands()
 
-        if type(ctx) == discord.Interaction:
+        if type(ctx) == Interaction:
             await ctx.followup.send(f'All cogs reloaded', ephemeral=True)
         else:
             await ctx.send(f'All cogs reloaded', ephemeral=True)

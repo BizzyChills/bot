@@ -2,9 +2,9 @@ import json
 from datetime import datetime, time, timedelta
 import pytz
 import os
-from discord import Interaction as discord_Interaction, Object
+from discord import Interaction as discord_Interaction
 # reduce bloat, only for type hints
-from discord.ext.commands import Context as commands_Context, Bot
+from discord.ext.commands import Context as commands_Context
 
 
 def get_pool():
@@ -117,13 +117,6 @@ async def has_permission(id: int, ctx: commands_Context | discord_Interaction):
         return False
 
     return True
-
-
-async def sync_commands(bot: Bot):
-    """Sync the commands with the discord API"""
-    synced = await bot.tree.sync(guild=Object(id=debug_server))
-    synced = await bot.tree.sync(guild=Object(id=val_server))
-    return synced
 
 
 def convert_to_json():
