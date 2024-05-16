@@ -42,8 +42,7 @@ class Tasks(commands.Cog):
         # if current_day not in [3,5,6]: # only check for events on thursday, saturday, and sunday
         #     return
 
-        # for event in list(prem_events) + list(debug_events):
-        for event in list(debug_events):
+        for event in list(prem_events) + list(debug_events):
             if "premier" not in event.name.lower():
                 continue
 
