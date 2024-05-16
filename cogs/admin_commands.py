@@ -28,10 +28,6 @@ class AdminPremierCommands(commands.Cog):
         if not await has_permission(interaction.user.id, interaction):
             return
 
-        if interaction.channel.id not in [bot_channel, debug_channel]:
-            await wrong_channel(interaction)
-            return
-
         guild = interaction.guild
 
         # remove commas and split by space
@@ -111,10 +107,6 @@ class AdminPremierCommands(commands.Cog):
         if not await has_permission(interaction.user.id, interaction):
             return
 
-        if interaction.channel.id not in [bot_channel, debug_channel]:
-            await wrong_channel(interaction)
-            return
-
         amount = amount.lower()
 
         _map = _map.title()
@@ -158,10 +150,6 @@ class AdminPremierCommands(commands.Cog):
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
         if not await has_permission(interaction.user.id, interaction):
-            return
-
-        if interaction.channel.id not in [bot_channel, debug_channel]:
-            await wrong_channel(interaction)
             return
 
         guild = interaction.guild
@@ -218,10 +206,6 @@ class AdminPremierCommands(commands.Cog):
         if not await has_permission(interaction.user.id, interaction):
             return
 
-        if interaction.channel.id not in [bot_channel, debug_channel]:
-            await wrong_channel(interaction)
-            return
-
         _map = _map.title()
         amount = amount.lower()
 
@@ -275,10 +259,6 @@ class AdminPremierCommands(commands.Cog):
         if not await has_permission(interaction.user.id, interaction):
             return
 
-        if interaction.channel.id not in [bot_channel, debug_channel]:
-            await wrong_channel(interaction)
-            return
-
         await interaction.response.defer(ephemeral=True, thinking=True)
         guild = interaction.guild
         events = guild.scheduled_events
@@ -313,13 +293,12 @@ class AdminPremierCommands(commands.Cog):
         if not await has_permission(interaction.user.id, interaction):
             return
 
-        if interaction.channel.id != notes_channel:
-            await wrong_channel(interaction)
-            return
-
         note_id = int(note_id)
         try:
-            interaction.channel.get_partial_message(note_id)
+            message = interaction.channel.get_partial_message(note_id)
+            if message.channel.id != notes_channel:
+                await interaction.response.send_message(f'Invalid message ID. The message must be in the notes channel.', ephemeral=True)
+                return
         except discord.errors.NotFound:
             await interaction.response.send_message(f'Invalid message ID.', ephemeral=True)
             return
@@ -348,10 +327,6 @@ class AdminPremierCommands(commands.Cog):
     async def removenote(self, interaction: discord.Interaction, _map: str, note_number: int = 0):
         """Remove a practice note from the notes list"""
         if not await has_permission(interaction.user.id, interaction):
-            return
-
-        if interaction.channel.id != notes_channel:
-            await wrong_channel(interaction)
             return
 
         if _map not in practice_notes or len(practice_notes[_map]) == 0:
@@ -406,10 +381,6 @@ class AdminManageCommands(commands.Cog):
         """Set a reminder for the target role"""
 
         if not await has_permission(interaction.user.id, interaction):
-            return
-
-        if interaction.channel.id not in [bot_channel, debug_channel]:
-            await wrong_channel(interaction)
             return
 
         if interval <= 0:

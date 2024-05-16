@@ -1,5 +1,7 @@
 from discord import Interaction, Object, app_commands
 from discord.ext import commands
+from discord.ext.commands import Context
+from asyncio import sleep
 
 from my_utils import *
 
@@ -19,7 +21,6 @@ class BizzyCommands(commands.Cog):
         synced = await self.bot.tree.sync(guild=Object(id=val_server))
         return synced
 
-
     @app_commands.command(name="clearlogs", description=command_descriptions["clearlogs"])
     @app_commands.choices(
         all_logs=[
@@ -35,9 +36,6 @@ class BizzyCommands(commands.Cog):
 
         if interaction.user.id != my_id:
             await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
-            return
-
-        if interaction.channel.id not in [debug_channel, bot_channel]:
             return
 
         message = "Log cleared"
@@ -59,7 +57,7 @@ class BizzyCommands(commands.Cog):
     @app_commands.command(name="clearslash", description=command_descriptions["clearslash"])
     async def clearslash(self, interaction: Interaction):
         """Clear all slash commands."""
-        if interaction.user.id != my_id or interaction.channel.id not in [debug_channel, bot_channel]:
+        if interaction.user.id != my_id:
             await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
             return
 
@@ -74,9 +72,13 @@ class BizzyCommands(commands.Cog):
 
     @commands.hybrid_command(name="sync", description=command_descriptions["sync"])
     @app_commands.guilds(Object(id=val_server), Object(debug_server))
-    async def sync(self, ctx):
+    async def sync(self, ctx: Context):
         """Add slash commands specific to this server. Only run this when commands are updated"""
-        if ctx.channel.id not in [debug_channel, bot_channel] or ctx.author.id != my_id:
+        if ctx.author.id != my_id:
+            await ctx.send(f'You do not have permission to use this command', ephemeral=True)
+
+        if ctx.channel.id not in [debug_channel, bot_channel]:
+            wrong_channel(ctx)
             return
 
         synced = await self.sync_commands()
@@ -94,18 +96,17 @@ class BizzyCommands(commands.Cog):
     @app_commands.describe(
         sync="Sync commands after reloading"
     )
-    async def reload(self, ctx, sync: int = 0):
+    async def reload(self, ctx: Context, sync: int = 0):
         """Reload all cogs."""
         if ctx.author.id != my_id:
             await ctx.send(f'You do not have permission to use this command', ephemeral=True)
             return
 
-        # if ctx.channel.id not in [debug_channel, bot_channel]:
-        #     wrong_channel(ctx)
-        #     return
+        if ctx.channel.id not in [debug_channel, bot_channel]:
+            wrong_channel(ctx)
+            return
 
         if type(ctx) == Interaction:
-            log(type(ctx))
             await ctx.response.defer(ephemeral=True, thinking=True)
 
         right_now = (datetime.now().replace(
@@ -127,18 +128,18 @@ class BizzyCommands(commands.Cog):
 
     @commands.hybrid_command(name="kill", description=command_descriptions["kill"])
     @app_commands.guilds(Object(id=val_server), Object(debug_server))
-    async def kill(self, ctx, *, reason: str = "no reason given"):
+    async def kill(self, ctx: Context, *, reason: str = "no reason given"):
         """Kill the bot."""
         if not await has_permission(ctx.author.id, ctx):
             return
 
         if ctx.channel.id not in [debug_channel, bot_channel]:
+            wrong_channel(ctx)
             return
 
         await ctx.send(f'Goodbye cruel world!', ephemeral=True)
 
-        log(
-            f"Bot killed for reason: {reason}")
+        log(f"Bot killed for reason: {reason}")
 
         await self.bot.close()
 

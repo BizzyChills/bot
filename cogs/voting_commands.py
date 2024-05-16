@@ -35,9 +35,6 @@ class VotingCommands(commands.Cog):
 
         global map_preferences
         global map_weights
-        if interaction.channel.id not in [bot_channel, debug_channel]:
-            await interaction.response.send_message(f'You cannot vote in this channel', ephemeral=True)
-            return
 
         output = ""
         preferences = {"+": "like", "~": "neutral", "-": "dislike"}
@@ -82,9 +79,6 @@ class VotingCommands(commands.Cog):
         """Display the map votes for each user"""
 
         global map_preferences
-        if interaction.channel.id not in all_channels:
-            await wrong_channel(interaction)
-            return
 
         role = prem_role if interaction.guild.id == val_server else debug_role
         all_users = discord.utils.get(
@@ -122,18 +116,21 @@ class VotingCommands(commands.Cog):
         ]
     )
     @app_commands.describe(
-        announce="Show the output of the command to everyone when used in the premier channel"
+        announce="Show the output of the command to everyone (only in the premier channel)"
     )
     async def mapweights(self, interaction: discord.Interaction, announce: int = 0):
         """Display the sorted map weights"""
 
-        global map_weights
-        if interaction.channel.id not in all_channels:
-            await wrong_channel(interaction)
-            return
+        announce = bool(announce)  # lib needs explicit bool not int
+
+        if interaction.channel.id != prem_channel:
+            announce = False
+
+        ephem = not announce
 
         output = ""
 
+        global map_weights
         map_weights = dict(sorted(map_weights.items(
         ), key=lambda item: item[1], reverse=True))  # sort the weights in descending order
 
@@ -145,8 +142,6 @@ class VotingCommands(commands.Cog):
 
         if output == "":
             output = "No weights to show for maps in the map pool."
-
-        ephem = False if announce and interaction.channel.id == prem_channel else True
 
         await interaction.response.send_message(output, ephemeral=ephem)
 

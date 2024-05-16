@@ -18,10 +18,6 @@ class InfoCommands(commands.Cog):
     async def schedule(self, interaction: Interaction):
         """Display the premier schedule"""
 
-        if interaction.channel.id not in all_channels:
-            await wrong_channel(interaction)
-            return
-
         guild = self.bot.get_guild(
             val_server) if interaction.guild.id == val_server else self.bot.get_guild(debug_server)
         events = guild.scheduled_events
@@ -79,20 +75,19 @@ class InfoCommands(commands.Cog):
     @app_commands.describe(
         action="The action to take on the map pool (ADMIN ONLY)",
         _map="The map to add or remove (ADMIN ONLY)",
-        announce="Show the output of the command to everyone when used in the premier channel"
+        announce="Show the output of the command to everyone (only used in the premier channel)"
     )
     async def mappool(self, interaction: Interaction, action: str = "", _map: str = "", announce: int = 0):
         """Add or remove maps from the map pool"""
 
-        if interaction.channel.id not in all_channels:
-            await wrong_channel(interaction)
-            return
+        announce = bool(announce)  # lib needs explicit bool not int
 
         if interaction.channel.id != prem_channel:
-            announce = 0  # don't announce in non-premier channels
+            announce = False  # don't announce in non-premier channels
+
+        ephem = not announce
 
         if action == "" and _map == "":
-            ephem = False if announce else True
 
             if len(map_pool) == 0:
                 output = f'The map pool is empty'
@@ -132,8 +127,6 @@ class InfoCommands(commands.Cog):
                 await interaction.response.send_message(f'{_map} is not in the map pool', ephemeral=True)
                 return
 
-        ephem = False if announce else True
-
         await interaction.response.send_message(output, ephemeral=ephem)
 
         log(log_message)
@@ -152,14 +145,16 @@ class InfoCommands(commands.Cog):
     @app_commands.describe(
         _map="The map to display the note for",
         note_number="The note number to display (1-indexed). Leave empty to see options.",
-        announce="Return the note so that it is visible to everyone"
+        announce="Return the note so that it is visible to everyone (only in notes channel)"
     )
     async def notes(self, interaction: Interaction, _map: str, note_number: int = 0, announce: int = 0):
         """Display a practice note for a map"""
+        announce = bool(announce)  # lib needs explicit bool not int
 
         if interaction.channel.id != notes_channel:
-            await wrong_channel(interaction)
-            return
+            announce = False
+
+        ephem = not announce
 
         _map = _map.lower()
 
@@ -172,8 +167,6 @@ class InfoCommands(commands.Cog):
             await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
             return
 
-        # has to explicitly be bool for lib, so can't use announce
-        ephem = False if announce else True
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
         if note_number == 0:

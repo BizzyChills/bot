@@ -1,10 +1,12 @@
+import os
 import json
+from asyncio import sleep
+
 from datetime import datetime, time, timedelta
 import pytz
-import os
-from discord import Interaction as discord_Interaction
-# reduce bloat, only for type hints
-from discord.ext.commands import Context as commands_Context
+
+from discord import Interaction  # reduce bloat, only for type hints
+from discord.ext.commands import Context
 
 
 def get_pool():
@@ -86,8 +88,19 @@ def debug_log(message: str):
             f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {message}\n')
 
 
-def wrong_channel(interaction):
-    return interaction.response.send_message("This command is not available in this channel.", ephemeral=True)
+async def wrong_channel(interaction: Interaction | Context):
+    if type(interaction) == Interaction:
+        send = interaction.response.send_message
+    else:
+        send = interaction.send
+
+    message = await send("This command is not available in this channel.", ephemeral=True)
+    if interaction.interaction == None:  # if unable to make the message ephemeral, delete it after 3 seconds
+        await sleep(3)
+        await interaction.message.delete()
+        await message.delete()
+
+    return
 
 
 def format_schedule(schedule: list, header: str = None):
@@ -106,11 +119,11 @@ def format_schedule(schedule: list, header: str = None):
     return schedule
 
 
-async def has_permission(id: int, ctx: commands_Context | discord_Interaction):
+async def has_permission(id: int, ctx: Context | Interaction):
     """Check if caller has perms to use command. Only Sam or Bizzy can use commands that call this function."""
     message = "You do not have permission to use this command"
     if id not in admin_ids:
-        if type(ctx) == commands_Context:
+        if type(ctx) == Context:
             await ctx.send(f'You do not have permission to use this command', ephemeral=True)
         else:
             await ctx.response.send_message(message, ephemeral=True)

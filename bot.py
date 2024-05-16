@@ -28,16 +28,18 @@ async def on_ready():
 
     log(f'Bot "{bot.user.name}" has connected to Discord. Starting log')
 
+
 @bot.event
 async def on_tree_error(interaction: Interaction, error: app_commands.AppCommandError):
     if interaction.is_expired():
         raise error
-    
+
     if interaction.user.id == my_id:
         await interaction.response.send_message(f"Error: {error}", ephemeral=True)
     else:
         await interaction.response.send_message("An error occurred. Please notify Bizzy.", ephemeral=True)
 bot.tree.on_error = on_tree_error
+
 
 async def main():
     await load()
