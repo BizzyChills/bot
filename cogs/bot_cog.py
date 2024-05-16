@@ -90,7 +90,6 @@ class BotCog(commands.Cog):
 
         output += useless_commands
 
-        # await interaction.response.send_message('\n'.join(output), ephemeral=ephem, silent=True)
         await interaction.followup.send('\n'.join(output), ephemeral=ephem, silent=True)
 
 
