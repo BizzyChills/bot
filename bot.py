@@ -30,9 +30,8 @@ async def on_ready():
 
 @bot.event
 async def on_tree_error(interaction: Interaction, error: app_commands.AppCommandError):
-    log(f"Error: {error}")
     if interaction.is_expired():
-        return
+        raise error
     
     if interaction.user.id == my_id:
         await interaction.response.send_message(f"Error: {error}", ephemeral=True)
