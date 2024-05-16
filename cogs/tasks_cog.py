@@ -11,7 +11,7 @@ import sys
 from my_utils import *
 
 
-class Tasks(commands.Cog):
+class TasksCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -165,4 +165,4 @@ class Tasks(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(Tasks(bot), guilds=[discord.Object(val_server), discord.Object(debug_server)])
+    await bot.add_cog(TasksCog(bot), guilds=[discord.Object(val_server), discord.Object(debug_server)])
