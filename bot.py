@@ -15,12 +15,6 @@ bot = commands.Bot(command_prefix='!',
                    intents=Intents.all(), help_command=None)
 
 
-async def load():
-    for file in os.listdir('./cogs'):
-        if file.endswith('.py'):
-            await bot.load_extension(f'cogs.{file[:-3]}')
-
-
 @bot.event
 async def on_ready():
     global last_log_date
@@ -29,20 +23,31 @@ async def on_ready():
     log(f'Bot "{bot.user.name}" has connected to Discord. Starting log')
 
 
-@bot.event
-async def on_tree_error(interaction: Interaction, error: app_commands.AppCommandError):
+@bot.tree.error
+async def on_app_command_error(interaction, error):
+    log(str(error))
+
     if interaction.is_expired():
         raise error
 
     if interaction.user.id == my_id:
-        await interaction.response.send_message(f"Error: {error}", ephemeral=True)
+        await interaction.response.send_message(f"{error}", ephemeral=True)
     else:
-        await interaction.response.send_message("An error occurred. Please notify Bizzy.", ephemeral=True)
-bot.tree.on_error = on_tree_error
+        await interaction.response.send_message("An unexpected error occurred. Please notify Bizzy.", ephemeral=True)
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    log(str(error))
+
+    if ctx.author.id == my_id:
+        await ctx.send(f"{error}")
+    else:
+        await ctx.send("An unexpected error occurred. Please notify Bizzy.")
 
 
 async def main():
-    await load()
+    await load_cogs(bot)
     # await bot.start(bot_token)
 
 asyncio.run(main())

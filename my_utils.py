@@ -1,12 +1,11 @@
 import os
 import json
-from asyncio import sleep
 
 from datetime import datetime, time, timedelta
 import pytz
 
-from discord import Interaction  # reduce bloat, only for type hints
-from discord.ext.commands import Context
+from discord import Interaction, Message  # reduce bloat, only for type hints
+from discord.ext import commands
 
 
 def get_pool():
@@ -88,19 +87,26 @@ def debug_log(message: str):
             f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {message}\n')
 
 
-async def wrong_channel(interaction: Interaction | Context):
-    if type(interaction) == Interaction:
-        send = interaction.response.send_message
-    else:
-        send = interaction.send
+def italics(text: str):
+    return f"_{text}_"
 
-    message = await send("This command is not available in this channel.", ephemeral=True)
-    if interaction.interaction == None:  # if unable to make the message ephemeral, delete it after 3 seconds
-        await sleep(3)
-        await interaction.message.delete()
-        await message.delete()
 
-    return
+def bold(text: str):
+    return f"**{text}**"
+
+
+def inline_code(text: str):
+    return f"`{text}`"
+
+
+async def load_cogs(bot: commands.Bot, reload=False):
+    for file in os.listdir('./cogs'):
+        if file.endswith('.py'):
+            f = f'cogs.{file[:-3]}'
+            if reload:
+                await bot.reload_extension(f)
+            else:
+                await bot.load_extension(f)
 
 
 def format_schedule(schedule: list, header: str = None):
@@ -119,11 +125,11 @@ def format_schedule(schedule: list, header: str = None):
     return schedule
 
 
-async def has_permission(id: int, ctx: Context | Interaction):
+async def has_permission(id: int, ctx: commands.Context | Interaction):
     """Check if caller has perms to use command. Only Sam or Bizzy can use commands that call this function."""
     message = "You do not have permission to use this command"
     if id not in admin_ids:
-        if type(ctx) == Context:
+        if type(ctx) == commands.Context:
             await ctx.send(f'You do not have permission to use this command', ephemeral=True)
         else:
             await ctx.response.send_message(message, ephemeral=True)
@@ -155,10 +161,11 @@ last_log = f"./logs/{last_log_date}_stdout.log"
 
 bot_token = "MTIxNzY0NjU0NDkxNzEwMjcwMw.GaY7e2.Z-YM3oT2Ts_zbZ8hs7N0zoEvhxqCMsSorzYzm8"
 
-val_server = 1100632842528096330
 debug_server = 1217649405759324232
-
 debug_channel = 1217649405759324235
+debug_voice = 1217649405759324236
+
+val_server = 1100632842528096330
 bot_channel = 1218420817394925668
 prem_channel = 1193661647752003614
 notes_channel = 1237971459461218376
@@ -213,13 +220,13 @@ command_descriptions = {
     "notes": "Display a practice note from the notes channel. Leave note_id blank to display all options",
     "prefermap": "Declare your preference for a map to play for premier playoffs",
     "mapvotes": "Display each member's map preferences",
-    "mapweights": "Display the total weights for each map",
+    "mapweights": "Display the total weights for each map in the map pool",
     "hello": "Say hello",
     "feed": "Feed the bot",
     "unfeed": "Unfeed the bot",
     "remind": "Set a reminder for the premier role",
     "addevents": "Add all premier events to the schedule",
-    "addpractices": "Add all premier practices to the schedule (must use /addevents first)",
+    "addpractices": "Add all premier practices to the schedule (a map must still have a Thursday event to add practices)",
     "cancelevent": "Cancel a premier map for today/all days",
     "cancelpractice": "Cancel a premier practice for today/all days",
     "clearschedule": "Clear the schedule of all premier events AND practices",
@@ -227,11 +234,10 @@ command_descriptions = {
     "removenote": "Remove a reference/link to practice note in the notes channel (this does not delete the note itself)",
     "pin": "Pin a message",
     "unpin": "Unpin a message",
-    "sync": "Update the slash commands (ensure that they have been initialized first)",
-    "clearslash": "Clear all slash commands",
-    "clear": "Clear the last <amount> **commands** from the bot, user, or both (defaults to last command)",
+    # "clearslash": "Clear all slash commands", # /clearslash has been deprecated; I couldn't think of a use case for it that couldn't be done by removing the bot from the server.
+    "clear": "(debug only) clear the debug channel",
     "deletemessage": "Delete a message by ID",
-    "clearlogs": "Clear the stdout log(s)",
+    # "sync": "Update the slash commands (ensure that they have been initialized first)", # deprecated. use /reload sync=1 instead
     "reload": "Reload the bot's cogs",
     "kill": "Kill the bot",
 }

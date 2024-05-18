@@ -15,19 +15,26 @@ class InfoCommands(commands.Cog):
         pass
 
     @app_commands.command(name="schedule", description=command_descriptions["schedule"])
-    async def schedule(self, interaction: Interaction):
+    @app_commands.choices(
+        announce=[
+            app_commands.Choice(name="Yes", value=1),
+        ]
+    )
+    @app_commands.describe(
+        announce="Show the output of the command to everyone (only used in the premier channel)"
+    )
+    async def schedule(self, interaction: Interaction, announce: int = 0):
         """Display the premier schedule"""
+        ephem = interaction.channel.id != prem_channel or not announce
 
-        guild = self.bot.get_guild(
-            val_server) if interaction.guild.id == val_server else self.bot.get_guild(debug_server)
-        events = guild.scheduled_events
+        events = interaction.guild.scheduled_events
 
         event_header = "**Upcoming Premier Events:**"
         practice_header = "\n\n**Upcoming Premier Practices:**"
         message = []
         practice_message = []
 
-        await interaction.response.defer(ephemeral=True, thinking=True)
+        await interaction.response.defer(ephemeral=ephem, thinking=True)
 
         for event in events:
             if "premier practice" in event.name.lower():
@@ -37,8 +44,6 @@ class InfoCommands(commands.Cog):
                 desc = "Playoffs" if "playoffs" in event.name.lower() else event.description
                 message.append(
                     (f" - {discord_local_time(event.start_time, _datetime=True)}", event.start_time, desc))
-
-        ephem = True if interaction.channel.id == bot_channel else False
 
         if message == []:
             message = "**No premier events scheduled**"
@@ -79,20 +84,14 @@ class InfoCommands(commands.Cog):
     )
     async def mappool(self, interaction: Interaction, action: str = "", _map: str = "", announce: int = 0):
         """Add or remove maps from the map pool"""
+        ephem = interaction.channel.id != prem_channel or not announce
 
-        announce = bool(announce)  # lib needs explicit bool not int
-
-        if interaction.channel.id != prem_channel:
-            announce = False  # don't announce in non-premier channels
-
-        ephem = not announce
-
-        if action == "" and _map == "":
-
+        if action == "" and _map == "":  # display the map pool
             if len(map_pool) == 0:
                 output = f'The map pool is empty'
             else:
-                output = f'Current map pool: {", ".join(map_pool)}'
+                output = 'Current map pool\n- ' + \
+                    "\n- ".join([m.title() for m in map_pool])
 
             await interaction.response.send_message(output, ephemeral=ephem)
             return
@@ -100,7 +99,7 @@ class InfoCommands(commands.Cog):
         if not await has_permission(interaction.user.id, interaction):
             return
 
-        if action == "" or (_map == "" and action != "clear"):  # clear doesn't need a map
+        if _map ^ action:  # both parameters must be set to perform an action
             await interaction.response.send_message(f'Please provide an action and a map.', ephemeral=True)
             return
 
@@ -121,8 +120,8 @@ class InfoCommands(commands.Cog):
         elif action == "remove":
             if _map in map_pool:
                 map_pool.remove(_map)
-                output = f'{_map} has been removed from the map pool'
-                log_message = f'{interaction.user.display_name} has removed {_map} from the map pool'
+                output = f'{_map.title()} has been removed from the map pool'
+                log_message = f'{interaction.user.display_name} has removed {_map.title()} from the map pool'
             else:
                 await interaction.response.send_message(f'{_map} is not in the map pool', ephemeral=True)
                 return
@@ -149,14 +148,7 @@ class InfoCommands(commands.Cog):
     )
     async def notes(self, interaction: Interaction, _map: str, note_number: int = 0, announce: int = 0):
         """Display a practice note for a map"""
-        announce = bool(announce)  # lib needs explicit bool not int
-
-        if interaction.channel.id != notes_channel:
-            announce = False
-
-        ephem = not announce
-
-        _map = _map.lower()
+        ephem = interaction.channel.id != prem_channel or not announce
 
         # user gave a valid map, but there are no notes for it
         if _map not in practice_notes or len(practice_notes[_map]) == 0:

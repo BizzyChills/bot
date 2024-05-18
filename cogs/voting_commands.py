@@ -37,27 +37,30 @@ class VotingCommands(commands.Cog):
         global map_weights
 
         output = ""
-        preferences = {"+": "like", "~": "neutral", "-": "dislike"}
+        preference_decoder = {"+": "like", "~": "neutral", "-": "dislike"}
+        preference_weights = {"+": 1, "~": 0, "-": -1}
 
-        _map = _map.lower()
+        old_preference = ""
+        uuid = str(interaction.user.id)
 
-        old_preferences = ""
-        # if you've voted for this map before
-        if str(interaction.user.id) in map_preferences[_map]:
-            old_preferences = map_preferences[_map][str(interaction.user.id)]
-            if old_preferences == preference:
-                await interaction.response.send_message(f'{interaction.user.mention} you have already marked {_map.title()} with a weight of {preferences[preference]}', ephemeral=True)
+        # if you've voted for this map before, need to remove the old weight
+        if uuid in map_preferences[_map]:
+            old_preference = map_preferences[_map][uuid]
+
+            # no change in preference, return
+            if old_preference == preference:
+                await interaction.response.send_message(f'{interaction.user.mention} you have already marked {italics(_map.title())} with a preference of "{italics(preference_decoder[preference])}"', ephemeral=True)
                 return
 
-            output = f'{interaction.user.mention}\'s vote for {_map.title()} has been changed from {preferences[old_preferences]} to {preferences[preference]}'
-            old_preferences = 1 if old_preferences == "+" else 0 if old_preferences == "~" else -1
-            map_weights[_map] -= old_preferences
+            output = f'Your preference for {italics(_map.title())} has been changed from _"{italics(preference_decoder[old_preference])}" to "{italics(preference_decoder[preference])}"'
 
-        map_preferences[_map][str(interaction.user.id)] = preference
-        if old_preferences == "":
-            output = f'{interaction.user.mention} voted for {_map.title()} with a weight of {preference}'
-        preference = 1 if preference == "+" else 0 if preference == "~" else -1
-        map_weights[_map] += preference
+            map_weights[_map] -= preference_weights[old_preference]
+        else:
+            output = f'You marked {italics(_map.title())} with a preference of "{italics(preference_decoder[preference])}"'
+
+        map_preferences[_map][uuid] = preference
+
+        map_weights[_map] += preference_weights[preference]
 
         await interaction.response.send_message(output, ephemeral=True)
 
@@ -77,6 +80,7 @@ class VotingCommands(commands.Cog):
     )
     async def mapvotes(self, interaction: discord.Interaction, announce: int = 0):
         """Display the map votes for each user"""
+        ephem = interaction.channel.id != prem_channel or not announce
 
         global map_preferences
 
@@ -87,7 +91,7 @@ class VotingCommands(commands.Cog):
         output = ""
 
         for _map in map_pool:
-            header = f'- {_map.title()} ({map_weights[_map]}):\n'
+            header = f'- {italics(_map.title())} ({bold(map_weights[_map])}):\n'
             body = ""
             for user in all_users:
                 if str(user.id) in map_preferences[_map]:
@@ -95,7 +99,7 @@ class VotingCommands(commands.Cog):
                     weight = {"+": "like", "~": "neutral",
                               "-": "dislike"}[encoded_weight]
 
-                    body += f' - {user.mention}: {weight}\n'
+                    body += f' - {user.mention}: {inline_code(weight)}\n'
 
             if body == "":
                 body = "No votes for this map."
@@ -104,8 +108,6 @@ class VotingCommands(commands.Cog):
 
         if output == "":
             output = "No votes for any maps in the map pool."
-
-        ephem = False if announce and interaction.channel.id == prem_channel else True
 
         await interaction.response.send_message(output, ephemeral=ephem, silent=True)
 
@@ -120,13 +122,7 @@ class VotingCommands(commands.Cog):
     )
     async def mapweights(self, interaction: discord.Interaction, announce: int = 0):
         """Display the sorted map weights"""
-
-        announce = bool(announce)  # lib needs explicit bool not int
-
-        if interaction.channel.id != prem_channel:
-            announce = False
-
-        ephem = not announce
+        ephem = interaction.channel.id != prem_channel or not announce
 
         output = ""
 

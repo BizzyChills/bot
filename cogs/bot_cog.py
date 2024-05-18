@@ -15,75 +15,68 @@ class BotCog(commands.Cog):
 
     @app_commands.command(name="commands", description="Display all bot commands")
     @app_commands.choices(
-        short=[
-            app_commands.Choice(name="(Optional) Shorten", value=1),
+        shorten=[
+            app_commands.Choice(name="(Optional) Yes", value=1),
         ],
         announce=[
-            app_commands.Choice(name="(Optional) Announce", value=1),
+            app_commands.Choice(name="(Optional) Yes", value=1),
         ]
     )
     @app_commands.describe(
-        short="Whether to display the full list of commands or a shortened list",
+        shorten="Whether to display the full list of commands or a shortened list",
         announce="Whether to allow others to see the returned command list in the channel (only in bot channel)"
     )
-    async def commands(self, interaction: Interaction, short: int = 0, announce: int = 0):
+    async def commands(self, interaction: Interaction, shorten: int = 0, announce: int = 0):
         """Displays all bot commands."""
-        announce = bool(announce)  # lib needs explicit bool not int
-
-        # disable announce in a non-bot channel
-        if interaction.channel.id not in [debug_channel, bot_channel]:
-            announce = False
-
-        ephem = not announce  # if we're announcing, we're not ephemeral
+        ephem = interaction.channel.id not in [
+            debug_channel, bot_channel] or not announce
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
-        common_commands = ["**Commands** (start typing the command to see its description):",
+        common_commands = [f"{bold('Commands')} (start typing the command to see its description):",
 
-                           "- **HELP**:",
-                           f" - _/commands_",
+                           f"- {bold('HELP')}:",
+                           f" - {inline_code('/commands')}",
 
-                           f"- **INFO**:",
-                           f" - _/schedule_",
-                           f" - _/mappool_",
-                           f" - _/notes_",
+                           f"- {bold('INFO')}:",
+                           f" - {inline_code('/schedule')}",
+                           f" - {inline_code('/mappool')}",
+                           f" - {inline_code('/notes')}",
 
-                           "- **VOTING**:",
-                           f" - _/prefermap_",
-                           f" - _/mapvotes_",
-                           f" - _/mapweights_",]
+                           f"- {bold('VOTING')}:",
+                           f" - {inline_code('/prefermap')}",
+                           f" - {inline_code('/mapvotes')}",
+                           f" - {inline_code('/mapweights')}",]
 
-        admin_commands = ["- **ADMIN ONLY**:",
-                          f" - _/mappool_ (**admin**)",
-                          f" - _/addevents_ (**admin**)",
-                          f" - _/cancelevent_ (**admin**)",
-                          f" - _/addpractices_ (**admin**)",
-                          f" - _/cancelpractice_ (**admin**)",
-                          f" - _/clearschedule_ (**admin**)",
-                          f" - _/addnote_ (**admin**)",
-                          f" - _/removenote_ (**admin**)",
-                          f" - _/remind_ (**admin**)",
-                          f" - _/pin_ (**admin**)",
-                          f" - _/unpin_ (**admin**)",
-                          f" - _/deletemessage_ (**admin**)",]
+        admin_commands = [f"- {bold('ADMIN ONLY')}:",
+                          f" - {inline_code('/mappool')} ({bold('admin')})",
+                          f" - {inline_code('/addevents')} ({bold('admin')})",
+                          f" - {inline_code('/cancelevent')} ({bold('admin')})",
+                          f" - {inline_code('/addpractices')} ({bold('admin')})",
+                          f" - {inline_code('/cancelpractice')} ({bold('admin')})",
+                          f" - {inline_code('/clearschedule')} ({bold('admin')})",
+                          f" - {inline_code('/addnote')} ({bold('admin')})",
+                          f" - {inline_code('/removenote')} ({bold('admin')})",
+                          f" - {inline_code('/remind')} ({bold('admin')})",
+                          f" - {inline_code('/pin')} ({bold('admin')})",
+                          f" - {inline_code('/unpin')} ({bold('admin')})",
+                          f" - {inline_code('/deletemessage')} ({bold('admin')})",]
 
-        my_commands = ["- **BIZZY ONLY**:",
-                       f" - _/reload_ (**Bizzy**)",
-                       f" - **!sync** (**Bizzy**)",
-                       f" - _/sync_ (**Bizzy**)",
-                       f" - _/clear_ (**Bizzy**)",
-                       f" - **!clearslash** (**Bizzy**)",
-                       f" - _/clearlogs_ (**Bizzy**)",
-                       f" - _/kill_ (**Bizzy**)",]
+        my_commands = [f"- {bold('BIZZY ONLY')}:",
+                       f" - {inline_code('(! | /)reload')} ({bold('Bizzy')})",
+                       f" - {inline_code('(! | /)sync')} ({bold('Bizzy')})",
+                       f" - {inline_code('/clear')} ({bold('Bizzy')})",
+                       f" - {inline_code('/clearslash')} ({bold('Bizzy')})",
+                       f" - {inline_code('(! | /)kill')} ({bold('Bizzy')})",]
 
-        useless_commands = ["- **MISC**:",
-                            f" - _/hello_",
-                            f" - _/feed_",
-                            f" - _/unfeed_",]
+        useless_commands = [f"- {bold('MISC')}:",
+                            f" - {inline_code('/hello')}",
+                            f" - {inline_code('/feed')}",
+                            f" - {inline_code('/unfeed')}",]
 
         output = common_commands
 
-        if not short:
+        if not shorten:
             if interaction.user.id in admin_ids:
                 output += admin_commands
 

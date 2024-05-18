@@ -67,12 +67,12 @@ class TasksCog(commands.Cog):
             if time_remaining <= 0:  # allow this reminder until 30 minutes after the event has already started
                 if time_remaining >= -3600 * .5:
                     reminder_class = "start"
+                    await event.start()
                 elif time_remaining <= -3600 * 1:  # remove the event
-                    try:
-                        await event.cancel()
-                    except ValueError:
+                    if event.status == discord.EventStatus.active:
                         await event.end()
-
+                    elif event.status == discord.EventStatus.scheduled:
+                        await event.cancel()
             elif time_remaining <= 60 * 10:
                 reminder_class = "prestart"
             elif time_remaining <= 3600:

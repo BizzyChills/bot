@@ -15,76 +15,60 @@ class BizzyCommands(commands.Cog):
         # print("Bizzy cog loaded")
         pass
 
-    async def sync_commands(self):
+    async def sync_commands(self, guild_id: int = debug_server):
         """Sync the commands with the discord API"""
-        synced = await self.bot.tree.sync(guild=Object(id=debug_server))
-        synced = await self.bot.tree.sync(guild=Object(id=val_server))
+        synced = await self.bot.tree.sync(guild=Object(id=guild_id))
         return synced
 
-    @app_commands.command(name="clearlogs", description=command_descriptions["clearlogs"])
-    @app_commands.choices(
-        all_logs=[
-            app_commands.Choice(name="All Logs", value="all"),
-        ]
-    )
-    @app_commands.describe(
-        all_logs="Clear all logs"
-    )
-    async def clearlogs(self, interaction: Interaction, all_logs: str = ""):
-        """Clear the stdout log for today, or all logs"""
-        global last_log
-
-        if interaction.user.id != my_id:
-            await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
+    # only available in the debug server
+    @app_commands.command(name="clear", description=command_descriptions["clear"])
+    async def clear(self, interaction: Interaction):
+        """clear the debug channel"""
+        if interaction.guild.id != debug_server:
+            await interaction.response.send_message(
+                "This command is not available in this server", ephemeral=True)
             return
 
-        message = "Log cleared"
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        await interaction.channel.purge(limit=None, bulk=True)
+        await interaction.followup.send("Cleared the entire channel", ephemeral=True)
 
-        if all_logs:  # empty string is false and we already checked for "all" if it's not empty
-            for file in os.listdir('./logs'):
-                if not file.endswith("stdout.log"):
-                    continue
-                with open(f'./logs/{file}', 'w') as file:
-                    file.write(
-                        f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}\n")
+    # /clearslash has been deprecated; I couldn't think of a use case for it that couldn't be done by removing the bot from the server.
+    # @app_commands.command(name="clearslash", description=command_descriptions["clearslash"])
+    # async def clearslash(self, interaction: Interaction):
+    #     """Clear all slash commands in the calling server"""
+    #     if interaction.user.id != my_id:
+    #         await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
+    #         return
 
-        message = "All stdout logs cleared"
+    #     g = Object(id=interaction.guild.id)
 
-        log(f"{message}")
+    #     await interaction.response.defer(ephemeral=True, thinking=True)
+    #     self.bot.tree.clear_commands(guild=g)
+    #     await self.sync_commands(interaction.guild.id)
 
-        await interaction.response.send_message(message, ephemeral=True)
+    #     log(f"Bot's slash commands cleared in server: {interaction.guild.name}")
 
-    @app_commands.command(name="clearslash", description=command_descriptions["clearslash"])
-    async def clearslash(self, interaction: Interaction):
-        """Clear all slash commands."""
-        if interaction.user.id != my_id:
-            await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
-            return
+    #     await interaction.followup.send(f'Cleared all of {self.bot.user.name}\'s slash commands', ephemeral=True)
 
-        g = Object(id=interaction.guild.id)
+    # /sync has been deprecated; use /reload sync=1 instead. There is negligible cost in running /reload, so just sync there when needed
+    # @commands.hybrid_command(name="sync", description=command_descriptions["sync"])
+    # @app_commands.guilds(Object(id=val_server), Object(debug_server))
+    # async def sync(self, ctx: Context):
+    #     """Add slash commands specific to this server. Only run this when commands are updated"""
+    #     if ctx.author.id != my_id:
+    #         await ctx.send(f'You do not have permission to use this command', ephemeral=True)
 
-        self.bot.tree.clear_commands(guild=g)
-        await self.bot.tree.sync(guild=g)
+    #     async with ctx.typing(ephemeral=True):
 
-        log(f"All Bot commands cleared in the {interaction.guild.name}")
+    #         synced = await self.sync_commands(ctx.guild.id)
 
-        await interaction.response.send_message(f'Cleared all slash commands', ephemeral=True)
+    #     m = await ctx.send(f'Commands synced: {len(synced)}', ephemeral=True)
 
-    @commands.hybrid_command(name="sync", description=command_descriptions["sync"])
-    @app_commands.guilds(Object(id=val_server), Object(debug_server))
-    async def sync(self, ctx: Context):
-        """Add slash commands specific to this server. Only run this when commands are updated"""
-        if ctx.author.id != my_id:
-            await ctx.send(f'You do not have permission to use this command', ephemeral=True)
+    #     await ctx.message.delete(delay=3)
+    #     await m.delete(delay=3)
 
-        if ctx.channel.id not in [debug_channel, bot_channel]:
-            wrong_channel(ctx)
-            return
-
-        synced = await self.sync_commands()
-        await ctx.send(f'Commands synced: {len(synced)}', ephemeral=True)
-
-        log(f"Bot commands synced for {ctx.guild.name}")
+    #     log(f"Bot commands synced for {ctx.guild.name}")
 
     @commands.hybrid_command(name="reload", description=command_descriptions["reload"])
     @app_commands.guilds(Object(id=val_server), Object(debug_server))
@@ -99,32 +83,29 @@ class BizzyCommands(commands.Cog):
     async def reload(self, ctx: Context, sync: int = 0):
         """Reload all cogs."""
         if ctx.author.id != my_id:
-            await ctx.send(f'You do not have permission to use this command', ephemeral=True)
+            content = f'{ctx.author.mention}You do not have permission to use this command'
+            await ctx.response.send_message(content, ephemeral=True)
             return
 
-        if ctx.channel.id not in [debug_channel, bot_channel]:
-            wrong_channel(ctx)
-            return
+        async with ctx.typing(ephemeral=True):
 
-        if type(ctx) == Interaction:
-            await ctx.response.defer(ephemeral=True, thinking=True)
+            right_now = (datetime.now().replace(
+                microsecond=0) + timedelta(seconds=5)).time()
 
-        right_now = (datetime.now().replace(
-            microsecond=0) + timedelta(seconds=5)).time()
+            premier_reminder_times[0] = est_to_utc(right_now)
 
-        premier_reminder_times[0] = est_to_utc(right_now)
+            await load_cogs(self.bot, reload=True)
 
-        for file in os.listdir('./cogs'):
-            if file.endswith('.py'):
-                await self.bot.reload_extension(f'cogs.{file[:-3]}')
+            message = "All cogs reloaded"
 
-        if sync:
-            await self.sync_commands()
+            if sync:
+                synced = await self.sync_commands(ctx.guild.id)
+                message += f" and {len(synced)} commands synced in {ctx.guild.name}"
 
-        if type(ctx) == Interaction:
-            await ctx.followup.send(f'All cogs reloaded', ephemeral=True)
-        else:
-            await ctx.send(f'All cogs reloaded', ephemeral=True)
+        m = await ctx.send(message, ephemeral=True)
+
+        await ctx.message.delete(delay=3)
+        await m.delete(delay=3)
 
     @commands.hybrid_command(name="kill", description=command_descriptions["kill"])
     @app_commands.guilds(Object(id=val_server), Object(debug_server))
@@ -133,13 +114,12 @@ class BizzyCommands(commands.Cog):
         if not await has_permission(ctx.author.id, ctx):
             return
 
-        if ctx.channel.id not in [debug_channel, bot_channel]:
-            wrong_channel(ctx)
-            return
+        m = await ctx.send(f'Goodbye cruel world!', ephemeral=True)
 
-        await ctx.send(f'Goodbye cruel world!', ephemeral=True)
+        await ctx.message.delete(delay=3)
+        await m.delete(delay=3)
 
-        log(f"Bot killed for reason: {reason}")
+        log(f"Bot killed. reason: {reason}")
 
         await self.bot.close()
 
