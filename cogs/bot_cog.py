@@ -1,7 +1,7 @@
 from discord import Object, Interaction, app_commands
 from discord.ext import commands
 
-from my_utils import *
+from global_utils import global_utils
 
 
 class BotCog(commands.Cog):
@@ -10,7 +10,7 @@ class BotCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        # log("Bot cog loaded")
+        # global_utils.log("Bot cog loaded")
         pass
 
     @app_commands.command(name="commands", description="Display all bot commands")
@@ -29,58 +29,58 @@ class BotCog(commands.Cog):
     async def commands(self, interaction: Interaction, shorten: int = 0, announce: int = 0):
         """Displays all bot commands."""
         ephem = interaction.channel.id not in [
-            debug_channel, bot_channel] or not announce
+            global_utils.debug_channel, global_utils.bot_channel] or not announce
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
-        common_commands = [f"{bold('Commands')} (start typing the command to see its description):",
+        common_commands = [f"{global_utils.bold('Commands')} (start typing the command to see its description):",
 
-                           f"- {bold('HELP')}:",
-                           f" - {inline_code('/commands')}",
+                           f"- {global_utils.bold('HELP')}:",
+                           f" - {global_utils.inline_code('/commands')}",
 
-                           f"- {bold('INFO')}:",
-                           f" - {inline_code('/schedule')}",
-                           f" - {inline_code('/mappool')}",
-                           f" - {inline_code('/notes')}",
+                           f"- {global_utils.bold('INFO')}:",
+                           f" - {global_utils.inline_code('/schedule')}",
+                           f" - {global_utils.inline_code('/mappool')}",
+                           f" - {global_utils.inline_code('/notes')}",
 
-                           f"- {bold('VOTING')}:",
-                           f" - {inline_code('/prefermap')}",
-                           f" - {inline_code('/mapvotes')}",
-                           f" - {inline_code('/mapweights')}",]
+                           f"- {global_utils.bold('VOTING')}:",
+                           f" - {global_utils.inline_code('/prefermap')}",
+                           f" - {global_utils.inline_code('/mapvotes')}",
+                           f" - {global_utils.inline_code('/mapweights')}",]
 
-        admin_commands = [f"- {bold('ADMIN ONLY')}:",
-                          f" - {inline_code('/mappool')} ({bold('admin')})",
-                          f" - {inline_code('/addevents')} ({bold('admin')})",
-                          f" - {inline_code('/cancelevent')} ({bold('admin')})",
-                          f" - {inline_code('/addpractices')} ({bold('admin')})",
-                          f" - {inline_code('/cancelpractice')} ({bold('admin')})",
-                          f" - {inline_code('/clearschedule')} ({bold('admin')})",
-                          f" - {inline_code('/addnote')} ({bold('admin')})",
-                          f" - {inline_code('/removenote')} ({bold('admin')})",
-                          f" - {inline_code('/remind')} ({bold('admin')})",
-                          f" - {inline_code('/pin')} ({bold('admin')})",
-                          f" - {inline_code('/unpin')} ({bold('admin')})",
-                          f" - {inline_code('/deletemessage')} ({bold('admin')})",]
+        admin_commands = [f"- {global_utils.bold('ADMIN ONLY')}:",
+                          f" - {global_utils.inline_code('/mappool')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/addevents')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/cancelevent')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/addpractices')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/cancelpractice')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/clearschedule')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/addnote')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/removenote')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/remind')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/pin')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/unpin')} ({global_utils.bold('admin')})",
+                          f" - {global_utils.inline_code('/deletemessage')} ({global_utils.bold('admin')})",]
 
-        my_commands = [f"- {bold('BIZZY ONLY')}:",
-                       f" - {inline_code('(! | /)reload')} ({bold('Bizzy')})",
-                       f" - {inline_code('(! | /)sync')} ({bold('Bizzy')})",
-                       f" - {inline_code('/clear')} ({bold('Bizzy')})",
-                       f" - {inline_code('/clearslash')} ({bold('Bizzy')})",
-                       f" - {inline_code('(! | /)kill')} ({bold('Bizzy')})",]
+        my_commands = [f"- {global_utils.bold('BIZZY ONLY')}:",
+                       f" - {global_utils.inline_code('(! | /)reload')} ({global_utils.bold('Bizzy')})",
+                       f" - {global_utils.inline_code('(! | /)sync')} ({global_utils.bold('Bizzy')})",
+                       f" - {global_utils.inline_code('/clear')} ({global_utils.bold('Bizzy')})",
+                       f" - {global_utils.inline_code('/clearslash')} ({global_utils.bold('Bizzy')})",
+                       f" - {global_utils.inline_code('(! | /)kill')} ({global_utils.bold('Bizzy')})",]
 
-        useless_commands = [f"- {bold('MISC')}:",
-                            f" - {inline_code('/hello')}",
-                            f" - {inline_code('/feed')}",
-                            f" - {inline_code('/unfeed')}",]
+        useless_commands = [f"- {global_utils.bold('MISC')}:",
+                            f" - {global_utils.inline_code('/hello')}",
+                            f" - {global_utils.inline_code('/feed')}",
+                            f" - {global_utils.inline_code('/unfeed')}",]
 
         output = common_commands
 
         if not shorten:
-            if interaction.user.id in admin_ids:
+            if interaction.user.id in global_utils.admin_ids:
                 output += admin_commands
 
-            if interaction.user.id == my_id:
+            if interaction.user.id == global_utils.my_id:
                 output += my_commands
 
         output += useless_commands
@@ -89,4 +89,4 @@ class BotCog(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(BotCog(bot), guilds=[Object(val_server), Object(debug_server)])
+    await bot.add_cog(BotCog(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])

@@ -2,7 +2,7 @@ from discord import app_commands, Interaction, Object
 from discord.ext import commands
 import random
 
-from my_utils import command_descriptions, val_server, debug_server
+from global_utils import global_utils
 
 
 class UselessCommands(commands.Cog):
@@ -14,19 +14,19 @@ class UselessCommands(commands.Cog):
         # print("Useless cog loaded")
         pass
 
-    @app_commands.command(name="hello", description=command_descriptions["hello"])
+    @app_commands.command(name="hello", description=global_utils.command_descriptions["hello"])
     async def hello(self, interaction: Interaction):
         """Says hello"""
 
         await interaction.response.send_message(f'Hello {interaction.user.mention}!', ephemeral=True)
 
-    @app_commands.command(name="feed", description=command_descriptions["feed"])
+    @app_commands.command(name="feed", description=global_utils.command_descriptions["feed"])
     async def feed(self, interaction: Interaction):
         """Feed the bot"""
 
         await interaction.response.send_message("Yum yum! Thanks for the food!", ephemeral=True)
 
-    @app_commands.command(name="unfeed", description=command_descriptions["unfeed"])
+    @app_commands.command(name="unfeed", description=global_utils.command_descriptions["unfeed"])
     async def unfeed(self, interaction: Interaction):
         """Unfeed the bot"""
 
@@ -38,4 +38,4 @@ class UselessCommands(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(UselessCommands(bot), guilds=[Object(val_server), Object(debug_server)])
+    await bot.add_cog(UselessCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])

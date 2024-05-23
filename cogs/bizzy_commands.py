@@ -3,7 +3,9 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from asyncio import sleep
 
-from my_utils import *
+from datetime import datetime, timedelta
+
+from global_utils import global_utils
 
 
 class BizzyCommands(commands.Cog):
@@ -15,16 +17,16 @@ class BizzyCommands(commands.Cog):
         # print("Bizzy cog loaded")
         pass
 
-    async def sync_commands(self, guild_id: int = debug_server):
+    async def sync_commands(self, guild_id: int = global_utils.debug_server):
         """Sync the commands with the discord API"""
         synced = await self.bot.tree.sync(guild=Object(id=guild_id))
         return synced
 
     # only available in the debug server
-    @app_commands.command(name="clear", description=command_descriptions["clear"])
+    @app_commands.command(name="clear", description=global_utils.command_descriptions["clear"])
     async def clear(self, interaction: Interaction):
         """clear the debug channel"""
-        if interaction.guild.id != debug_server:
+        if interaction.guild.id != global_utils.debug_server:
             await interaction.response.send_message(
                 "This command is not available in this server", ephemeral=True)
             return
@@ -34,10 +36,10 @@ class BizzyCommands(commands.Cog):
         await interaction.followup.send("Cleared the entire channel", ephemeral=True)
 
     # /clearslash has been deprecated; I couldn't think of a use case for it that couldn't be done by removing the bot from the server.
-    # @app_commands.command(name="clearslash", description=command_descriptions["clearslash"])
+    # @app_commands.command(name="clearslash", description=global_utils.command_descriptions["clearslash"])
     # async def clearslash(self, interaction: Interaction):
     #     """Clear all slash commands in the calling server"""
-    #     if interaction.user.id != my_id:
+    #     if interaction.user.id != global_utils.my_id:
     #         await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
     #         return
 
@@ -47,16 +49,16 @@ class BizzyCommands(commands.Cog):
     #     self.bot.tree.clear_commands(guild=g)
     #     await self.sync_commands(interaction.guild.id)
 
-    #     log(f"Bot's slash commands cleared in server: {interaction.guild.name}")
+    #     global_utils.log(f"Bot's slash commands cleared in server: {interaction.guild.name}")
 
     #     await interaction.followup.send(f'Cleared all of {self.bot.user.name}\'s slash commands', ephemeral=True)
 
     # /sync has been deprecated; use /reload sync=1 instead. There is negligible cost in running /reload, so just sync there when needed
-    # @commands.hybrid_command(name="sync", description=command_descriptions["sync"])
-    # @app_commands.guilds(Object(id=val_server), Object(debug_server))
+    # @commands.hybrid_command(name="sync", description=global_utils.command_descriptions["sync"])
+    # @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
     # async def sync(self, ctx: Context):
     #     """Add slash commands specific to this server. Only run this when commands are updated"""
-    #     if ctx.author.id != my_id:
+    #     if ctx.author.id != global_utils.my_id:
     #         await ctx.send(f'You do not have permission to use this command', ephemeral=True)
 
     #     async with ctx.typing(ephemeral=True):
@@ -68,10 +70,10 @@ class BizzyCommands(commands.Cog):
     #     await ctx.message.delete(delay=3)
     #     await m.delete(delay=3)
 
-    #     log(f"Bot commands synced for {ctx.guild.name}")
+    #     global_utils.log(f"Bot commands synced for {ctx.guild.name}")
 
-    @commands.hybrid_command(name="reload", description=command_descriptions["reload"])
-    @app_commands.guilds(Object(id=val_server), Object(debug_server))
+    @commands.hybrid_command(name="reload", description=global_utils.command_descriptions["reload"])
+    @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
     @app_commands.choices(
         sync=[
             app_commands.Choice(name="Sync", value=1),
@@ -82,7 +84,7 @@ class BizzyCommands(commands.Cog):
     )
     async def reload(self, ctx: Context, sync: int = 0):
         """Reload all cogs."""
-        if ctx.author.id != my_id:
+        if ctx.author.id != global_utils.my_id:
             content = f'{ctx.author.mention}You do not have permission to use this command'
             await ctx.response.send_message(content, ephemeral=True)
             return
@@ -92,9 +94,9 @@ class BizzyCommands(commands.Cog):
             right_now = (datetime.now().replace(
                 microsecond=0) + timedelta(seconds=5)).time()
 
-            premier_reminder_times[0] = est_to_utc(right_now)
+            global_utils.premier_reminder_times[0] = global_utils.est_to_utc(right_now)
 
-            await load_cogs(self.bot, reload=True)
+            await global_utils.load_cogs(self.bot, reload=True)
 
             message = "All cogs reloaded"
 
@@ -107,11 +109,11 @@ class BizzyCommands(commands.Cog):
         await ctx.message.delete(delay=3)
         await m.delete(delay=3)
 
-    @commands.hybrid_command(name="kill", description=command_descriptions["kill"])
-    @app_commands.guilds(Object(id=val_server), Object(debug_server))
+    @commands.hybrid_command(name="kill", description=global_utils.command_descriptions["kill"])
+    @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
     async def kill(self, ctx: Context, *, reason: str = "no reason given"):
         """Kill the bot."""
-        if not await has_permission(ctx.author.id, ctx):
+        if not await global_utils.has_permission(ctx.author.id, ctx):
             return
 
         m = await ctx.send(f'Goodbye cruel world!', ephemeral=True)
@@ -119,10 +121,10 @@ class BizzyCommands(commands.Cog):
         await ctx.message.delete(delay=3)
         await m.delete(delay=3)
 
-        log(f"Bot killed. reason: {reason}")
+        global_utils.log(f"Bot killed. reason: {reason}")
 
         await self.bot.close()
 
 
 async def setup(bot):
-    await bot.add_cog(BizzyCommands(bot), guilds=[Object(val_server), Object(debug_server)])
+    await bot.add_cog(BizzyCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])

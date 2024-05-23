@@ -8,7 +8,7 @@ import asyncio
 import asyncpg
 import sys
 
-from my_utils import *
+from global_utils import global_utils
 
 
 class TasksCog(commands.Cog):
@@ -17,22 +17,22 @@ class TasksCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        # log("Tasks cog loaded")
+        # global_utils.log("Tasks cog loaded")
         self.eventreminders.add_exception_type(asyncpg.PostgresConnectionError)
         self.eventreminders.start()
         self.syncreminders.start()
         self.latest_log.start()
 
-    @tasks.loop(time=premier_reminder_times)
+    @tasks.loop(time=global_utils.premier_reminder_times)
     async def eventreminders(self):
-        """Send reminders for upcoming events"""
+        """Send global_utils.reminders for upcoming events"""
 
-        log("Checking for event reminders")
+        global_utils.log("Checking for event global_utils.reminders")
 
-        guild = self.bot.get_guild(val_server)
+        guild = self.bot.get_guild(global_utils.val_server)
         prem_events = guild.scheduled_events
 
-        debug_guild = self.bot.get_guild(debug_server)
+        debug_guild = self.bot.get_guild(global_utils.debug_server)
         debug_events = debug_guild.scheduled_events
 
         current_time = datetime.now(pytz.utc).time()
@@ -47,21 +47,21 @@ class TasksCog(commands.Cog):
                 continue
 
             g = event.guild
-            r = prem_role if g.id == val_server else debug_role
+            r = global_utils.prem_role if g.id == global_utils.val_server else global_utils.debug_role
             role = discord.utils.get(g.roles, name=r)
             subbed_users = []
             async for user in event.users():
                 subbed_users.append(user)
 
             start_time = event.start_time
-            current_time = datetime.now().astimezone(tz)
+            current_time = datetime.now().astimezone(global_utils.tz)
 
             time_remaining = (start_time - current_time).total_seconds()
 
-            reminder_messages = {premier_reminder_classes[0]: f"(reminder) {role.mention} {event.name} on _{event.description}_ has started (at {discord_local_time(start_time)}). JOIN THE VC!",
-                                 premier_reminder_classes[1]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 10 minutes (at {discord_local_time(start_time)})! JOIN THE VC!",
-                                 premier_reminder_classes[2]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 1 hour (at {discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
-                                 premier_reminder_classes[3]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is today at {discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
+            reminder_messages = {global_utils.premier_reminder_classes[0]: f"(reminder) {role.mention} {event.name} on _{event.description}_ has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!",
+                                 global_utils.premier_reminder_classes[1]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 10 minutes (at {global_utils.discord_local_time(start_time)})! JOIN THE VC!",
+                                 global_utils.premier_reminder_classes[2]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 1 hour (at {global_utils.discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
+                                 global_utils.premier_reminder_classes[3]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
 
             reminder_class = ""
             if time_remaining <= 0:  # allow this reminder until 30 minutes after the event has already started
@@ -81,9 +81,9 @@ class TasksCog(commands.Cog):
                 reminder_class = "day"
 
             if reminder_class != "":  # there is an event reminder to send
-                log_message = f"Posted '{reminder_class}' reminder for event: {event.name} on {event.description} starting at {start_time.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S')} EST"
+                log_message = f"Posted '{reminder_class}' reminder for event: {event.name} on {event.description} starting at {start_time.astimezone(global_utils.tz).strftime('%Y-%m-%d %H:%M:%S')} EST"
 
-                with open(last_log, "r") as file:
+                with open(global_utils.last_log, "r") as file:
                     log_contents = file.read()
 
                 if log_message in log_contents:  # if the reminder has already been posted, skip it
@@ -92,7 +92,7 @@ class TasksCog(commands.Cog):
                 message = reminder_messages[reminder_class]
 
                 channel = self.bot.get_channel(
-                    prem_channel) if g.id == val_server else self.bot.get_channel(debug_channel)
+                    global_utils.prem_channel) if g.id == global_utils.val_server else self.bot.get_channel(global_utils.debug_channel)
 
                 is_silent = True if len(
                     subbed_users) >= 5 and reminder_class == "hour" else False
@@ -108,7 +108,7 @@ class TasksCog(commands.Cog):
 
                 await channel.send(message, silent=is_silent)
 
-                log(log_message)
+                global_utils.log(log_message)
 
                 if len(subbed_users) > 0:
                     message = " RSVP'ed users: \n" + \
@@ -124,45 +124,40 @@ class TasksCog(commands.Cog):
     @tasks.loop(count=1)
     async def syncreminders(self):
         """Resync reminder timers in case the bot went offline """
-        global reminders
-
-        iterable = deepcopy(reminders)
+        iterable = deepcopy(global_utils.reminders)
 
         for server in iterable.keys():
             for time, message in iterable[server].items():
                 channel = self.bot.get_channel(
-                    prem_channel) if server == str(val_server) else self.bot.get_channel(debug_channel)
+                    global_utils.prem_channel) if server == str(global_utils.val_server) else self.bot.get_channel(global_utils.debug_channel)
 
                 time_dt = datetime.fromisoformat(time)
 
                 if time_dt < datetime.now():
-                    await channel.send(message + "\n(bot was offline when this reminder was supposed to go off at " + discord_local_time(time_dt) + ".")
-                    log("Bot missed a reminder during its downtime, but sent it now. Message: " + message)
-                    reminders[server].pop(time)
+                    await channel.send(message + "\n(bot was offline when this reminder was supposed to go off at " + global_utils.discord_local_time(time_dt) + ".")
+                    global_utils.log("Bot missed a reminder during its downtime, but sent it now. Message: " + message)
+                    global_utils.reminders[server].pop(time)
                 else:
                     await asyncio.sleep((time_dt - datetime.now()).total_seconds())
                     await channel.send(message)
-                    log("Posted reminder: " + message)
-                    reminders[server].pop(time)
+                    global_utils.log("Posted reminder: " + message)
+                    global_utils.reminders[server].pop(time)
 
-            save_reminders(reminders)
+            global_utils.save_reminders()
 
     # wait until 1 minute after midnight to start new log in case of delay
-    @tasks.loop(time=est_to_utc(time(hour=0, minute=1, second=0)))
+    @tasks.loop(time=global_utils.est_to_utc(time(hour=0, minute=1, second=0)))
     async def latest_log(self):
         """Create a new log file at midnight"""
-        global last_log
-        global last_log_date
-
         log_date = datetime.now().strftime("%Y-%m-%d")
 
         if log_date != last_log_date:
-            log("Starting new log file")
+            global_utils.log("Starting new log file")
             last_log_date = log_date
-            last_log = f"./logs/{last_log_date}_stdout.log"
+            global_utils.last_log = f"./logs/{last_log_date}_stdout.log"
             sys.stdout.close()
-            sys.stdout = open(last_log, 'a')
+            sys.stdout = open(global_utils.last_log, 'a')
 
 
 async def setup(bot):
-    await bot.add_cog(TasksCog(bot), guilds=[discord.Object(val_server), discord.Object(debug_server)])
+    await bot.add_cog(TasksCog(bot), guilds=[discord.Object(global_utils.val_server), discord.Object(global_utils.debug_server)])

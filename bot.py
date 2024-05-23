@@ -5,32 +5,27 @@ import asyncio
 from discord import Interaction, Intents, app_commands
 from discord.ext import commands
 
-from my_utils import *
-
-
-sys.stdout = open(last_log, 'a')
-# redirect stderr after connecting to discord to avoid spamming the error log with connection messages
+import global_utils
+from global_utils import global_utils
 
 bot = commands.Bot(command_prefix='!',
                    intents=Intents.all(), help_command=None)
 
-
 @bot.event
 async def on_ready():
-    global last_log_date
-    sys.stderr = open(f'./logs/{last_log_date}_stderr.log', 'a')
+    sys.stderr = open(f'./logs/{global_utils.last_log_date}_stderr.log', 'a')
 
-    log(f'Bot "{bot.user.name}" has connected to Discord. Starting log')
+    global_utils.log(f'Bot "{bot.user.name}" has connected to Discord. Starting log')
 
 
 @bot.tree.error
 async def on_app_command_error(interaction, error):
-    log(str(error))
+    global_utils.debug_log(str(error))
 
     if interaction.is_expired():
         raise error
 
-    if interaction.user.id == my_id:
+    if interaction.user.id == global_utils.my_id:
         await interaction.response.send_message(f"{error}", ephemeral=True)
     else:
         await interaction.response.send_message("An unexpected error occurred. Please notify Bizzy.", ephemeral=True)
@@ -38,17 +33,17 @@ async def on_app_command_error(interaction, error):
 
 @bot.event
 async def on_command_error(ctx, error):
-    log(str(error))
+    global_utils.debug_log(str(error))
 
-    if ctx.author.id == my_id:
+    if ctx.author.id == global_utils.my_id:
         await ctx.send(f"{error}")
     else:
         await ctx.send("An unexpected error occurred. Please notify Bizzy.")
 
 
 async def main():
-    await load_cogs(bot)
-    # await bot.start(bot_token)
+    await global_utils.load_cogs(bot)
+    # await bot.start(global_utils.bot_token)
 
 asyncio.run(main())
-bot.run(bot_token)
+bot.run(global_utils.bot_token)

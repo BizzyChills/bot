@@ -3,7 +3,10 @@ from discord.ext import commands
 from discord import app_commands, Object
 import asyncio
 
-from my_utils import *
+from datetime import datetime, time, timedelta
+from pytz import utc
+
+from global_utils import global_utils
 
 
 class AdminPremierCommands(commands.Cog):
@@ -15,7 +18,7 @@ class AdminPremierCommands(commands.Cog):
         # print("AdminPremier cog loaded")
         pass
 
-    @app_commands.command(name="addevents", description=command_descriptions["addevents"])
+    @app_commands.command(name="addevents", description=global_utils.command_descriptions["addevents"])
     @app_commands.describe(
         map_list="The map order separated by commas (whitespace between maps does not matter). Ex: 'map1, map2, map3'",
         date="The date (mm/dd) of the Thursday that starts the first event. Events will be added for Thursday, Saturday, and Sunday."
@@ -24,8 +27,8 @@ class AdminPremierCommands(commands.Cog):
         """Add all premier events to the schedule"""
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
-        # don't need to send a message here, has_permission will do it
-        if not await has_permission(interaction.user.id, interaction):
+        # don't need to send a message here, global_utils.has_permission will do it
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
         guild = interaction.guild
@@ -35,12 +38,12 @@ class AdminPremierCommands(commands.Cog):
         new_maps = [m.strip().lower() for m in map_list.split(",")]
 
         for _map in new_maps:
-            if _map not in map_pool:
-                await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only add premier events. Ensure that {inline_code("map_list")} is formatted properly and that {inline_code("/mappool")} has been updated.', ephemeral=True)
+            if _map not in global_utils.map_pool:
+                await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only add premier events. Ensure that {global_utils.inline_code("map_list")} is formatted properly and that {global_utils.inline_code("/mappool")} has been updated.', ephemeral=True)
                 return
 
         try:
-            input_date = tz.localize(datetime.strptime(
+            input_date = global_utils.tz.localize(datetime.strptime(
                 date, "%m/%d").replace(year=datetime.now().year))
         except ValueError:
             await interaction.response.send_message(f'Invalid date format. Please provide a date in the format mm/dd (ex: "07/10" for July 10th)', ephemeral=True)
@@ -55,16 +58,16 @@ class AdminPremierCommands(commands.Cog):
         sat_time = (thur_time + timedelta(days=2)).replace(hour=23)
         sun_time = (thur_time + timedelta(days=3))
 
-        start_times = [tz.localize(d) for d in [thur_time, sat_time, sun_time]]
+        start_times = [global_utils.tz.localize(d) for d in [thur_time, sat_time, sun_time]]
 
         await interaction.response.defer(ephemeral=True, thinking=True)
 
         output = ""
 
-        now = tz.localize(datetime.now())
+        now = global_utils.tz.localize(datetime.now())
 
-        vc_object = discord.utils.get(guild.voice_channels, id=voice_channel) if interaction.guild.id == val_server else discord.utils.get(
-            guild.voice_channels, id=debug_voice)
+        vc_object = discord.utils.get(guild.voice_channels, id=global_utils.voice_channel) if interaction.guild.id == global_utils.val_server else discord.utils.get(
+            guild.voice_channels, id=global_utils.debug_voice)
 
         for i, _map in enumerate(new_maps):
             for j, start_time in enumerate(start_times):
@@ -87,13 +90,13 @@ class AdminPremierCommands(commands.Cog):
             start_times = [start_time + timedelta(days=7)
                            for start_time in start_times]
 
-        log(f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
+        global_utils.log(f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
         await interaction.followup.send(f'The Premier schedule has been created.\n{output}', ephemeral=True)
 
-    @app_commands.command(name="cancelevent", description=command_descriptions["cancelevent"])
+    @app_commands.command(name="cancelevent", description=global_utils.command_descriptions["cancelevent"])
     @app_commands.choices(
         _map=[
-            app_commands.Choice(name=s.title(), value=s) for s in map_pool] + [app_commands.Choice(name="playoffs", value="playoffs")],
+            app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_pool] + [app_commands.Choice(name="playoffs", value="playoffs")],
         all_events=[
             app_commands.Choice(name="(Optional) All", value=1),
         ]
@@ -105,10 +108,10 @@ class AdminPremierCommands(commands.Cog):
     async def cancelevent(self, interaction: discord.Interaction, _map: str, all_events: int = 0):
         """Cancel a premier event"""
 
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
-        if _map not in map_pool and _map != "playoffs":
+        if _map not in global_utils.map_pool and _map != "playoffs":
             await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only cancel premier events.', ephemeral=True)
             return
 
@@ -137,18 +140,18 @@ class AdminPremierCommands(commands.Cog):
                     message = f'All events on {_map.title()} have been cancelled'
 
         if message != "Event not found in the schedule.":
-            log(f'{interaction.user.display_name} cancelled event - {message}')
+            global_utils.log(f'{interaction.user.display_name} cancelled event - {message}')
 
         await interaction.followup.send(message)
 
-        log(f"{interaction.user.display_name} cancelled event - {message}")
+        global_utils.log(f"{interaction.user.display_name} cancelled event - {message}")
 
-    @app_commands.command(name="addpractices", description=command_descriptions["addpractices"])
+    @app_commands.command(name="addpractices", description=global_utils.command_descriptions["addpractices"])
     async def addpractices(self, interaction: discord.Interaction):
         """Add all practice events to the schedule"""
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
         guild = interaction.guild
@@ -158,21 +161,21 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(f'Please add the premier events first using the `/addevents` command', ephemeral=True)
             return
 
-        wed_hour = est_to_utc(time(hour=22)).hour
+        wed_hour = global_utils.est_to_utc(time(hour=22)).hour
         fri_hour = wed_hour + 1
 
         await interaction.response.defer(ephemeral=True, thinking=True)
 
         for event in events:
-            if event.start_time.astimezone(tz).weekday() != 3 or "Premier" not in event.name:
+            if event.start_time.astimezone(global_utils.tz).weekday() != 3 or "Premier" not in event.name:
                 continue
 
-            wed_time = fri_time = event.start_time.astimezone(pytz.utc)
+            wed_time = fri_time = event.start_time.astimezone(utc)
             wed_time = wed_time.replace(hour=wed_hour) - timedelta(days=1)
             fri_time = fri_time.replace(hour=fri_hour) + timedelta(days=1)
 
             for start_time in [wed_time, fri_time]:
-                if start_time < tz.localize(datetime.now()):
+                if start_time < global_utils.tz.localize(datetime.now()):
                     continue
 
                 event_name = "Premier Practice"
@@ -183,13 +186,13 @@ class AdminPremierCommands(commands.Cog):
                                                    timedelta(hours=1),
                                                    entity_type=discord.EntityType.voice, privacy_level=discord.PrivacyLevel.guild_only)
 
-        log(f'{interaction.user.display_name} has posted the premier practice schedule')
+        global_utils.log(f'{interaction.user.display_name} has posted the premier practice schedule')
         await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True)
 
-    @app_commands.command(name="cancelpractice", description=command_descriptions["cancelpractice"])
+    @app_commands.command(name="cancelpractice", description=global_utils.command_descriptions["cancelpractice"])
     @app_commands.choices(
         _map=[
-            app_commands.Choice(name=s.title(), value=s) for s in map_pool
+            app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_pool
         ],
         all_practices=[
             app_commands.Choice(name="(Optional) All", value=1),
@@ -202,11 +205,11 @@ class AdminPremierCommands(commands.Cog):
     async def cancelpractice(self, interaction: discord.Interaction, _map: str, all_practices: int = 0):
         """Cancel a practice event for the specified map"""
 
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
-        if _map not in map_pool:
-            await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only cancel premier events. Ensure that {inline_code("/mappool")} is updated.', ephemeral=True)
+        if _map not in global_utils.map_pool:
+            await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only cancel premier events. Ensure that {global_utils.inline_code("/mappool")} is updated.', ephemeral=True)
             return
 
         await interaction.response.defer(ephemeral=True, thinking=True)
@@ -233,13 +236,13 @@ class AdminPremierCommands(commands.Cog):
                     message = f'All practices on {_map.title()} have been cancelled'
 
         if message != f"No practices found for {_map.title()} in the schedule.":
-            log(f'{interaction.user.display_name} cancelled practice: {message}')
+            global_utils.log(f'{interaction.user.display_name} cancelled practice: {message}')
 
         await interaction.followup.send(message)
 
-        log(f"{interaction.user.display_name} cancelled practice(s) - {message}")
+        global_utils.log(f"{interaction.user.display_name} cancelled practice(s) - {message}")
 
-    @app_commands.command(name="clearschedule", description=command_descriptions["clearschedule"])
+    @app_commands.command(name="clearschedule", description=global_utils.command_descriptions["clearschedule"])
     @app_commands.choices(
         confirm=[
             app_commands.Choice(
@@ -253,7 +256,7 @@ class AdminPremierCommands(commands.Cog):
         """Clear all premier and practice events from the schedule"""
         # confirm is automatically chcecked by discord, so we just need to ensure it is a required argument to "confirm"
 
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
         await interaction.response.defer(ephemeral=True, thinking=True)
@@ -269,13 +272,13 @@ class AdminPremierCommands(commands.Cog):
                 else:
                     await event.delete()
 
-        log(f'{interaction.user.display_name} has cleared the premier schedule')
+        global_utils.log(f'{interaction.user.display_name} has cleared the premier schedule')
         await interaction.followup.send(f'Cleared the premier schedule', ephemeral=True)
 
-    @app_commands.command(name="addnote", description=command_descriptions["addnote"])
+    @app_commands.command(name="addnote", description=global_utils.command_descriptions["addnote"])
     @app_commands.choices(
         _map=[
-            app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
+            app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
         ]
     )
     @app_commands.describe(
@@ -285,7 +288,7 @@ class AdminPremierCommands(commands.Cog):
     )
     async def addnote(self, interaction: discord.Interaction, _map: str, note_id: str, description: str):
         """Create a practice note from a pre-existing note message"""
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
         note_id = int(note_id)
@@ -295,25 +298,25 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(f'Message not found', ephemeral=True)
             return
 
-        if message.channel.id != notes_channel:
+        if message.channel.id != global_utils.notes_channel:
             await interaction.response.send_message(f'Invalid message ID. The message must be in the notes channel.', ephemeral=True)
             return
 
-        if _map not in practice_notes:
-            practice_notes[_map] = {}
+        if _map not in global_utils.practice_notes:
+            global_utils.practice_notes[_map] = {}
 
-        practice_notes[_map][note_id] = description
+        global_utils.practice_notes[_map][note_id] = description
 
-        save_notes(practice_notes)
+        global_utils.save_notes()
 
-        log(f'{interaction.user.display_name} has added a practice note. Note ID: {note_id}')
+        global_utils.log(f'{interaction.user.display_name} has added a practice note. Note ID: {note_id}')
 
         await interaction.response.send_message(f'Added a practice note for {_map.title()}. Access using `/notes {_map}`', ephemeral=True)
 
-    @app_commands.command(name="removenote", description=command_descriptions["removenote"])
+    @app_commands.command(name="removenote", description=global_utils.command_descriptions["removenote"])
     @app_commands.choices(
         _map=[
-            app_commands.Choice(name=s.title(), value=s) for s in map_preferences.keys()
+            app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
         ]
     )
     @app_commands.describe(
@@ -322,19 +325,19 @@ class AdminPremierCommands(commands.Cog):
     )
     async def removenote(self, interaction: discord.Interaction, _map: str, note_number: int = 0):
         """Remove a practice note from the notes list"""
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
-        if _map not in practice_notes or len(practice_notes[_map]) == 0:
+        if _map not in global_utils.practice_notes or len(global_utils.practice_notes[_map]) == 0:
             await interaction.response.send_message(f'No notes found for {_map.title()}', ephemeral=True)
             return
 
-        if note_number < 0 or note_number > len(practice_notes[_map]):
+        if note_number < 0 or note_number > len(global_utils.practice_notes[_map]):
             await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
             return
 
         if note_number == 0:
-            notes_list = practice_notes[_map]
+            notes_list = global_utils.practice_notes[_map]
             output = f'**Practice notes for _{_map.title()}_:**\n'
             for i, note_id in enumerate(notes_list.keys()):
                 output += f'- **Note {i+1}**: _{notes_list[note_id]}_\n'
@@ -342,13 +345,13 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(output, ephemeral=True)
             return
 
-        note_id = list(practice_notes[_map].keys())[note_number - 1]
-        practice_notes[_map].pop(note_id)
+        note_id = list(global_utils.practice_notes[_map].keys())[note_number - 1]
+        global_utils.practice_notes[_map].pop(note_id)
 
         await interaction.response.send_message(f'Removed a practice note for {_map.title()}', ephemeral=True)
 
-        save_notes(practice_notes)
-        log(f'{interaction.user.display_name} has removed a practice note. Note ID: {note_id}')
+        global_utils.save_notes()
+        global_utils.log(f'{interaction.user.display_name} has removed a practice note. Note ID: {note_id}')
 
 
 class AdminMessageCommands(commands.Cog):
@@ -360,7 +363,7 @@ class AdminMessageCommands(commands.Cog):
         # print("AdminManage cog loaded")
         pass
 
-    @app_commands.command(name="remind", description=command_descriptions["remind"])
+    @app_commands.command(name="remind", description=global_utils.command_descriptions["remind"])
     @app_commands.choices(
         unit=[
             app_commands.Choice(name="Hours", value="hours"),
@@ -376,7 +379,7 @@ class AdminMessageCommands(commands.Cog):
     async def remind(self, interaction: discord.Interaction, interval: int, unit: str, *, message: str):
         """Set a reminder for the target role"""
 
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
         if interval <= 0:
@@ -388,12 +391,12 @@ class AdminMessageCommands(commands.Cog):
         current_time = datetime.now()
 
         g = interaction.guild
-        if g.id == val_server:
-            r = prem_role
-            reminder_channel = self.bot.get_channel(prem_channel)
+        if g.id == global_utils.val_server:
+            r = global_utils.prem_role
+            reminder_channel = self.bot.get_channel(global_utils.prem_channel)
         else:
-            r = debug_role
-            reminder_channel = self.bot.get_channel(debug_channel)
+            r = global_utils.debug_role
+            reminder_channel = self.bot.get_channel(global_utils.debug_channel)
 
         role = discord.utils.get(g.roles, name=r)
 
@@ -416,28 +419,28 @@ class AdminMessageCommands(commands.Cog):
 
         dt_when = datetime.fromtimestamp(when.timestamp()).isoformat()
 
-        reminders[str(g.id)].update(
+        global_utils.reminders[str(g.id)].update(
             {dt_when: message})
 
-        save_reminders(reminders)
+        global_utils.save_reminders()
 
-        log(f"Saved a reminder from {interaction.user.display_name}: {output}")
+        global_utils.log(f"Saved a reminder from {interaction.user.display_name}: {output}")
 
         await asyncio.sleep(interval)
 
         await reminder_channel.send(message)
-        log(f"Posted a reminder from {interaction.user.display_name} for {role.name}: {message}")
+        global_utils.log(f"Posted a reminder from {interaction.user.display_name} for {role.name}: {message}")
 
-        reminders[str(g.id)].pop(dt_when)
-        save_reminders(reminders)
+        global_utils.reminders[str(g.id)].pop(dt_when)
+        global_utils.save_reminders()
 
-    @app_commands.command(name="pin", description=command_descriptions["pin"])
+    @app_commands.command(name="pin", description=global_utils.command_descriptions["pin"])
     @app_commands.describe(
         message_id="The ID of the message to pin"
     )
     async def pin(self, interaction: discord.Interaction, message_id: str):
         """Pin a message"""
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
         try:
@@ -449,15 +452,15 @@ class AdminMessageCommands(commands.Cog):
 
         await interaction.response.send_message(f'Message pinned', ephemeral=True)
 
-        log(f'{interaction.user.display_name} pinned message {message_id}')
+        global_utils.log(f'{interaction.user.display_name} pinned message {message_id}')
 
-    @app_commands.command(name="unpin", description=command_descriptions["unpin"])
+    @app_commands.command(name="unpin", description=global_utils.command_descriptions["unpin"])
     @app_commands.describe(
         message_id="The ID of the message to unpin"
     )
     async def unpin(self, interaction: discord.Interaction, message_id: str):
         """Unpin a message"""
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
         try:
@@ -469,15 +472,15 @@ class AdminMessageCommands(commands.Cog):
 
         await interaction.response.send_message(f'Message unpinned', ephemeral=True)
 
-        log(f'{interaction.user.display_name} unpinned message {message_id}')
+        global_utils.log(f'{interaction.user.display_name} unpinned message {message_id}')
 
-    @app_commands.command(name="deletemessage", description=command_descriptions["deletemessage"])
+    @app_commands.command(name="deletemessage", description=global_utils.command_descriptions["deletemessage"])
     @app_commands.describe(
         message_id="The ID of the message to delete"
     )
     async def deletemessage(self, interaction: discord.Interaction, message_id: str):
         """Delete a message by ID"""
-        if not await has_permission(interaction.user.id, interaction):
+        if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
         try:
@@ -488,9 +491,9 @@ class AdminMessageCommands(commands.Cog):
 
         await interaction.response.send_message(f'Message deleted', ephemeral=True)
 
-        log(f'{interaction.user.display_name} deleted message {message_id}')
+        global_utils.log(f'{interaction.user.display_name} deleted message {message_id}')
 
 
 async def setup(bot):
-    await bot.add_cog(AdminPremierCommands(bot), guilds=[Object(val_server), Object(debug_server)])
-    await bot.add_cog(AdminMessageCommands(bot), guilds=[Object(val_server), Object(debug_server)])
+    await bot.add_cog(AdminPremierCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])
+    await bot.add_cog(AdminMessageCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])

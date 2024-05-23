@@ -152,92 +152,93 @@ def convert_to_json():
         save_reminders(reminders)
 
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-last_log_date = datetime.now().strftime("%Y-%m-%d")
-if not os.path.exists('logs'):
-    os.makedirs('logs')
+try: # hacky way to avoid reinitializing variables when importing this module
+    last_log + ""
+except NameError:
+    last_log_date = datetime.now().strftime("%Y-%m-%d")
 
-last_log = f"./logs/{last_log_date}_stdout.log"
-
-bot_token = "MTIxNzY0NjU0NDkxNzEwMjcwMw.GaY7e2.Z-YM3oT2Ts_zbZ8hs7N0zoEvhxqCMsSorzYzm8"
-
-debug_server = 1217649405759324232
-debug_channel = 1217649405759324235
-debug_voice = 1217649405759324236
-
-val_server = 1100632842528096330
-bot_channel = 1218420817394925668
-prem_channel = 1193661647752003614
-notes_channel = 1237971459461218376
-voice_channel = 1100632843174031476
-# no voice channel, these are the general channels the bot will be in. use specific channel checks for other uses
-all_channels = [debug_channel, bot_channel, prem_channel]
-
-my_id = 461265370813038633
-sam_id = 180107711806046208
-admin_ids = [my_id, sam_id]
+    last_log = f"./logs/{last_log_date}_stdout.log"
 
 
-debug_role = "southern"
-prem_role = "The Valorats"
+    bot_token = "MTIxNzY0NjU0NDkxNzEwMjcwMw.GaY7e2.Z-YM3oT2Ts_zbZ8hs7N0zoEvhxqCMsSorzYzm8"
 
-tz = pytz.timezone("US/Eastern")
+    debug_server = 1217649405759324232
+    debug_channel = 1217649405759324235
+    debug_voice = 1217649405759324236
 
-# debug, 5 seconds from right now to trigger the eventreminders task on startup
-right_now = (datetime.now().replace(
-    microsecond=0) + timedelta(seconds=5)).time()
+    val_server = 1100632842528096330
+    bot_channel = 1218420817394925668
+    prem_channel = 1193661647752003614
+    notes_channel = 1237971459461218376
+    voice_channel = 1100632843174031476
+    # no voice channel, these are the general channels the bot will be in. use specific channel checks for other uses
+    all_channels = [debug_channel, bot_channel, prem_channel]
 
-premier_reminder_times = [  # add 2 seconds to each time to ensure time_remaining logic works
-    right_now,  # debug,
-    time(hour=19, second=2),  # 3 hours before for thur and sun
-    time(hour=20, second=2),  # 3 hours before for sat
-
-    time(hour=21, second=2),  # 1 hour before for thur and sun
-    time(hour=21, minute=50, second=2),  # 10 minutes before for thur and sun
-    # right on time for thur and sun AND 1 hour before for sat
-    time(hour=22, second=2),
-    time(hour=22, minute=50, second=2),  # 10 minutes before for sat
-
-    time(hour=23, second=2)  # right on time for sat
-]
+    my_id = 461265370813038633
+    sam_id = 180107711806046208
+    admin_ids = [my_id, sam_id]
 
 
-premier_reminder_times = [est_to_utc(t) for t in premier_reminder_times]
+    debug_role = "southern"
+    prem_role = "The Valorats"
 
-premier_reminder_classes = ["start", "prestart", "hour", "day"]
+    tz = pytz.timezone("US/Eastern")
 
-map_pool = get_pool()
-map_preferences = get_prefrences()
-map_weights = get_weights()
-reminders = get_reminders()
-practice_notes = get_notes()
+    # debug, 5 seconds from right now to trigger the eventreminders task on startup
+    right_now = (datetime.now().replace(
+        microsecond=0) + timedelta(seconds=5)).time()
 
-command_descriptions = {
-    "commands": "Display this message",
-    "schedule": "Display the premier event and practice schedules",
-    "mappool_common": "Display the current competitive map pool",
-    "mappool_admin": "Modify the map pool",
-    "notes": "Display a practice note from the notes channel. Leave note_id blank to display all options",
-    "prefermap": "Declare your preference for a map to play for premier playoffs",
-    "mapvotes": "Display each member's map preferences",
-    "mapweights": "Display the total weights for each map in the map pool",
-    "hello": "Say hello",
-    "feed": "Feed the bot",
-    "unfeed": "Unfeed the bot",
-    "remind": "Set a reminder for the premier role",
-    "addevents": "Add all premier events to the schedule",
-    "addpractices": "Add all premier practices to the schedule (a map must still have a Thursday event to add practices)",
-    "cancelevent": "Cancel a premier map for today/all days",
-    "cancelpractice": "Cancel a premier practice for today/all days",
-    "clearschedule": "Clear the schedule of all premier events AND practices",
-    "addnote": "Add a reference/link to a practice note in the notes channel",
-    "removenote": "Remove a reference/link to practice note in the notes channel (this does not delete the note itself)",
-    "pin": "Pin a message",
-    "unpin": "Unpin a message",
-    # "clearslash": "Clear all slash commands", # /clearslash has been deprecated; I couldn't think of a use case for it that couldn't be done by removing the bot from the server.
-    "clear": "(debug only) clear the debug channel",
-    "deletemessage": "Delete a message by ID",
-    # "sync": "Update the slash commands (ensure that they have been initialized first)", # deprecated. use /reload sync=1 instead
-    "reload": "Reload the bot's cogs",
-    "kill": "Kill the bot",
-}
+    premier_reminder_times = [  # add 2 seconds to each time to ensure time_remaining logic works
+        right_now,  # debug,
+        time(hour=19, second=2),  # 3 hours before for thur and sun
+        time(hour=20, second=2),  # 3 hours before for sat
+
+        time(hour=21, second=2),  # 1 hour before for thur and sun
+        time(hour=21, minute=50, second=2),  # 10 minutes before for thur and sun
+        # right on time for thur and sun AND 1 hour before for sat
+        time(hour=22, second=2),
+        time(hour=22, minute=50, second=2),  # 10 minutes before for sat
+
+        time(hour=23, second=2)  # right on time for sat
+    ]
+
+
+    premier_reminder_times = [est_to_utc(t) for t in premier_reminder_times]
+
+    premier_reminder_classes = ["start", "prestart", "hour", "day"]
+
+    map_pool = get_pool()
+    map_preferences = get_prefrences()
+    map_weights = get_weights()
+    reminders = get_reminders()
+    practice_notes = get_notes()
+
+    command_descriptions = {
+        "commands": "Display this message",
+        "schedule": "Display the premier event and practice schedules",
+        "mappool_common": "Display the current competitive map pool",
+        "mappool_admin": "Modify the map pool",
+        "notes": "Display a practice note from the notes channel. Leave note_id blank to display all options",
+        "prefermap": "Declare your preference for a map to play for premier playoffs",
+        "mapvotes": "Display each member's map preferences",
+        "mapweights": "Display the total weights for each map in the map pool",
+        "hello": "Say hello",
+        "feed": "Feed the bot",
+        "unfeed": "Unfeed the bot",
+        "remind": "Set a reminder for the premier role",
+        "addevents": "Add all premier events to the schedule",
+        "addpractices": "Add all premier practices to the schedule (a map must still have a Thursday event to add practices)",
+        "cancelevent": "Cancel a premier map for today/all days",
+        "cancelpractice": "Cancel a premier practice for today/all days",
+        "clearschedule": "Clear the schedule of all premier events AND practices",
+        "addnote": "Add a reference/link to a practice note in the notes channel",
+        "removenote": "Remove a reference/link to practice note in the notes channel (this does not delete the note itself)",
+        "pin": "Pin a message",
+        "unpin": "Unpin a message",
+        # "clearslash": "Clear all slash commands", # /clearslash has been deprecated; I couldn't think of a use case for it that couldn't be done by removing the bot from the server.
+        "clear": "(debug only) clear the debug channel",
+        "deletemessage": "Delete a message by ID",
+        # "sync": "Update the slash commands (ensure that they have been initialized first)", # deprecated. use /reload sync=1 instead
+        "reload": "Reload the bot's cogs",
+        "kill": "Kill the bot",
+    }
