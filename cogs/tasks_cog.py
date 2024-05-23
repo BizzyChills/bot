@@ -25,9 +25,9 @@ class TasksCog(commands.Cog):
 
     @tasks.loop(time=global_utils.premier_reminder_times)
     async def eventreminders(self):
-        """Send global_utils.reminders for upcoming events"""
+        """Send reminders for upcoming events"""
 
-        global_utils.log("Checking for event global_utils.reminders")
+        global_utils.log("Checking for event reminders")
 
         guild = self.bot.get_guild(global_utils.val_server)
         prem_events = guild.scheduled_events
