@@ -5,7 +5,6 @@ import asyncio
 from discord import Interaction, Intents, app_commands
 from discord.ext import commands
 
-import global_utils
 from global_utils import global_utils
 
 bot = commands.Bot(command_prefix='!',
