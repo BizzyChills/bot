@@ -1,6 +1,6 @@
 from discord import app_commands, Interaction, Object
 from discord.ext import commands
-import random
+from random import choice
 
 from global_utils import global_utils
 
@@ -32,7 +32,7 @@ class UselessCommands(commands.Cog):
 
         options = ["pukes", "poops", "performs own liposuction"]
 
-        option = options[random.randint(0, len(options) - 1)]
+        option = choice(options)
 
         await interaction.response.send_message(f'\*looks at you with a deadpan expression\* ... \*{option}\*', ephemeral=True)
 

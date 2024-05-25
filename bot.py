@@ -16,6 +16,14 @@ async def on_ready():
 
     global_utils.log(f'Bot "{bot.user.name}" has connected to Discord. Starting log')
 
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+    if message.guild is None: # don't use bot commands in DMs
+        await message.reply("I can't respond to messages in DMs. Please use my slash commands in the server.")
+        return
+
 
 @bot.tree.error
 async def on_app_command_error(interaction, error):
