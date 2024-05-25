@@ -24,7 +24,17 @@ class AdminPremierCommands(commands.Cog):
         date="The date (mm/dd) of the Thursday that starts the first event. Events will be added for Thursday, Saturday, and Sunday."
     )
     async def addevents(self, interaction: discord.Interaction, map_list: str, date: str):
-        """Add all premier events to the schedule"""
+        """[command] Adds all premier events to the schedule at a rate of 5 events/minute
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        map_list : str
+            The season's map order separated by commas (whitespace between maps does not matter). Ex: 'map1, map2, map3'
+        date : str
+            The date (mm/dd) of the Thursday that starts the first event. Events will be added for Thursday, Saturday, and Sunday.
+        """
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
         # don't need to send a message here, global_utils.has_permission will do it
@@ -106,7 +116,17 @@ class AdminPremierCommands(commands.Cog):
         all_events="Cancel all events for the specified map"
     )
     async def cancelevent(self, interaction: discord.Interaction, _map: str, all_events: int = 0):
-        """Cancel a premier event"""
+        """[command] Cancels the next premier event (or all events on a map). It's important to note that events are not practices.
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        _map : str
+            The map to cancel the closest event for
+        all_events : int, optional
+            Treated as a boolean, whether to cancel all events for the specified map, by default 0
+        """
 
         if not await global_utils.has_permission(interaction.user.id, interaction):
             return
@@ -148,7 +168,13 @@ class AdminPremierCommands(commands.Cog):
 
     @app_commands.command(name="addpractices", description=global_utils.command_descriptions["addpractices"])
     async def addpractices(self, interaction: discord.Interaction):
-        """Add all practice events to the schedule"""
+        """[command] Adds all premier practice events to the schedule at a rate of 5 practices/minute. Ensure that the premier events have been added first using /addevents
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
         if not await global_utils.has_permission(interaction.user.id, interaction):
@@ -203,7 +229,17 @@ class AdminPremierCommands(commands.Cog):
         all_practices="Cancel all events for the specified map"
     )
     async def cancelpractice(self, interaction: discord.Interaction, _map: str, all_practices: int = 0):
-        """Cancel a practice event for the specified map"""
+        """[command] Cancels the next premier practice event (or all practices on a map)
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        _map : str
+            The map to cancel the next practice for
+        all_practices : int, optional
+            Treated as a boolean, whether to cancel all practices for the specified map, by default 0
+        """
 
         if not await global_utils.has_permission(interaction.user.id, interaction):
             return
@@ -253,7 +289,15 @@ class AdminPremierCommands(commands.Cog):
         confirm='Confirm clear. Note: This will clear all events with "Premier" in the name.'
     )
     async def clearschedule(self, interaction: discord.Interaction, confirm: str):
-        """Clear all premier and practice events from the schedule"""
+        """[command] Clears the premier schedule (by deleting all events with "Premier" in the name)
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        confirm : str
+            Confrims the schedule clear (discord indirectly ensures the user has confirmed this by requiring the argument to be present)
+        """
         # confirm is automatically chcecked by discord, so we just need to ensure it is a required argument to "confirm"
 
         if not await global_utils.has_permission(interaction.user.id, interaction):
@@ -287,7 +331,19 @@ class AdminPremierCommands(commands.Cog):
         description="Provide a short description of the note. Used to identify the note when using /notes"
     )
     async def addnote(self, interaction: discord.Interaction, _map: str, note_id: str, description: str):
-        """Create a practice note from a pre-existing note message"""
+        """[command] Creates a "symbolic" link/reference to a practice note for the specified map (used to reference notes in the notes channel)
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        _map : str
+            The map to add a note for
+        note_id : str
+            The message ID of the note to add a reference to
+        description : str
+            The description of the note. Used to easily identify this note when using /notes
+        """
         if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
@@ -324,7 +380,17 @@ class AdminPremierCommands(commands.Cog):
         note_number="The note number to remove (1-indexed). Leave empty to see options."
     )
     async def removenote(self, interaction: discord.Interaction, _map: str, note_number: int = 0):
-        """Remove a practice note from the notes list"""
+        """[command] Removes a practice note reference for the specified map (this does not remove the original message)
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        _map : str
+            The map to remove the note reference from
+        note_number : int, optional
+            The note number to remove (1-indexed). Leave empty/0 to see options, by default 0
+        """
         if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
@@ -377,7 +443,19 @@ class AdminMessageCommands(commands.Cog):
         message="The reminder message to send to the premier role"
     )
     async def remind(self, interaction: discord.Interaction, interval: int, unit: str, *, message: str):
-        """Set a reminder for the target role"""
+        """[command] Sends a reminder to the premier role (and in the premier channel) after a specified interval
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        interval : int
+            The number of units to wait for the reminder
+        unit : str
+            The unit of time associated with the interval (hours, minutes, seconds)
+        message : str
+            The reminder message to send to the premier role
+        """
 
         if not await global_utils.has_permission(interaction.user.id, interaction):
             return
@@ -439,7 +517,15 @@ class AdminMessageCommands(commands.Cog):
         message_id="The ID of the message to pin"
     )
     async def pin(self, interaction: discord.Interaction, message_id: str):
-        """Pin a message"""
+        """[command] Pins a message by ID
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        message_id : str
+            The ID of the message to pin
+        """
         if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
@@ -459,7 +545,15 @@ class AdminMessageCommands(commands.Cog):
         message_id="The ID of the message to unpin"
     )
     async def unpin(self, interaction: discord.Interaction, message_id: str):
-        """Unpin a message"""
+        """[command] Unpins a message by ID
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        message_id : str
+            The ID of the message to unpin
+        """
         if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
@@ -479,7 +573,15 @@ class AdminMessageCommands(commands.Cog):
         message_id="The ID of the message to delete"
     )
     async def deletemessage(self, interaction: discord.Interaction, message_id: str):
-        """Delete a message by ID"""
+        """[command] Deletes a message by ID
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        message_id : str
+            The ID of the message to delete
+        """
         if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 

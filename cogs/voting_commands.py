@@ -32,7 +32,17 @@ class VotingCommands(commands.Cog):
         preference="Your preference for the map"
     )
     async def prefermap(self, interaction: discord.Interaction, _map: str, preference: str):
-        """Declare a preference for a map to play for premier playoffs"""
+        """[command] Declares a preference for a map to play in premier playoffs
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        _map : str
+            The map to mark with a preference
+        preference : str
+            The preference value for the map
+        """
 
         output = ""
         preference_decoder = {"+": "Like", "~": "Neutral", "-": "Dislike"}
@@ -77,7 +87,15 @@ class VotingCommands(commands.Cog):
         announce="Show the output of the command to everyone when used in the premier channel"
     )
     async def mapvotes(self, interaction: discord.Interaction, announce: int = 0):
-        """Display the map votes for each user"""
+        """[command] Displays each user's preferences for each map in the map pool
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        announce : int, optional
+            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+        """
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
         role = global_utils.prem_role if interaction.guild.id == global_utils.val_server else global_utils.debug_role
@@ -117,7 +135,15 @@ class VotingCommands(commands.Cog):
         announce="Show the output of the command to everyone (only in the premier channel)"
     )
     async def mapweights(self, interaction: discord.Interaction, announce: int = 0):
-        """Display the sorted map weights"""
+        """[command] Displays the weights of each map in the map pool based on user preferences
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        announce : int, optional
+            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+        """
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
         output = ""

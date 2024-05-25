@@ -27,7 +27,17 @@ class BotCog(commands.Cog):
         announce="Whether to allow others to see the returned command list in the channel (only in bot channel)"
     )
     async def commands(self, interaction: Interaction, shorten: int = 0, announce: int = 0):
-        """Displays all bot commands."""
+        """[command] Displays all bot commands
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The interaction object that initiated the command
+        shorten : int, optional
+            Treated as a boolean, determines whether to display the full list of commands or a shortened list, by default 0
+        announce : int, optional
+            Treated as a boolean, determines whether to announce the output when used in the bot channel, by default 0
+        """
         ephem = interaction.channel.id not in [
             global_utils.debug_channel, global_utils.bot_channel] or not announce
 

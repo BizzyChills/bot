@@ -24,7 +24,15 @@ class InfoCommands(commands.Cog):
         announce="Show the output of the command to everyone (only used in the premier channel)"
     )
     async def schedule(self, interaction: Interaction, announce: int = 0):
-        """Display the premier schedule"""
+        """[command] Displays the premier schedule from server events
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The interaction object that initiated the command
+        announce : int, optional
+            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+        """
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
         events = interaction.guild.scheduled_events
@@ -83,7 +91,19 @@ class InfoCommands(commands.Cog):
         announce="Show the output of the command to everyone (only used in the premier channel)"
     )
     async def mappool(self, interaction: Interaction, action: str = "", _map: str = "", announce: int = 0):
-        """Add or remove maps from the map pool"""
+        """[command] Adds/removes maps from the map pool or display the map pool
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The interaction object that initiated the command
+        action : str, optional
+            The action to take on the map pool (ADMIN ONLY), by default ""
+        _map : str, optional
+            The map to add or remove (ADMIN ONLY), by default ""
+        announce : int, optional
+            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+        """
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
         if action == "" and _map == "":  # display the map pool
@@ -147,7 +167,19 @@ class InfoCommands(commands.Cog):
         announce="Return the note so that it is visible to everyone (only in notes channel)"
     )
     async def notes(self, interaction: Interaction, _map: str, note_number: int = 0, announce: int = 0):
-        """Display a practice note for a map"""
+        """[command] Displays practice notes for a map
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The interaction object that initiated the command
+        _map : str
+            The map to display the note for
+        note_number : int, optional
+            The note number to display (1-indexed). Leaving this empty will show all options, by default 0
+        announce : int, optional
+            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+        """
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
         # user gave a valid map, but there are no notes for it

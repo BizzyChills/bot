@@ -25,7 +25,7 @@ class TasksCog(commands.Cog):
 
     @tasks.loop(time=global_utils.premier_reminder_times)
     async def eventreminders(self):
-        """Send reminders for upcoming events"""
+        """(task) Sends reminders for upcoming events near starting times of West Coast premier events"""
 
         global_utils.log("Checking for event reminders")
 
@@ -123,7 +123,7 @@ class TasksCog(commands.Cog):
 
     @tasks.loop(count=1)
     async def syncreminders(self):
-        """Resync reminder timers in case the bot went offline """
+        """(task) Resyncs reminder timers in case the bot went offline with reminders still in the queue"""
         iterable = deepcopy(global_utils.reminders)
 
         for server in iterable.keys():
@@ -148,7 +148,7 @@ class TasksCog(commands.Cog):
     # wait until 1 minute after midnight to start new log in case of delay
     @tasks.loop(time=global_utils.est_to_utc(time(hour=0, minute=1, second=0)))
     async def latest_log(self):
-        """Create a new log file at midnight"""
+        """Creates a new log file at midnight and updates the logger to write to the new file"""
         log_date = datetime.now().strftime("%Y-%m-%d")
 
         if log_date != last_log_date:

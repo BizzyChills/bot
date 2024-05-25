@@ -16,19 +16,37 @@ class UselessCommands(commands.Cog):
 
     @app_commands.command(name="hello", description=global_utils.command_descriptions["hello"])
     async def hello(self, interaction: Interaction):
-        """Says hello"""
+        """[command] Says hello to the bot
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
 
         await interaction.response.send_message(f'Hello {interaction.user.mention}!', ephemeral=True)
 
     @app_commands.command(name="feed", description=global_utils.command_descriptions["feed"])
     async def feed(self, interaction: Interaction):
-        """Feed the bot"""
+        """[command] Feeds the bot
+        
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
 
         await interaction.response.send_message("Yum yum! Thanks for the food!", ephemeral=True)
 
     @app_commands.command(name="unfeed", description=global_utils.command_descriptions["unfeed"])
     async def unfeed(self, interaction: Interaction):
-        """Unfeed the bot"""
+        """[command] Unfeeds the bot
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
 
         options = ["pukes", "poops", "performs own liposuction"]
 

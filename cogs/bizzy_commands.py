@@ -17,15 +17,32 @@ class BizzyCommands(commands.Cog):
         # print("Bizzy cog loaded")
         pass
 
-    async def sync_commands(self, guild_id: int = global_utils.debug_server):
-        """Sync the commands with the discord API"""
+    async def sync_commands(self, guild_id: int = global_utils.debug_server) -> int:
+        """Syncs the bot's app commands within the given guild
+
+        Parameters
+        ----------
+        guild_id : int, optional
+            The guild ID to sync the commands in, by default debug_server
+
+        Returns
+        -------
+        int
+            The number of commands synced
+        """
         synced = await self.bot.tree.sync(guild=Object(id=guild_id))
         return synced
 
     # only available in the debug server
     @app_commands.command(name="clear", description=global_utils.command_descriptions["clear"])
     async def clear(self, interaction: Interaction):
-        """clear the debug channel"""
+        """[command] Clears the calling channel in the debug server
+
+        Parameters
+        ----------
+        interaction : Interaction
+            The interaction object that initiated the command
+        """
         if interaction.guild.id != global_utils.debug_server:
             await interaction.response.send_message(
                 "This command is not available in this server", ephemeral=True)
@@ -38,7 +55,13 @@ class BizzyCommands(commands.Cog):
     # /clearslash has been deprecated; I couldn't think of a use case for it that couldn't be done by removing the bot from the server.
     # @app_commands.command(name="clearslash", description=global_utils.command_descriptions["clearslash"])
     # async def clearslash(self, interaction: Interaction):
-    #     """Clear all slash commands in the calling server"""
+    #     """[command] Clears all of the bot's slash commands in the calling server
+
+    #     Parameters
+    #     ----------
+    #     interaction : discord.Interaction
+    #         The interaction object that initiated the command
+    #     """
     #     if interaction.user.id != global_utils.my_id:
     #         await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
     #         return
@@ -57,7 +80,13 @@ class BizzyCommands(commands.Cog):
     # @commands.hybrid_command(name="sync", description=global_utils.command_descriptions["sync"])
     # @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
     # async def sync(self, ctx: Context):
-    #     """Add slash commands specific to this server. Only run this when commands are updated"""
+    #     """[command] Syncs the bot's app commands in the calling server
+
+    #     Parameters
+    #     ----------
+    #     ctx : discord.Context
+    #         The context object that initiated the command
+    #     """
     #     if ctx.author.id != global_utils.my_id:
     #         await ctx.send(f'You do not have permission to use this command', ephemeral=True)
 
@@ -83,7 +112,15 @@ class BizzyCommands(commands.Cog):
         sync="Sync commands after reloading"
     )
     async def reload(self, ctx: Context, sync: int = 0):
-        """Reload all cogs."""
+        """[command] Reloads all cogs in the bot
+
+        Parameters
+        ----------
+        ctx : discord.Context
+            The context object that initiated the command
+        sync : int, optional
+            Treated as a boolean, determines whether to sync the commands after reloading, by default 0
+        """
         if ctx.author.id != global_utils.my_id:
             content = f'{ctx.author.mention}You do not have permission to use this command'
             await ctx.response.send_message(content, ephemeral=True)
@@ -112,7 +149,15 @@ class BizzyCommands(commands.Cog):
     @commands.hybrid_command(name="kill", description=global_utils.command_descriptions["kill"])
     @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
     async def kill(self, ctx: Context, *, reason: str = "no reason given"):
-        """Kill the bot."""
+        """[command] Kills the bot (shutdown)
+
+        Parameters
+        ----------
+        ctx : discord.Context
+            The context object that initiated the command
+        reason : str, optional
+            The reason for killing the bot, by default "no reason given"
+        """
         if not await global_utils.has_permission(ctx.author.id, ctx):
             return
 
