@@ -108,14 +108,18 @@ class AdminPremierCommands(commands.Cog):
         _map=[
             app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_pool] + [app_commands.Choice(name="playoffs", value="playoffs")],
         all_events=[
-            app_commands.Choice(name="(Optional) All", value=1),
+            app_commands.Choice(name="All events on selected map", value=1),
+        ],
+        announce=[
+            app_commands.Choice(name="Yes", value=1),
         ]
     )
     @app_commands.describe(
         _map="The map to cancel the closest event for",
-        all_events="Cancel all events for the specified map"
+        all_events="Cancel all events for the specified map",
+        announce="Announce the cancellation when used in the premier channel"
     )
-    async def cancelevent(self, interaction: discord.Interaction, _map: str, all_events: int = 0):
+    async def cancelevent(self, interaction: discord.Interaction, _map: str, all_events: int = 0, announce: int = 0):
         """[command] Cancels the next premier event (or all events on a map). It's important to note that events are not practices.
 
         Parameters
@@ -126,6 +130,8 @@ class AdminPremierCommands(commands.Cog):
             The map to cancel the closest event for
         all_events : int, optional
             Treated as a boolean, whether to cancel all events for the specified map, by default 0
+        announce : int, optional
+            Treated as a boolean, whether to announce the cancellation when used in the premier channel, by default 0
         """
 
         if not await global_utils.has_permission(interaction.user.id, interaction):
@@ -138,7 +144,9 @@ class AdminPremierCommands(commands.Cog):
         guild = interaction.guild
         events = guild.scheduled_events
 
-        await interaction.response.defer(ephemeral=True, thinking=True)
+        ephem = interaction.channel.id != global_utils.prem_channel or not announce
+
+        await interaction.response.defer(ephemeral=ephem, thinking=True)
         message = "Event not found in the schedule."
 
         for event in events:
@@ -162,7 +170,7 @@ class AdminPremierCommands(commands.Cog):
         if message != "Event not found in the schedule.":
             global_utils.log(f'{interaction.user.display_name} cancelled event - {message}')
 
-        await interaction.followup.send(message)
+        await interaction.followup.send(message, ephemeral=ephem)
 
         global_utils.log(f"{interaction.user.display_name} cancelled event - {message}")
 
@@ -221,14 +229,18 @@ class AdminPremierCommands(commands.Cog):
             app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_pool
         ],
         all_practices=[
-            app_commands.Choice(name="(Optional) All", value=1),
+            app_commands.Choice(name="All practices on selected map", value=1),
+        ],
+        announce=[
+            app_commands.Choice(name="Yes", value=1),
         ]
     )
     @app_commands.describe(
         _map="The map to cancel the next practice for",
-        all_practices="Cancel all events for the specified map"
+        all_practices="Cancel all events for the specified map",
+        announce="Announce the cancellation when used in the premier channel"
     )
-    async def cancelpractice(self, interaction: discord.Interaction, _map: str, all_practices: int = 0):
+    async def cancelpractice(self, interaction: discord.Interaction, _map: str, all_practices: int = 0, announce: int = 0):
         """[command] Cancels the next premier practice event (or all practices on a map)
 
         Parameters
@@ -239,6 +251,8 @@ class AdminPremierCommands(commands.Cog):
             The map to cancel the next practice for
         all_practices : int, optional
             Treated as a boolean, whether to cancel all practices for the specified map, by default 0
+        announce : int, optional
+            Treated as a boolean, whether to announce the cancellation when used in the premier channel, by default 0
         """
 
         if not await global_utils.has_permission(interaction.user.id, interaction):
@@ -248,10 +262,12 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only cancel premier events. Ensure that {global_utils.inline_code("/mappool")} is updated.', ephemeral=True)
             return
 
-        await interaction.response.defer(ephemeral=True, thinking=True)
         guild = interaction.guild
         events = guild.scheduled_events
 
+        ephem = interaction.channel.id != global_utils.prem_channel or not announce
+        
+        await interaction.response.defer(ephemeral=ephem, thinking=True)
         message = f"No practices found for {_map.title()} in the schedule."
 
         for event in events:
@@ -274,7 +290,7 @@ class AdminPremierCommands(commands.Cog):
         if message != f"No practices found for {_map.title()} in the schedule.":
             global_utils.log(f'{interaction.user.display_name} cancelled practice: {message}')
 
-        await interaction.followup.send(message)
+        await interaction.followup.send(message, ephemeral=ephem)
 
         global_utils.log(f"{interaction.user.display_name} cancelled practice(s) - {message}")
 
@@ -283,12 +299,16 @@ class AdminPremierCommands(commands.Cog):
         confirm=[
             app_commands.Choice(
                 name="I acknowledge all events with 'Premier' in the name will be deleted.", value="confirm"),
+        ],
+        announce=[
+            app_commands.Choice(name="Yes", value=1),
         ]
     )
     @app_commands.describe(
-        confirm='Confirm clear. Note: This will clear all events with "Premier" in the name.'
+        confirm='Confirm clear. Note: This will clear all events with "Premier" in the name.',
+        announce="Announce that the schedule has been cleared when used in the premier channel"
     )
-    async def clearschedule(self, interaction: discord.Interaction, confirm: str):
+    async def clearschedule(self, interaction: discord.Interaction, confirm: str, announce: int = 0):
         """[command] Clears the premier schedule (by deleting all events with "Premier" in the name)
 
         Parameters
@@ -297,13 +317,17 @@ class AdminPremierCommands(commands.Cog):
             The interaction object that initiated the command
         confirm : str
             Confrims the schedule clear (discord indirectly ensures the user has confirmed this by requiring the argument to be present)
+        announce : int, optional
+            Treated as a boolean, whether to announce the schedule clear when used in the premier channel, by default 0
         """
         # confirm is automatically chcecked by discord, so we just need to ensure it is a required argument to "confirm"
 
         if not await global_utils.has_permission(interaction.user.id, interaction):
             return
 
-        await interaction.response.defer(ephemeral=True, thinking=True)
+        ephem = interaction.channel.id != global_utils.prem_channel or not announce
+
+        await interaction.response.defer(ephemeral=ephem, thinking=True)
         guild = interaction.guild
         events = guild.scheduled_events
 
@@ -317,7 +341,7 @@ class AdminPremierCommands(commands.Cog):
                     await event.delete()
 
         global_utils.log(f'{interaction.user.display_name} has cleared the premier schedule')
-        await interaction.followup.send(f'Cleared the premier schedule', ephemeral=True)
+        await interaction.followup.send(f'Cleared the premier schedule', ephemeral=ephem)
 
     @app_commands.command(name="addnote", description=global_utils.command_descriptions["addnote"])
     @app_commands.choices(
