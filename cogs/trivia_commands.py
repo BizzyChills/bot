@@ -18,7 +18,6 @@ class TriviaCommands(commands.Cog):
     async def on_ready(self):
         # print("Trivia cog loaded")
         pass
-    
 
     def setup_trivia(self) -> dict:
         """Sets up the trivia questions for the trivia game
@@ -130,7 +129,6 @@ class TriviaCommands(commands.Cog):
                 "answer": "Isaiah"
             })
         
-        global_utils.debug_log(str(questions))
         questions = sample(questions, len(questions)) # shuffle the questions
 
             
