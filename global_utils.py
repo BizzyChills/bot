@@ -15,7 +15,6 @@ class Utils:
             os.makedirs('logs')
 
 
-
         self.last_log_date = datetime.now().strftime("%Y-%m-%d")
         self.last_log = f'./logs/{self.last_log_date}_stdout.log'
         sys.stdout = open(self.last_log, 'a')
@@ -80,6 +79,7 @@ class Utils:
             "hello": "Say hello",
             "feed": "Feed the bot",
             "unfeed": "Unfeed the bot",
+            "trivia": "Play a game of trivia with the bot to earn a prize!",
             "remind": "Set a reminder for the premier role",
             "addevents": "Add all premier events to the schedule",
             "addpractices": "Add all premier practices to the schedule (a map must still have a Thursday event to add practices)",
@@ -177,7 +177,10 @@ class Utils:
             if file.endswith('.py'):
                 f = f'cogs.{file[:-3]}'
                 if reload:
-                    await bot.reload_extension(f)
+                    try:
+                        await bot.reload_extension(f)
+                    except commands.ExtensionNotLoaded: # reload argument is just to make things faster. if the cog isn't already loaded (new cog), just load it.
+                        await bot.load_extension(f)
                 else:
                     await bot.load_extension(f)
 

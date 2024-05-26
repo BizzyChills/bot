@@ -16,13 +16,15 @@ async def on_ready():
 
     global_utils.log(f'Bot "{bot.user.name}" has connected to Discord. Starting log')
 
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-    if message.guild is None: # don't use bot commands in DMs
-        await message.reply("I can't respond to messages in DMs. Please use my slash commands in the server.")
-        return
+# @bot.event
+# async def on_message(message):
+#     if message.author == bot.user:
+#         return
+#     if message.guild is None: # don't use bot commands in DMs
+#         await message.reply("I can't respond to messages in DMs. Please use my slash commands in the server.")
+#         return
+    
+#     await bot.process_commands(message)
 
 
 @bot.tree.error
@@ -35,7 +37,9 @@ async def on_app_command_error(interaction, error):
     if interaction.user.id == global_utils.my_id:
         await interaction.response.send_message(f"{error}", ephemeral=True)
     else:
-        await interaction.response.send_message("An unexpected error occurred. Please notify Bizzy.", ephemeral=True)
+        m = await interaction.response.send_message("An unexpected error occurred. Please notify Bizzy.", ephemeral=True)
+        await m.delete(delay=5)
+        await interaction.message.delete(delay=5)
 
 
 @bot.event
@@ -45,7 +49,9 @@ async def on_command_error(ctx, error):
     if ctx.author.id == global_utils.my_id:
         await ctx.send(f"{error}")
     else:
-        await ctx.send("An unexpected error occurred. Please notify Bizzy.")
+        m = await ctx.send("An unexpected error occurred. Please notify Bizzy.")
+        await m.delete(delay=5)
+        await ctx.message.delete(delay=5)
 
 
 async def main():
