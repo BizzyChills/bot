@@ -81,6 +81,7 @@ class BotCog(commands.Cog):
 
         useless_commands = [f"- {global_utils.bold('MISC')}:",
                             f" - {global_utils.inline_code('/hello')}",
+                            f" - {global_utils.inline_code('/trivia')}",
                             f" - {global_utils.inline_code('/feed')}",
                             f" - {global_utils.inline_code('/unfeed')}",]
 
