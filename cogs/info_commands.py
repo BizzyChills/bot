@@ -13,6 +13,40 @@ class InfoCommands(commands.Cog):
     async def on_ready(self):
         # print("Info cog loaded")
         pass
+    
+    def format_schedule(self, schedule: list, header: str = None):
+        """Formats the schedule for display in Discord
+
+        Parameters
+        ----------
+        schedule : list
+            The schedule to format. This should be a list of tuples with the following structure: [(event_display_string, event_datetime, event_map), ...]
+        header : str, optional
+            The header to display at the top of the schedule, by default None
+
+        Returns
+        -------
+        str
+            The formatted schedule
+        """
+        schedule = sorted(schedule, key=lambda x: x[1])
+
+        subsections = {entry[2]: [] for entry in schedule}
+
+        for m in schedule:
+            map_name = m[2]
+            event_display = m[0] # just use variables for readability
+
+            subsections[map_name].append(event_display)
+
+        output = ""
+        for map_name, event_displays in subsections.items():
+            subheader = f"- {global_utils.style_text(map_name, 'iU')}:"
+            event_displays = " - " + '\n - '.join(event_displays)
+            
+            output += f"{subheader}\n{event_displays}\n"
+
+        return f"{header}\n{output}" if header else output
 
     @app_commands.command(name="schedule", description=global_utils.command_descriptions["schedule"])
     @app_commands.choices(
@@ -37,31 +71,33 @@ class InfoCommands(commands.Cog):
 
         events = interaction.guild.scheduled_events
 
-        event_header = "**Upcoming Premier Events:**"
-        practice_header = "\n\n**Upcoming Premier Practices:**"
+        event_header = f"{global_utils.bold('Upcoming Premier Events:')}"
+        practice_header = f"\n\n{global_utils.bold('Upcoming Premier Practices:')}"
         message = []
         practice_message = []
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
         for event in events:
+            map_name = event.description if "playoffs" not in event.name.lower(
+            ) else "Playoffs"
+
             if "premier practice" in event.name.lower():
                 practice_message.append(
-                    (f" - {global_utils.discord_local_time(event.start_time, _datetime=True)}", event.start_time, event.description))
+                    (f"{global_utils.discord_local_time(event.start_time, _datetime=True)}", event.start_time, map_name))
             elif "premier" in event.name.lower():
-                desc = "Playoffs" if "playoffs" in event.name.lower() else event.description
                 message.append(
-                    (f" - {global_utils.discord_local_time(event.start_time, _datetime=True)}", event.start_time, desc))
+                    (f"{global_utils.discord_local_time(event.start_time, _datetime=True)}", event.start_time, map_name))
 
         if message == []:
-            message = "**No premier events scheduled**"
+            message = f"{global_utils.bold('No premier events scheduled')}"
         else:
-            message = global_utils.format_schedule(message, event_header)
+            message = self.format_schedule(message, event_header)
 
         if practice_message == []:
-            practice_message = "\n\n**No premier practices scheduled**"
+            practice_message = f"\n\n{global_utils.bold('No premier practices scheduled')}"
         else:
-            practice_message = global_utils.format_schedule(
+            practice_message = self.format_schedule(
                 practice_message, practice_header)
 
         message += practice_message
@@ -182,24 +218,24 @@ class InfoCommands(commands.Cog):
         """
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
-        # user gave a valid map, but there are no notes for it
         if _map not in global_utils.practice_notes or len(global_utils.practice_notes[_map]) == 0:
-            await interaction.response.send_message(f'There are no notes for {_map.title()}', ephemeral=True)
+            await interaction.response.send_message(f'No notes found for {_map.title()}', ephemeral=True)
             return
 
         if note_number < 0 or note_number > len(global_utils.practice_notes[_map]):
             await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
             return
 
-        await interaction.response.defer(ephemeral=ephem, thinking=True)
-
         if note_number == 0:
             notes_list = global_utils.practice_notes[_map]
-            output = f'**Practice notes for _{_map.title()}_:**\n'
+            output = global_utils.bold("Practice notes for ")
+            output += global_utils.style_text(_map.title(), "ib") + ":\n"
             for i, note_id in enumerate(notes_list.keys()):
-                output += f'- **Note {i+1}**: _{notes_list[note_id]}_\n'
+                note_number = f"Note {i+1}"
+                note_desc = notes_list[note_id]
+                output += f'- {global_utils.bold(note_number)}: {global_utils.italics(note_desc)}\n'
 
-            await interaction.followup.send(output, ephemeral=True)
+            await interaction.response.send_message(output, ephemeral=True)
             return
 
         note_id = list(global_utils.practice_notes[_map].keys())[note_number - 1]
