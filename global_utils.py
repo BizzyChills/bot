@@ -19,7 +19,10 @@ class Utils:
         self.last_log = f'./logs/{self.last_log_date}_stdout.log'
         sys.stdout = open(self.last_log, 'a')
 
-        self.bot_token = "MTIxNzY0NjU0NDkxNzEwMjcwMw.GaY7e2.Z-YM3oT2Ts_zbZ8hs7N0zoEvhxqCMsSorzYzm8"
+        self.bot_token = os.getenv("DISCORD_BOT_TOKEN")
+
+        if not self.bot_token:
+            raise ValueError("DISCORD_BOT_TOKEN is not set in the environment variables")
 
         self.debug_server = 1217649405759324232
         self.debug_role = "southern"
@@ -90,66 +93,142 @@ class Utils:
             "removenote": "Remove a reference/link to practice note in the notes channel (this does not delete the note itself)",
             "pin": "Pin a message",
             "unpin": "Unpin a message",
-            # "clearslash": "Clear all slash commands", # /clearslash has been deprecated; I couldn't think of a use case for it that couldn't be done by removing the bot from the server.
             "clear": "(debug only) clear the debug channel",
             "deletemessage": "Delete a message by ID",
-            # "sync": "Update the slash commands (ensure that they have been initialized first)", # deprecated. use /reload sync=1 instead
             "reload": "Reload the bot's cogs",
             "kill": "Kill the bot",
         }
 
     
     def get_pool(self):
+        """Extracts the map pool from the map_pool.txt file
+
+        Returns
+        -------
+        list
+            A list of strings containing the maps in the current map pool
+        """
         with open("./local_storage/map_pool.txt", "r") as file:
             return file.read().splitlines()
     
     def save_pool(self):
+        """Saves any changes to the map pool during runtime to the map_pool.txt file
+        """
         with open("./local_storage/map_pool.txt", "w") as file:
             file.write("\n".join(self.map_pool))
     
     def get_preferences(self):
+        """Extracts the map preferences from the map_preferences.json file
+
+        Returns
+        -------
+        dict
+            A 2D dictionary containing with the following structure: {map: {user_id: weight}}
+        """
         with open("./local_storage/map_preferences.json", "r") as file:
             return json.load(file)
         
     def save_preferences(self):
+        """Saves any changes to the map preferences during runtime to the map_preferences.json file
+        """
         with open("./local_storage/map_preferences.json", "w") as file:
             json.dump(self.map_preferences, file)
     
     def get_weights(self):
+        """Extracts the map weights from the map_weights.json file
+
+        Returns
+        -------
+        dict
+            A dictionary containing the weights for each map in the current map pool
+        """
         with open("./local_storage/map_weights.json", "r") as file:
             return json.load(file)
 
     def save_weights(self):
+        """Saves any changes to the map weights during runtime to the map_weights.json file
+        """
         with open("./local_storage/map_weights.json", "w") as file:
             json.dump(self.map_weights, file)
 
     def get_reminders(self):
+        """Extracts the reminders from the reminders.json file
+
+        Returns
+        -------
+        dict
+            A 2D dictionary containing with the following structure: {guild_id: {reminder_time: reminder_message}}
+        """
         with open("./local_storage/reminders.json", "r") as file:
             return json.load(file)
 
     def save_reminders(self):
+        """Saves any changes to the reminders during runtime to the reminders.json file
+        """
         with open("./local_storage/reminders.json", "w") as file:
             json.dump(self.reminders, file)
 
     def get_notes(self):
+        """Extracts the practice notes from the notes.json file. This file does not actually contain the notes, but rather the message IDs of the notes in the notes channel.
+
+        Returns
+        -------
+        dict
+            A 2D dictionary containing with the following structure: {map: {note_message_id: note_description}}
+        """
         with open("./local_storage/notes.json", "r") as file:
             return json.load(file)
 
     def save_notes(self):
+        """Saves any changes to the practice notes during runtime to the notes.json file
+        """
         with open("./local_storage/notes.json", "w") as file:
             json.dump(self.notes, file)
 
     def est_to_utc(self, t: time):
+        """Converts an EST time to a UTC time
+
+        Parameters
+        ----------
+        t : time
+            The EST time to convert
+
+        Returns
+        -------
+        datetime.time
+            The converted, UTC time
+        """
         d = datetime.combine(datetime.today(), t)
         return self.tz.localize(d).astimezone(pytz.utc).time()
 
     def discord_local_time(self, time: datetime, _datetime=False):
+        """Converts a datetime object to a Discord-formatted local time string (shows the time in the user's local time zone)
+
+        Parameters
+        ----------
+        time : datetime
+            The datetime object to convert
+        _datetime : bool, optional
+            Whether to include the date in the formatted string, by default False
+
+        Returns
+        -------
+        str
+            The Discord-formatted local time string
+        """
         epoch_time = time.timestamp()
         style = "F" if _datetime else "t"  # F for full date and time
         formatted = f"<t:{str(int(epoch_time))}:{style}>"
         return formatted
 
     def log(self, message: str):
+        """Logs a message to the current stdout log file
+
+        Parameters
+        ----------
+        message : str
+            The message to log
+        """
         with open(self.last_log, 'a+') as file:
             if ("connected to Discord" in message):
                 prefix = "\n" if file.readline() != "" else ""
@@ -159,57 +238,155 @@ class Utils:
                 f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {message}\n')
 
     def debug_log(self, message: str):
+        """Logs a message to the debug log file
+
+        Parameters
+        ----------
+        message : str
+            The debug message to log
+        """
         with open("./local_storage/debug_log.txt", 'a') as file:
             file.write(
                 f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {message}\n')
 
     def italics(self, text: str):
+        """Formats text to be italicized in Discord
+
+        Parameters
+        ----------
+        text : str
+            The text to format
+
+        Returns
+        -------
+        str
+            The formatted text
+        """
         return f"_{text}_"
 
+    def underline(self, text: str):
+        """Formats text to be underlined in Discord
+
+        Parameters
+        ----------
+        text : str
+            The text to format
+
+        Returns
+        -------
+        str
+            The formatted text
+        """
+        return f"__{text}__"
+
     def bold(self, text: str):
+        """Formats text to be bold in Discord
+
+        Parameters
+        ----------
+        text : str
+            The text to format
+
+        Returns
+        -------
+        str
+            The formatted text
+        """
         return f"**{text}**"
 
     def inline_code(self, text: str):
+        """Formats text to be in an inline code block in Discord
+
+        Parameters
+        ----------
+        text : str
+            The text to format
+
+        Returns
+        -------
+        str
+            The formatted text
+        """
         return f"`{text}`"
 
-    async def load_cogs(self, bot: commands.Bot, reload=False):
+    def style_text(self, text: str, style: str):
+        """Formats text to a specified style in Discord
+
+        Parameters
+        ----------
+        text : str
+            The text to format
+        style : str
+            The style to apply to the text. Options are "(i)talics", "(u)nderline", "(b)old", or "(c)ode". 
+            
+            Just use the first letter of the style (case-insensitive and spaces are ignored). 
+            If a style character is not recognized, it will be ignored.
+
+        Returns
+        -------
+        str
+            The formatted text
+        """
+        style = style.replace(" ", "").lower() # easier to parse the style
+        style = set(style)
+
+        output = text
+
+        all_styles = {'i': self.italics, 'u': self.underline, 'b': self.bold, 'c': self.inline_code}
+
+        for s in style:
+            if s not in all_styles:
+                continue
+
+            output = all_styles[s](output)
+
+        return output
+
+    async def load_cogs(self, bot: commands.Bot):
+        """Load/reload all cogs in the cogs directory
+
+        Parameters
+        ----------
+        bot : commands.Bot
+            The bot object that the cogs will be loaded into
+        """
         for file in os.listdir('./cogs'):
             if file.endswith('.py'):
                 f = f'cogs.{file[:-3]}'
-                if reload:
-                    try:
-                        await bot.reload_extension(f)
-                    except commands.ExtensionNotLoaded: # reload argument is just to make things faster. if the cog isn't already loaded (new cog), just load it.
-                        await bot.load_extension(f)
-                else:
-                    await bot.load_extension(f)
-
-    def format_schedule(self, schedule: list, header: str = None):
-        schedule = sorted(schedule, key=lambda x: x[1])
-
-        subheaders = {m[2]: [] for m in schedule}
-
-        for m in schedule:
-            subheaders[m[2]].append(m[0])
-
-        schedule = [f"- ___{k}___:\n" +
-                    "\n".join(v) for k, v in subheaders.items()]
-        schedule = "\n".join(([header] + schedule)
-                            ) if header else "\n".join(schedule)
-
-        return schedule
+                try:
+                    await bot.reload_extension(f) # reload them if they're already loaded
+                except commands.ExtensionNotLoaded: # otherwise
+                    await bot.load_extension(f) # load them
 
     async def has_permission(self, id: int, ctx: commands.Context | Interaction):
-        """Check if caller has perms to use command. Only Sam or Bizzy can use commands that call this function."""
-        message = "You do not have permission to use this command"
-        if id not in self.admin_ids:
-            if type(ctx) == commands.Context:
-                await ctx.send(f'You do not have permission to use this command', ephemeral=True)
-            else:
-                await ctx.response.send_message(message, ephemeral=True)
-            return False
+        """Determines if the user is either Sam or Bizzy for use in admin commands
 
-        return True
+        Parameters
+        ----------
+        id : int
+            The user ID to check
+        ctx : commands.Context | Interaction
+            The context object that initiated the command. Used to notify the user that they don't have permission (and log the attempt).
+
+        Returns
+        -------
+        bool
+            Whether the user has permission to use the command
+        """
+        message = "You do not have permission to use this command"
+        
+        if id in self.admin_ids:
+            return True
+        
+        if type(ctx) == commands.Context:
+            await ctx.send(message, ephemeral=True)
+            command = ctx.invoked_with
+        else:
+            await ctx.response.send_message(message, ephemeral=True)
+            command = ctx.command.name
+        
+        self.log(f"User {id} attempted to use the admin command '{ctx.prefix}{command}'")
+        return False
     
 
 global_utils = Utils()
