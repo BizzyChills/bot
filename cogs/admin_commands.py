@@ -69,7 +69,8 @@ class AdminPremierCommands(commands.Cog):
         sat_time = (thur_time + timedelta(days=2)).replace(hour=23)
         sun_time = (thur_time + timedelta(days=3))
 
-        start_times = [global_utils.tz.localize(d) for d in [thur_time, sat_time, sun_time]]
+        start_times = [global_utils.tz.localize(
+            d) for d in [thur_time, sat_time, sun_time]]
 
         await interaction.response.defer(ephemeral=True, thinking=True)
 
@@ -101,7 +102,8 @@ class AdminPremierCommands(commands.Cog):
             start_times = [start_time + timedelta(days=7)
                            for start_time in start_times]
 
-        global_utils.log(f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
+        global_utils.log(
+            f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
         await interaction.followup.send(f'The Premier schedule has been created.\n{output}', ephemeral=True)
 
     @app_commands.command(name="cancelevent", description=global_utils.command_descriptions["cancelevent"])
@@ -169,11 +171,13 @@ class AdminPremierCommands(commands.Cog):
                     message = f'All events on {_map.title()} have been cancelled'
 
         if message != "Event not found in the schedule.":
-            global_utils.log(f'{interaction.user.display_name} cancelled event - {message}')
+            global_utils.log(
+                f'{interaction.user.display_name} cancelled event - {message}')
 
         await interaction.followup.send(message, ephemeral=ephem)
 
-        global_utils.log(f"{interaction.user.display_name} cancelled event - {message}")
+        global_utils.log(
+            f"{interaction.user.display_name} cancelled event - {message}")
 
     @app_commands.command(name="addpractices", description=global_utils.command_descriptions["addpractices"])
     async def addpractices(self, interaction: discord.Interaction):
@@ -221,7 +225,8 @@ class AdminPremierCommands(commands.Cog):
                                                    timedelta(hours=1),
                                                    entity_type=discord.EntityType.voice, privacy_level=discord.PrivacyLevel.guild_only)
 
-        global_utils.log(f'{interaction.user.display_name} has posted the premier practice schedule')
+        global_utils.log(
+            f'{interaction.user.display_name} has posted the premier practice schedule')
         await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True)
 
     @app_commands.command(name="cancelpractice", description=global_utils.command_descriptions["cancelpractice"])
@@ -267,7 +272,7 @@ class AdminPremierCommands(commands.Cog):
         events = guild.scheduled_events
 
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
-        
+
         await interaction.response.defer(ephemeral=ephem, thinking=True)
         message = f"No practices found for {_map.title()} in the schedule."
 
@@ -289,11 +294,13 @@ class AdminPremierCommands(commands.Cog):
                     message = f'All practices on {_map.title()} have been cancelled'
 
         if message != f"No practices found for {_map.title()} in the schedule.":
-            global_utils.log(f'{interaction.user.display_name} cancelled practice: {message}')
+            global_utils.log(
+                f'{interaction.user.display_name} cancelled practice: {message}')
 
         await interaction.followup.send(message, ephemeral=ephem)
 
-        global_utils.log(f"{interaction.user.display_name} cancelled practice(s) - {message}")
+        global_utils.log(
+            f"{interaction.user.display_name} cancelled practice(s) - {message}")
 
     @app_commands.command(name="clearschedule", description=global_utils.command_descriptions["clearschedule"])
     @app_commands.choices(
@@ -341,7 +348,8 @@ class AdminPremierCommands(commands.Cog):
                 else:
                     await event.delete()
 
-        global_utils.log(f'{interaction.user.display_name} has cleared the premier schedule')
+        global_utils.log(
+            f'{interaction.user.display_name} has cleared the premier schedule')
         await interaction.followup.send(f'Cleared the premier schedule', ephemeral=ephem)
 
     @app_commands.command(name="addnote", description=global_utils.command_descriptions["addnote"])
@@ -390,7 +398,8 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.save_notes()
 
-        global_utils.log(f'{interaction.user.display_name} has added a practice note. Note ID: {note_id}')
+        global_utils.log(
+            f'{interaction.user.display_name} has added a practice note. Note ID: {note_id}')
 
         await interaction.response.send_message(f'Added a practice note for {_map.title()}. Access using `/notes {_map}`', ephemeral=True)
 
@@ -439,13 +448,15 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(output, ephemeral=True)
             return
 
-        note_id = list(global_utils.practice_notes[_map].keys())[note_number - 1]
+        note_id = list(global_utils.practice_notes[_map].keys())[
+            note_number - 1]
         global_utils.practice_notes[_map].pop(note_id)
 
         await interaction.response.send_message(f'Removed a practice note for {_map.title()}', ephemeral=True)
 
         global_utils.save_notes()
-        global_utils.log(f'{interaction.user.display_name} has removed a practice note. Note ID: {note_id}')
+        global_utils.log(
+            f'{interaction.user.display_name} has removed a practice note. Note ID: {note_id}')
 
 
 class AdminMessageCommands(commands.Cog):
@@ -530,12 +541,14 @@ class AdminMessageCommands(commands.Cog):
 
         global_utils.save_reminders()
 
-        global_utils.log(f"Saved a reminder from {interaction.user.display_name}: {output}")
+        global_utils.log(
+            f"Saved a reminder from {interaction.user.display_name}: {output}")
 
         await asyncio.sleep(interval)
 
         await reminder_channel.send(message)
-        global_utils.log(f"Posted a reminder from {interaction.user.display_name} for {role.name}: {message}")
+        global_utils.log(
+            f"Posted a reminder from {interaction.user.display_name} for {role.name}: {message}")
 
         global_utils.reminders[str(g.id)].pop(dt_when)
         global_utils.save_reminders()
@@ -566,7 +579,8 @@ class AdminMessageCommands(commands.Cog):
 
         await interaction.response.send_message(f'Message pinned', ephemeral=True)
 
-        global_utils.log(f'{interaction.user.display_name} pinned message {message_id}')
+        global_utils.log(
+            f'{interaction.user.display_name} pinned message {message_id}')
 
     @app_commands.command(name="unpin", description=global_utils.command_descriptions["unpin"])
     @app_commands.describe(
@@ -594,7 +608,8 @@ class AdminMessageCommands(commands.Cog):
 
         await interaction.response.send_message(f'Message unpinned', ephemeral=True)
 
-        global_utils.log(f'{interaction.user.display_name} unpinned message {message_id}')
+        global_utils.log(
+            f'{interaction.user.display_name} unpinned message {message_id}')
 
     @app_commands.command(name="deletemessage", description=global_utils.command_descriptions["deletemessage"])
     @app_commands.describe(
@@ -621,9 +636,9 @@ class AdminMessageCommands(commands.Cog):
 
         await interaction.response.send_message(f'Message deleted', ephemeral=True)
 
-        global_utils.log(f'{interaction.user.display_name} deleted message {message_id}')
+        global_utils.log(
+            f'{interaction.user.display_name} deleted message {message_id}')
 
-    
     @commands.hybrid_command(name="kill", description=global_utils.command_descriptions["kill"])
     @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
     async def kill(self, ctx: Context, *, reason: str = "no reason given"):

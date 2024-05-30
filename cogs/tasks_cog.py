@@ -63,8 +63,9 @@ class TasksCog(commands.Cog):
                                  global_utils.premier_reminder_classes[1]: f"is starting in 10 minutes (at {global_utils.discord_local_time(start_time)})! JOIN THE VC!",
                                  global_utils.premier_reminder_classes[2]: f"is starting in 1 hour (at {global_utils.discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
                                  global_utils.premier_reminder_classes[3]: f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
-            
-            reminder_messages = {k: f"(reminder) {role.mention} {event.name} on {global_utils.italics(event.description)}" + v for k, v in reminder_messages.items()}
+
+            reminder_messages = {
+                k: f"(reminder) {role.mention} {event.name} on {global_utils.italics(event.description)}" + v for k, v in reminder_messages.items()}
 
             reminder_class = ""
             if time_remaining <= 0:  # allow this reminder until 30 minutes after the event has already started
@@ -115,8 +116,8 @@ class TasksCog(commands.Cog):
 
                 if len(subbed_users) > 0:
                     message = ("RSVP'ed users: \n"
-                        "- "
-                        "\n- ".join([user.mention for user in subbed_users]))
+                               "- "
+                               "\n- ".join([user.mention for user in subbed_users]))
                 else:
                     message = "No one has RSVP'ed yet."
 
@@ -135,19 +136,21 @@ class TasksCog(commands.Cog):
             channel = self.bot.get_channel(channel_id)
             now = datetime.now()
             before_time = now - timedelta(days=1)
-            after_time = now - timedelta(days=14) # bulk deletion only works for messages up to 14 days old
+            # bulk deletion only works for messages up to 14 days old
+            after_time = now - timedelta(days=14)
             # in case bot goes offline for a couple days, we can't just search for messages in the last 48 hours. If the bot is offline for over 14 days, oh well
-            
-            messages = [message async for message in channel.history(limit=None, before=before_time, after=after_time) if message.author == self.bot.user 
-                        and message.content.startswith("(reminder)") # bot prefixes all reminder messages with this
-                        and now - message.created_at > timedelta(days=1)] # only delete reminders that are at least 1 day old
+
+            messages = [message async for message in channel.history(limit=None, before=before_time, after=after_time) if message.author == self.bot.user
+                        # bot prefixes all reminder messages with this
+                        and message.content.startswith("(reminder)")
+                        and now - message.created_at > timedelta(days=1)]  # only delete reminders that are at least 1 day old
 
             if len(messages) == 0:
                 continue
 
             await channel.delete_messages(messages)
-            global_utils.log(f"Deleted {len(messages)} old reminder messages from {channel.name}")
-        
+            global_utils.log(
+                f"Deleted {len(messages)} old reminder messages from {channel.name}")
 
     @tasks.loop(count=1)
     async def syncreminders(self):
@@ -163,7 +166,8 @@ class TasksCog(commands.Cog):
 
                 if time_dt < datetime.now():
                     await channel.send(message + "\n(bot was offline when this reminder was supposed to go off at " + global_utils.discord_local_time(time_dt) + ".")
-                    global_utils.log("Bot missed a reminder during its downtime, but sent it now. Message: " + message)
+                    global_utils.log(
+                        "Bot missed a reminder during its downtime, but sent it now. Message: " + message)
                     global_utils.reminders[server].pop(time)
                 else:
                     await asyncio.sleep((time_dt - datetime.now()).total_seconds())

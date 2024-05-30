@@ -8,6 +8,7 @@ from asyncio import sleep, TimeoutError
 
 from global_utils import global_utils
 
+
 class TriviaCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -27,8 +28,8 @@ class TriviaCommands(commands.Cog):
         dict
             a dictionary of trivia questions and answers grouped as lists by easy/medium/hard with the following structure: {difficulty: [{question: answer}, ...]}
         """
-        questions ={
-            "easy":[
+        questions = {
+            "easy": [
                 {
                     "question": "How many agents are currently (05/25/24) in Valorant? (hint: some are hidden)",
                     "answer": "25"
@@ -50,7 +51,7 @@ class TriviaCommands(commands.Cog):
                     "answer": "Luna"
                 },
             ],
-            "medium":[
+            "medium": [
                 {
                     "question": 'What is the internal codename for the agent "Killjoy"?',
                     "answer": "Killjoy"
@@ -68,7 +69,7 @@ class TriviaCommands(commands.Cog):
                     "answer": "6"
                 },
             ],
-            "hard":[
+            "hard": [
                 {
                     "question": "What is Bizzy's favorite 2D effect, notably implemented in his Flappy Bird clone? (hint: It gets Bizzy very excited and is related to background elements)",
                     "answer": "Parallax"
@@ -92,9 +93,8 @@ class TriviaCommands(commands.Cog):
             ]
         }
 
-
         return questions
-    
+
     async def delayed_gratification(self, user: discord.User):
         """[command] Sends the prize message to the user after 5 minutes while taunting them with messages every minute until then
 
@@ -114,12 +114,11 @@ class TriviaCommands(commands.Cog):
         for taunt in taunts:
             await sleep(60)
             await user.send(taunt)
-        
+
         await user.send("Alright, I thought hard about my actions and I've decided to give you an actual prize. Here it is: \*gives you a pat on the back\* Congratulations!")
 
         await sleep(5)
         await user.send(f"Just kidding. Here is your actual prize, no foolin: {global_utils.inline_code('https://cs.indstate.edu/~cs60901/final/')}")
-        
 
     async def clear_dm(self, user: discord.User):
         """Clears the DMs between the bot and the user
@@ -135,7 +134,7 @@ class TriviaCommands(commands.Cog):
         async for message in user.dm_channel.history(limit=None):
             if message.author == self.bot.user:
                 await message.delete(delay=5)
-    
+
     async def trivia(self, user: discord.User):
         """[command] Plays a game of trivia with the user
 
@@ -147,21 +146,20 @@ class TriviaCommands(commands.Cog):
 
         await user.send((f"Welcome to trivia! You will have {global_utils.inline_code('10 seconds')} to answer each question.\n\n"
                          "Since I'm nice, I'll let you know that almost every answer can be found in the server (or with a simple Google search). Good luck!"
-                        ))
+                         ))
 
-        await sleep(10) # give the user time to read the message
+        await sleep(10)  # give the user time to read the message
 
-        questions = self.trivia_questions["easy"] + self.trivia_questions["medium"] + self.trivia_questions["hard"]
-        
-        if randint(0,4) == 3: # The prize for trivia is my name. 25% chance to troll the user by asking them my name lmao
+        questions = self.trivia_questions["easy"] + \
+            self.trivia_questions["medium"] + self.trivia_questions["hard"]
+
+        if randint(0, 4) == 3:  # The prize for trivia is my name. 25% chance to troll the user by asking them my name lmao
             questions.append({
                 "question": "What is Bizzy's name?",
                 "answer": "Isaiah"
             })
-        
-        questions = sample(questions, len(questions)) # shuffle the questions
 
-            
+        questions = sample(questions, len(questions))  # shuffle the questions
 
         for i in range(len(questions)):
             question_header = global_utils.bold(f"Question {i + 1}:\n")
@@ -180,13 +178,13 @@ class TriviaCommands(commands.Cog):
                     await user.send("Awwww, you tried. Go back to the server and use /trivia to try again")
                 else:
                     await user.send(f"Incorrect. Go back to the server and use {global_utils.inline_code('/trivia')} to try again (yes this is intentionally tedious)")
-                
+
                 return await self.clear_dm(user)
-            
+
         await user.send(f"Congratulations, you win! Here is your prize: \*{global_utils.italics('gives you a pat on the back')}\*")
-        
+
         await self.delayed_gratification(user)
-        
+
     @app_commands.command(name="trivia", description=global_utils.command_descriptions["trivia"])
     async def trivia_help(self, interaction: discord.Interaction):
         """[command] Simply imforms the user to use the text command !trivia so that the Context object can be used to message multiple times
@@ -199,7 +197,6 @@ class TriviaCommands(commands.Cog):
         user = interaction.user
         await interaction.response.send_message("Please open the DM with the bot to play trivia. It may take a few minutes to start.", ephemeral=True)
         await self.trivia(user)
-
 
 
 async def setup(bot):

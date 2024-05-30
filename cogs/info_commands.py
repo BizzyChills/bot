@@ -13,7 +13,7 @@ class InfoCommands(commands.Cog):
     async def on_ready(self):
         # print("Info cog loaded")
         pass
-    
+
     def format_schedule(self, schedule: list, header: str = None):
         """Formats the schedule for display in Discord
 
@@ -35,7 +35,7 @@ class InfoCommands(commands.Cog):
 
         for m in schedule:
             map_name = m[2]
-            event_display = m[0] # just use variables for readability
+            event_display = m[0]  # just use variables for readability
 
             subsections[map_name].append(event_display)
 
@@ -43,7 +43,7 @@ class InfoCommands(commands.Cog):
         for map_name, event_displays in subsections.items():
             subheader = f"- {global_utils.style_text(map_name, 'iU')}:"
             event_displays = " - " + '\n - '.join(event_displays)
-            
+
             output += f"{subheader}\n{event_displays}\n"
 
         return f"{header}\n{output}" if header else output
@@ -238,7 +238,8 @@ class InfoCommands(commands.Cog):
             await interaction.response.send_message(output, ephemeral=True)
             return
 
-        note_id = list(global_utils.practice_notes[_map].keys())[note_number - 1]
+        note_id = list(global_utils.practice_notes[_map].keys())[
+            note_number - 1]
         try:
             note = await interaction.channel.fetch_message(int(note_id))
         except errors.NotFound:

@@ -131,9 +131,10 @@ class BizzyCommands(commands.Cog):
             right_now = (datetime.now().replace(
                 microsecond=0) + timedelta(seconds=5)).time()
 
-            global_utils.premier_reminder_times[0] = global_utils.est_to_utc(right_now)
+            global_utils.premier_reminder_times[0] = global_utils.est_to_utc(
+                right_now)
 
-            await global_utils.load_cogs(self.bot) # also *re*loads the cogs
+            await global_utils.load_cogs(self.bot)  # also *re*loads the cogs
 
             message = "All cogs reloaded"
 

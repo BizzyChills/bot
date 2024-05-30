@@ -72,7 +72,8 @@ class VotingCommands(commands.Cog):
 
         await interaction.response.send_message(output, ephemeral=True)
 
-        global_utils.log(f'{interaction.user.name} marked {_map.title()} with a preference of "{preference_decoder[preference]}"')
+        global_utils.log(
+            f'{interaction.user.name} marked {_map.title()} with a preference of "{preference_decoder[preference]}"')
 
         global_utils.save_preferences()
         global_utils.save_weights()
@@ -109,7 +110,8 @@ class VotingCommands(commands.Cog):
             body = ""
             for user in all_users:
                 if str(user.id) in global_utils.map_preferences[_map]:
-                    encoded_weight = global_utils.map_preferences[_map][str(user.id)]
+                    encoded_weight = global_utils.map_preferences[_map][str(
+                        user.id)]
                     weight = {"+": "Like", "~": "Neutral",
                               "-": "Dislike"}[encoded_weight]
 

@@ -8,12 +8,12 @@ import pytz
 from discord import Interaction  # reduce bloat, only for type hints
 from discord.ext import commands
 
+
 class Utils:
     def __init__(self):
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         if not os.path.exists('logs'):
             os.makedirs('logs')
-
 
         self.last_log_date = datetime.now().strftime("%Y-%m-%d")
         self.last_log = f'./logs/{self.last_log_date}_stdout.log'
@@ -22,7 +22,8 @@ class Utils:
         self.bot_token = os.getenv("DISCORD_BOT_TOKEN")
 
         if not self.bot_token:
-            raise ValueError("DISCORD_BOT_TOKEN is not set in the environment variables")
+            raise ValueError(
+                "DISCORD_BOT_TOKEN is not set in the environment variables")
 
         self.debug_server = 1217649405759324232
         self.debug_role = "southern"
@@ -36,7 +37,8 @@ class Utils:
         self.notes_channel = 1237971459461218376
         self.voice_channel = 1100632843174031476
         # no voice channel, these are the general channels the bot will be in. use specific channel checks for other uses
-        self.all_channels = [self.debug_channel, self.bot_channel, self.prem_channel]
+        self.all_channels = [self.debug_channel,
+                             self.bot_channel, self.prem_channel]
 
         self.my_id = 461265370813038633
         self.sam_id = 180107711806046208
@@ -44,7 +46,8 @@ class Utils:
 
         self.tz = pytz.timezone("US/Eastern")
 
-        right_now = (datetime.now().replace(microsecond=0) + timedelta(seconds=5)).time()
+        right_now = (datetime.now().replace(
+            microsecond=0) + timedelta(seconds=5)).time()
         self.premier_reminder_times = [  # add 2 seconds to each time to ensure time_remaining logic works
             right_now,  # debug,
             time(hour=19, second=2),  # 3 hours before for thur and sun
@@ -60,7 +63,8 @@ class Utils:
             time(hour=23, second=2)  # right on time for sat
         ]
 
-        self.premier_reminder_times = [self.est_to_utc(t) for t in self.premier_reminder_times]
+        self.premier_reminder_times = [self.est_to_utc(
+            t) for t in self.premier_reminder_times]
 
         self.premier_reminder_classes = ["start", "prestart", "hour", "day"]
 
@@ -99,7 +103,6 @@ class Utils:
             "kill": "Kill the bot",
         }
 
-    
     def get_pool(self):
         """Extracts the map pool from the map_pool.txt file
 
@@ -110,13 +113,13 @@ class Utils:
         """
         with open("./local_storage/map_pool.txt", "r") as file:
             return file.read().splitlines()
-    
+
     def save_pool(self):
         """Saves any changes to the map pool during runtime to the map_pool.txt file
         """
         with open("./local_storage/map_pool.txt", "w") as file:
             file.write("\n".join(self.map_pool))
-    
+
     def get_preferences(self):
         """Extracts the map preferences from the map_preferences.json file
 
@@ -127,13 +130,13 @@ class Utils:
         """
         with open("./local_storage/map_preferences.json", "r") as file:
             return json.load(file)
-        
+
     def save_preferences(self):
         """Saves any changes to the map preferences during runtime to the map_preferences.json file
         """
         with open("./local_storage/map_preferences.json", "w") as file:
             json.dump(self.map_preferences, file)
-    
+
     def get_weights(self):
         """Extracts the map weights from the map_weights.json file
 
@@ -318,7 +321,7 @@ class Utils:
             The text to format
         style : str
             The style to apply to the text. Options are "(i)talics", "(u)nderline", "(b)old", or "(c)ode". 
-            
+
             Just use the first letter of the style (case-insensitive and spaces are ignored). 
             If a style character is not recognized, it will be ignored.
 
@@ -327,12 +330,13 @@ class Utils:
         str
             The formatted text
         """
-        style = style.replace(" ", "").lower() # easier to parse the style
+        style = style.replace(" ", "").lower()  # easier to parse the style
         style = set(style)
 
         output = text
 
-        all_styles = {'i': self.italics, 'u': self.underline, 'b': self.bold, 'c': self.inline_code}
+        all_styles = {'i': self.italics, 'u': self.underline,
+                      'b': self.bold, 'c': self.inline_code}
 
         for s in style:
             if s not in all_styles:
@@ -354,9 +358,10 @@ class Utils:
             if file.endswith('.py'):
                 f = f'cogs.{file[:-3]}'
                 try:
-                    await bot.reload_extension(f) # reload them if they're already loaded
-                except commands.ExtensionNotLoaded: # otherwise
-                    await bot.load_extension(f) # load them
+                    # reload them if they're already loaded
+                    await bot.reload_extension(f)
+                except commands.ExtensionNotLoaded:  # otherwise
+                    await bot.load_extension(f)  # load them
 
     async def has_permission(self, id: int, ctx: commands.Context | Interaction):
         """Determines if the user is either Sam or Bizzy for use in admin commands
@@ -374,19 +379,20 @@ class Utils:
             Whether the user has permission to use the command
         """
         message = "You do not have permission to use this command"
-        
+
         if id in self.admin_ids:
             return True
-        
+
         if type(ctx) == commands.Context:
             await ctx.send(message, ephemeral=True)
             command = ctx.invoked_with
         else:
             await ctx.response.send_message(message, ephemeral=True)
             command = ctx.command.name
-        
-        self.log(f"User {id} attempted to use the admin command '{ctx.prefix}{command}'")
+
+        self.log(
+            f"User {id} attempted to use the admin command '{ctx.prefix}{command}'")
         return False
-    
+
 
 global_utils = Utils()

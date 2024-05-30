@@ -29,7 +29,7 @@ class UselessCommands(commands.Cog):
     @app_commands.command(name="feed", description=global_utils.command_descriptions["feed"])
     async def feed(self, interaction: Interaction):
         """[command] Feeds the bot
-        
+
         Parameters
         ----------
         interaction : discord.Interaction

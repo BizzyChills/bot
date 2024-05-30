@@ -1,4 +1,3 @@
-import os
 import sys
 import asyncio
 
@@ -11,13 +10,15 @@ from global_utils import global_utils
 bot = commands.Bot(command_prefix='!',
                    intents=Intents.all(), help_command=None)
 
+
 @bot.event
 async def on_ready():
     """[event] Logs the bot's connection to Discord and starts the log file
     """
     sys.stderr = open(f'./logs/{global_utils.last_log_date}_stderr.log', 'a')
 
-    global_utils.log(f'Bot "{bot.user.name}" has connected to Discord. Starting log')
+    global_utils.log(
+        f'Bot "{bot.user.name}" has connected to Discord. Starting log')
 
 
 @bot.tree.error
