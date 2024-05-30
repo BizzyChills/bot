@@ -2,7 +2,7 @@ import os
 import sys
 import asyncio
 
-from discord import Interaction, Intents, errors
+from discord import Interaction, Intents, app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -21,14 +21,14 @@ async def on_ready():
 
 
 @bot.tree.error
-async def on_app_command_error(interaction: Interaction, error: errors.DiscordException):
+async def on_app_command_error(interaction: Interaction, error: app_commands.AppCommandError):
     """[error] Handles slash command errors
 
     Parameters
     ----------
     interaction : discord.Interaction
         The interaction object that initiated the command
-    error : discord.errors.DiscordException
+    error : discord.app_commands.AppCommandError
         The error that occurred
 
     Raises
@@ -50,14 +50,14 @@ async def on_app_command_error(interaction: Interaction, error: errors.DiscordEx
 
 
 @bot.event
-async def on_command_error(ctx: Context, error: errors.DiscordException):
+async def on_command_error(ctx: Context, error: commands.CommandError):
     """[error] Handles text command errors
 
     Parameters
     ----------
     ctx : discord.ext.commands.Context
         The context object that initiated the command
-    error : discord.errors.CommandError
+    error : discord.ext.commands.CommandError
         The error that occurred
     """
     global_utils.debug_log(str(error))
