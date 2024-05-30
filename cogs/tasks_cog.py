@@ -20,12 +20,13 @@ class TasksCog(commands.Cog):
         # global_utils.log("Tasks cog loaded")
         self.eventreminders.add_exception_type(asyncpg.PostgresConnectionError)
         self.eventreminders.start()
+        self.clear_old_reminders.start()
         self.syncreminders.start()
         self.latest_log.start()
 
     @tasks.loop(time=global_utils.premier_reminder_times)
     async def eventreminders(self):
-        """(task) Sends reminders for upcoming events near starting times of West Coast premier events"""
+        """[task] Sends reminders for upcoming events near starting times of West Coast premier events"""
 
         global_utils.log("Checking for event reminders")
 
@@ -58,10 +59,12 @@ class TasksCog(commands.Cog):
 
             time_remaining = (start_time - current_time).total_seconds()
 
-            reminder_messages = {global_utils.premier_reminder_classes[0]: f"(reminder) {role.mention} {event.name} on _{event.description}_ has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!",
-                                 global_utils.premier_reminder_classes[1]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 10 minutes (at {global_utils.discord_local_time(start_time)})! JOIN THE VC!",
-                                 global_utils.premier_reminder_classes[2]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is starting in 1 hour (at {global_utils.discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
-                                 global_utils.premier_reminder_classes[3]: f"(reminder) {role.mention} {event.name} on _{event.description}_ is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
+            reminder_messages = {global_utils.premier_reminder_classes[0]: f"has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!",
+                                 global_utils.premier_reminder_classes[1]: f"is starting in 10 minutes (at {global_utils.discord_local_time(start_time)})! JOIN THE VC!",
+                                 global_utils.premier_reminder_classes[2]: f"is starting in 1 hour (at {global_utils.discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
+                                 global_utils.premier_reminder_classes[3]: f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
+            
+            reminder_messages = {k: f"(reminder) {role.mention} {event.name} on {global_utils.italics(event.description)}" + v for k, v in reminder_messages.items()}
 
             reminder_class = ""
             if time_remaining <= 0:  # allow this reminder until 30 minutes after the event has already started
@@ -111,19 +114,44 @@ class TasksCog(commands.Cog):
                 global_utils.log(log_message)
 
                 if len(subbed_users) > 0:
-                    message = " RSVP'ed users: \n" + \
-                        "- " + \
-                        "\n- ".join([user.mention for user in subbed_users])
+                    message = ("RSVP'ed users: \n"
+                        "- "
+                        "\n- ".join([user.mention for user in subbed_users]))
                 else:
                     message = "No one has RSVP'ed yet."
 
                 message += "\n\n(This message was sent silently)"
 
+                message = "(reminder) " + message
+
                 await channel.send(message, silent=True)
+
+    @tasks.loop(hours=1)
+    async def clear_old_reminders(self):
+        """[task] Clears old reminder messages from the premier and debug channels"""
+        channels = global_utils.prem_channel, global_utils.debug_channel
+
+        for channel_id in channels:
+            channel = self.bot.get_channel(channel_id)
+            now = datetime.now()
+            before_time = now - timedelta(days=1)
+            after_time = now - timedelta(days=14) # bulk deletion only works for messages up to 14 days old
+            # in case bot goes offline for a couple days, we can't just search for messages in the last 48 hours. If the bot is offline for over 14 days, oh well
+            
+            messages = [message async for message in channel.history(limit=None, before=before_time, after=after_time) if message.author == self.bot.user 
+                        and message.content.startswith("(reminder)") # bot prefixes all reminder messages with this
+                        and now - message.created_at > timedelta(days=1)] # only delete reminders that are at least 1 day old
+
+            if len(messages) == 0:
+                continue
+
+            await channel.delete_messages(messages)
+            global_utils.log(f"Deleted {len(messages)} old reminder messages from {channel.name}")
+        
 
     @tasks.loop(count=1)
     async def syncreminders(self):
-        """(task) Resyncs reminder timers in case the bot went offline with reminders still in the queue"""
+        """[task] Resyncs reminder timers in case the bot went offline with reminders still in the queue"""
         iterable = deepcopy(global_utils.reminders)
 
         for server in iterable.keys():
@@ -145,15 +173,15 @@ class TasksCog(commands.Cog):
 
             global_utils.save_reminders()
 
-    # wait until 1 minute after midnight to start new log in case of delay
-    @tasks.loop(time=global_utils.est_to_utc(time(hour=0, minute=1, second=0)))
+    # wait until a few seconds after midnight to start new log in case of some delay/race issue
+    @tasks.loop(time=global_utils.est_to_utc(time(hour=0, minute=0, second=5)))
     async def latest_log(self):
-        """Creates a new log file at midnight and updates the logger to write to the new file"""
-        log_date = datetime.now().strftime("%Y-%m-%d")
+        """[task] Creates a new log file at midnight and updates the logger to write to the new file"""
+        new_date = datetime.now().strftime("%Y-%m-%d")
 
-        if log_date != last_log_date:
+        if new_date != global_utils.last_log_date:
             global_utils.log("Starting new log file")
-            last_log_date = log_date
+            last_log_date = new_date
             global_utils.last_log = f"./logs/{last_log_date}_stdout.log"
             sys.stdout.close()
             sys.stdout = open(global_utils.last_log, 'a')
