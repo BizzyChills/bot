@@ -133,7 +133,7 @@ class BizzyCommands(commands.Cog):
 
             global_utils.premier_reminder_times[0] = global_utils.est_to_utc(right_now)
 
-            await global_utils.load_cogs(self.bot, reload=True)
+            await global_utils.load_cogs(self.bot) # also *re*loads the cogs
 
             message = "All cogs reloaded"
 
@@ -145,30 +145,6 @@ class BizzyCommands(commands.Cog):
 
         await ctx.message.delete(delay=3)
         await m.delete(delay=3)
-
-    @commands.hybrid_command(name="kill", description=global_utils.command_descriptions["kill"])
-    @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
-    async def kill(self, ctx: Context, *, reason: str = "no reason given"):
-        """[command] Kills the bot (shutdown)
-
-        Parameters
-        ----------
-        ctx : discord.Context
-            The context object that initiated the command
-        reason : str, optional
-            The reason for killing the bot, by default "no reason given"
-        """
-        if not await global_utils.has_permission(ctx.author.id, ctx):
-            return
-
-        m = await ctx.send(f'Goodbye cruel world!', ephemeral=True)
-
-        await ctx.message.delete(delay=3)
-        await m.delete(delay=3)
-
-        global_utils.log(f"Bot killed. reason: {reason}")
-
-        await self.bot.close()
 
 
 async def setup(bot):

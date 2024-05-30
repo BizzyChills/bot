@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands import Context
 from discord import app_commands, Object
 import asyncio
 
@@ -428,9 +429,12 @@ class AdminPremierCommands(commands.Cog):
 
         if note_number == 0:
             notes_list = global_utils.practice_notes[_map]
-            output = f'**Practice notes for _{_map.title()}_:**\n'
+            output = global_utils.bold("Practice notes for ")
+            output += global_utils.style_text(_map.title(), "ib") + ":\n"
             for i, note_id in enumerate(notes_list.keys()):
-                output += f'- **Note {i+1}**: _{notes_list[note_id]}_\n'
+                note_number = f"Note {i+1}"
+                note_desc = notes_list[note_id]
+                output += f'- {global_utils.bold(note_number)}: {global_utils.italics(note_desc)}\n'
 
             await interaction.response.send_message(output, ephemeral=True)
             return
@@ -618,6 +622,31 @@ class AdminMessageCommands(commands.Cog):
         await interaction.response.send_message(f'Message deleted', ephemeral=True)
 
         global_utils.log(f'{interaction.user.display_name} deleted message {message_id}')
+
+    
+    @commands.hybrid_command(name="kill", description=global_utils.command_descriptions["kill"])
+    @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
+    async def kill(self, ctx: Context, *, reason: str = "no reason given"):
+        """[command] Kills the bot (shutdown)
+
+        Parameters
+        ----------
+        ctx : discord.Context
+            The context object that initiated the command
+        reason : str, optional
+            The reason for killing the bot, by default "no reason given"
+        """
+        if not await global_utils.has_permission(ctx.author.id, ctx):
+            return
+
+        m = await ctx.send(f'Goodbye cruel world!', ephemeral=True)
+
+        await ctx.message.delete(delay=3)
+        await m.delete(delay=3)
+
+        global_utils.log(f"Bot killed. reason: {reason}")
+
+        await self.bot.close()
 
 
 async def setup(bot):
