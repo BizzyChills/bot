@@ -66,7 +66,7 @@ class Utils:
         self.premier_reminder_times = [self.est_to_utc(
             t) for t in self.premier_reminder_times]
 
-        self.premier_reminder_classes = ["start", "prestart", "hour", "day"]
+        self.premier_reminder_classes = ["start", "prestart", "day"]
 
         self.map_pool = self.get_pool()
         self.map_preferences = self.get_preferences()
@@ -362,6 +362,28 @@ class Utils:
                     await bot.reload_extension(f)
                 except commands.ExtensionNotLoaded:  # otherwise
                     await bot.load_extension(f)  # load them
+    
+    async def already_logged(self, log_message: str):
+        """Checks if a log message has already been logged in the current stdout log file
+
+        Parameters
+        ----------
+        log_message : str
+            The message to check for in the log file
+
+        Returns
+        -------
+        bool
+            Whether the message has already been logged
+        """
+        if log_message == "":
+            return False
+
+        with open(self.last_log, "r") as file:
+            log_contents = file.read()
+        
+        return log_message in log_contents if log_contents != "" else False
+    
 
     async def has_permission(self, id: int, ctx: commands.Context | Interaction):
         """Determines if the user is either Sam or Bizzy for use in admin commands

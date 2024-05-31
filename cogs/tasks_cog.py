@@ -60,37 +60,36 @@ class TasksCog(commands.Cog):
             time_remaining = (start_time - current_time).total_seconds()
 
             reminder_messages = {global_utils.premier_reminder_classes[0]: f"has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!",
-                                 global_utils.premier_reminder_classes[1]: f"is starting in 10 minutes (at {global_utils.discord_local_time(start_time)})! JOIN THE VC!",
-                                 global_utils.premier_reminder_classes[2]: f"is starting in 1 hour (at {global_utils.discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
-                                 global_utils.premier_reminder_classes[3]: f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
-
-            reminder_messages = {
-                k: f"(reminder) {role.mention} {event.name} on {global_utils.italics(event.description)}" + v for k, v in reminder_messages.items()}
+                                 global_utils.premier_reminder_classes[1]: f"is starting in 30 minutes (at {global_utils.discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
+                                 global_utils.premier_reminder_classes[2]: f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
+            
+            for k, v in reminder_messages.items():
+                reminder = ["(reminder)", f"{event.name} on {global_utils.italics(event.description)}", v]
+                if k != global_utils.premier_reminder_classes[2]:
+                    reminder.insert(1, f"{role.mention}")
+                else:
+                    reminder_messages[k] = " ".join(reminder)
 
             reminder_class = ""
-            if time_remaining <= 0:  # allow this reminder until 30 minutes after the event has already started
-                if time_remaining >= -3600 * .5:
+            if time_remaining <= 0:  # allow this reminder until 10 minutes after the event has already started
+                if time_remaining >= -60 * 10:
                     reminder_class = "start"
                     await event.start()
-                elif time_remaining <= -3600 * 1:  # remove the event
+                elif time_remaining <= -3600:  # remove the event
                     if event.status == discord.EventStatus.active:
                         await event.end()
                     elif event.status == discord.EventStatus.scheduled:
                         await event.cancel()
-            elif time_remaining <= 60 * 10:
+            elif time_remaining <= 60 * 30:
                 reminder_class = "prestart"
-            elif time_remaining <= 3600:
-                reminder_class = "hour"
             elif time_remaining <= 3600 * 3:
                 reminder_class = "day"
 
             if reminder_class != "":  # there is an event reminder to send
                 log_message = f"Posted '{reminder_class}' reminder for event: {event.name} on {event.description} starting at {start_time.astimezone(global_utils.tz).strftime('%Y-%m-%d %H:%M:%S')} EST"
 
-                with open(global_utils.last_log, "r") as file:
-                    log_contents = file.read()
 
-                if log_message in log_contents:  # if the reminder has already been posted, skip it
+                if global_utils.already_logged(log_message):  # if the reminder has already been posted, skip it
                     continue
 
                 message = reminder_messages[reminder_class]
@@ -98,14 +97,11 @@ class TasksCog(commands.Cog):
                 channel = self.bot.get_channel(
                     global_utils.prem_channel) if g.id == global_utils.val_server else self.bot.get_channel(global_utils.debug_channel)
 
-                is_silent = True if len(
-                    subbed_users) >= 5 and reminder_class == "hour" else False
+                is_silent = reminder_class != self.premier_reminder_classes[0] # only the start reminder should be loud
 
                 if len(subbed_users) < 5:  # if we don't have enough people, actually ping the role
                     message += f"\nWe don't have enough people for {event.name} on _{event.description}_ yet!"
-                    message += " Please RSVP before it's too late!" if reminder_class not in [
-                        "start", "prestart"] else " Please join the VC so we can start!"
-                    is_silent = False
+                    message += " Please RSVP before it's too late!" if reminder_class != self.premier_reminder_classes[0] else " Please join the VC so we can start!"
 
                 if is_silent:
                     message += "\n\n(This message was sent silently)"
