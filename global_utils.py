@@ -363,7 +363,7 @@ class Utils:
                 except commands.ExtensionNotLoaded:  # otherwise
                     await bot.load_extension(f)  # load them
     
-    async def already_logged(self, log_message: str):
+    def already_logged(self, log_message: str):
         """Checks if a log message has already been logged in the current stdout log file
 
         Parameters

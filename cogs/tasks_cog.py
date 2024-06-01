@@ -24,7 +24,7 @@ class TasksCog(commands.Cog):
         self.syncreminders.start()
         self.latest_log.start()
 
-    @tasks.loop(time=global_utils.premier_reminder_times)
+    @tasks.loop(hours=1)
     async def eventreminders(self):
         """[task] Sends reminders for upcoming events near starting times of West Coast premier events"""
 
@@ -36,7 +36,7 @@ class TasksCog(commands.Cog):
         debug_guild = self.bot.get_guild(global_utils.debug_server)
         debug_events = debug_guild.scheduled_events
 
-        current_time = datetime.now(pytz.utc).time()
+        current_time = datetime.now(pytz.utc)
 
         # no longer using this, but keeping it here in case we want to use it again
         # current_day = datetime.now().weekday()  # get current day based on my timezone
@@ -47,33 +47,14 @@ class TasksCog(commands.Cog):
             if "premier" not in event.name.lower():
                 continue
 
-            g = event.guild
-            r = global_utils.prem_role if g.id == global_utils.val_server else global_utils.debug_role
-            role = discord.utils.get(g.roles, name=r)
-            subbed_users = []
-            async for user in event.users():
-                subbed_users.append(user)
-
             start_time = event.start_time
-            current_time = datetime.now().astimezone(global_utils.tz)
 
             time_remaining = (start_time - current_time).total_seconds()
-
-            reminder_messages = {global_utils.premier_reminder_classes[0]: f"has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!",
-                                 global_utils.premier_reminder_classes[1]: f"is starting in 30 minutes (at {global_utils.discord_local_time(start_time)})! Make sure you have RSVP'ed if you're joining!",
-                                 global_utils.premier_reminder_classes[2]: f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
-            
-            for k, v in reminder_messages.items():
-                reminder = ["(reminder)", f"{event.name} on {global_utils.italics(event.description)}", v]
-                if k != global_utils.premier_reminder_classes[2]:
-                    reminder.insert(1, f"{role.mention}")
-                else:
-                    reminder_messages[k] = " ".join(reminder)
 
             reminder_class = ""
             if time_remaining <= 0:  # allow this reminder until 10 minutes after the event has already started
                 if time_remaining >= -60 * 10:
-                    reminder_class = "start"
+                    reminder_class = global_utils.premier_reminder_classes[0]
                     await event.start()
                 elif time_remaining <= -3600:  # remove the event
                     if event.status == discord.EventStatus.active:
@@ -81,47 +62,95 @@ class TasksCog(commands.Cog):
                     elif event.status == discord.EventStatus.scheduled:
                         await event.cancel()
             elif time_remaining <= 60 * 30:
-                reminder_class = "prestart"
+                reminder_class = global_utils.premier_reminder_classes[1]
             elif time_remaining <= 3600 * 3:
-                reminder_class = "day"
+                reminder_class = global_utils.premier_reminder_classes[2]
 
-            if reminder_class != "":  # there is an event reminder to send
-                log_message = f"Posted '{reminder_class}' reminder for event: {event.name} on {event.description} starting at {start_time.astimezone(global_utils.tz).strftime('%Y-%m-%d %H:%M:%S')} EST"
+            if reminder_class == "":  # there is no event reminder to send
+                continue
+            
+            g = event.guild
+            r = global_utils.prem_role if g.id == global_utils.val_server else global_utils.debug_role
+            channel = self.bot.get_channel(
+                global_utils.prem_channel) if g.id == global_utils.val_server else self.bot.get_channel(global_utils.debug_channel)
+            role = discord.utils.get(g.roles, name=r)
+
+            reminder_messages = {global_utils.premier_reminder_classes[0]: f"has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!",
+                                 global_utils.premier_reminder_classes[1]: f"is starting in 30 minutes (at {global_utils.discord_local_time(start_time)})!",
+                                 global_utils.premier_reminder_classes[2]: f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
 
 
-                if global_utils.already_logged(log_message):  # if the reminder has already been posted, skip it
-                    continue
+            for k, v in reminder_messages.items():
+                reminder = [
+                    "(reminder)", f"{event.name} on {global_utils.italics(event.description)}", v]
+                if k != global_utils.premier_reminder_classes[2]:
+                    reminder.insert(1, f"{role.mention}")
 
-                message = reminder_messages[reminder_class]
+                reminder_messages[k] = " ".join(reminder)
+                
+            log_message = f"Posted '{reminder_class}' reminder for event: {event.name} on {event.description} starting at {start_time.astimezone(global_utils.tz).strftime('%Y-%m-%d %H:%M:%S')} EST"
 
-                channel = self.bot.get_channel(
-                    global_utils.prem_channel) if g.id == global_utils.val_server else self.bot.get_channel(global_utils.debug_channel)
+            if global_utils.already_logged(log_message):  # if the reminder has already been posted, skip it
+                continue
 
-                is_silent = reminder_class != self.premier_reminder_classes[0] # only the start reminder should be loud
+            subbed_users = []
+            async for user in event.users():
+                subbed_users.append(user)
 
-                if len(subbed_users) < 5:  # if we don't have enough people, actually ping the role
-                    message += f"\nWe don't have enough people for {event.name} on _{event.description}_ yet!"
-                    message += " Please RSVP before it's too late!" if reminder_class != self.premier_reminder_classes[0] else " Please join the VC so we can start!"
+            await self.send_reminder(channel, reminder_messages[reminder_class], reminder_class, subbed_users)
+            global_utils.log(log_message)
 
-                if is_silent:
-                    message += "\n\n(This message was sent silently)"
+    async def send_reminder(self, channel : discord.TextChannel, message : str, reminder_class : str = "", subbed_users : list = []):
+        """Sends a reminder message to a channel
 
-                await channel.send(message, silent=is_silent)
+        Parameters
+        ----------
+        channel : discord.TextChannel
+            The channel to send the reminder message to (not the channel ID)
+        message : str
+            The message to send
+        reminder_class : str
+            The class of the reminder message
+        subbed_users : list
+            The list of users who have RSVP'ed to the event
+        """
+        # who to ping when
+        pings = {"subbed": global_utils.premier_reminder_classes[0],
+                 "message": global_utils.premier_reminder_classes[1],
+                 "none": global_utils.premier_reminder_classes[2]}
+        
+        is_silent = reminder_class != pings["message"] 
 
-                global_utils.log(log_message)
+        # We're not showing the RSVP list for the "today" reminder
+        if reminder_class != pings["none"]:
+            if len(subbed_users) < 5 and reminder_class == pings["message"]:
+                message += f"\nWe don't have enough people RSVP'ed yet!"
+                message += " Please RSVP before it's too late!"
 
-                if len(subbed_users) > 0:
-                    message = ("RSVP'ed users: \n"
-                               "- "
-                               "\n- ".join([user.mention for user in subbed_users]))
-                else:
-                    message = "No one has RSVP'ed yet."
+        if is_silent:
+            message += "\n\n(This message was sent silently)"
 
-                message += "\n\n(This message was sent silently)"
+        await channel.send(message, silent=is_silent)
 
-                message = "(reminder) " + message
+        # don't show the RSVP list for the "today" reminder
+        if reminder_class == pings["none"]: 
+            return
 
-                await channel.send(message, silent=True)
+        if len(subbed_users) > 0:
+            message = ("RSVP'ed users: \n" +
+                        "- " +
+                        "\n- ".join([user.mention for user in subbed_users]))
+        else:
+            message = "No one has RSVP'ed."
+
+        message = "(reminder) " + message
+
+        # only the start reminder should ping the subbed users
+        is_silent = reminder_class != pings["subbed"]
+
+        message += "\n\n(This message was sent silently)" if is_silent else ""
+
+        await channel.send(message, silent=is_silent)
 
     @tasks.loop(hours=1)
     async def clear_old_reminders(self):
