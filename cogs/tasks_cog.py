@@ -25,7 +25,7 @@ class TasksCog(commands.Cog):
         self.latest_log.start()
 
     # @tasks.loop(hours=1)
-    @tasks.loop(hours=global_utils.premier_reminder_times)
+    @tasks.loop(time=global_utils.premier_reminder_times)
     async def eventreminders(self):
         """[task] Sends reminders for upcoming events near starting times of West Coast premier events"""
 
