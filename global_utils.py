@@ -53,12 +53,11 @@ class Utils:
             time(hour=19, second=2),  # 3 hours before for thur and sun
             time(hour=20, second=2),  # 3 hours before for sat
 
-            time(hour=21, second=2),  # 1 hour before for thur and sun
-            # 10 minutes before for thur and sun
-            time(hour=21, minute=50, second=2),
-            # right on time for thur and sun AND 1 hour before for sat
+            time(hour=21, minute=30, second=2),  # 30 mins before for thur and sun
+
+            # right on time for thur and sun
             time(hour=22, second=2),
-            time(hour=22, minute=50, second=2),  # 10 minutes before for sat
+            time(hour=22, minute=30, second=2),  # 30 minutes before for sat
 
             time(hour=23, second=2)  # right on time for sat
         ]
