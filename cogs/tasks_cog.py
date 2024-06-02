@@ -24,7 +24,6 @@ class TasksCog(commands.Cog):
         self.syncreminders.start()
         self.latest_log.start()
 
-    # @tasks.loop(hours=1)
     @tasks.loop(time=global_utils.premier_reminder_times)
     async def eventreminders(self):
         """[task] Sends reminders for upcoming events near starting times of West Coast premier events"""
@@ -56,7 +55,8 @@ class TasksCog(commands.Cog):
             if time_remaining <= 0:  # allow this reminder until 10 minutes after the event has already started
                 if time_remaining >= -60 * 10:
                     reminder_class = global_utils.premier_reminder_classes[0]
-                    await event.start()
+                    if event.status == discord.EventStatus.scheduled:
+                        await event.start()
                 elif time_remaining <= -3600:  # remove the event
                     if event.status == discord.EventStatus.active:
                         await event.end()
@@ -160,11 +160,11 @@ class TasksCog(commands.Cog):
 
         for channel_id in channels:
             channel = self.bot.get_channel(channel_id)
-            now = datetime.now()
+            discord.TextChannel.history
+            now = datetime.now().astimezone(pytz.utc)
             before_time = now - timedelta(days=1)
-            # bulk deletion only works for messages up to 14 days old
+            # bulk deletion only works for messages up to 14 days old. If the bot is offline for over 14 days, oh well
             after_time = now - timedelta(days=14)
-            # in case bot goes offline for a couple days, we can't just search for messages in the last 48 hours. If the bot is offline for over 14 days, oh well
 
             messages = [message async for message in channel.history(limit=None, before=before_time, after=after_time) if message.author == self.bot.user
                         # bot prefixes all reminder messages with this
@@ -203,7 +203,7 @@ class TasksCog(commands.Cog):
 
             global_utils.save_reminders()
 
-    # wait until a few seconds after midnight to start new log in case of some delay/race issue
+    # wait until a few seconds after midnight to start new log in case of some delay/desync issue
     @tasks.loop(time=global_utils.est_to_utc(time(hour=0, minute=0, second=5)))
     async def latest_log(self):
         """[task] Creates a new log file at midnight and updates the logger to write to the new file"""
