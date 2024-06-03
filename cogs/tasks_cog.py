@@ -12,11 +12,23 @@ from global_utils import global_utils
 
 
 class TasksCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.bot) -> None:
+        """Initializes the TasksCog cog and stores the type names for premier reminders
+
+        Parameters
+        ----------
+        bot : discord.ext.commands.bot
+            The bot to add the cog to. Automatically passed with the bot.load_extension method
+
+        """
         self.bot = bot
 
+        self.premier_reminder_types = ["start", "prestart", "day"]
+
     @commands.Cog.listener()
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        """[event] Executes when the TasksCog cog is ready to start the tasks
+        """
         # global_utils.log("Tasks cog loaded")
         self.eventreminders.add_exception_type(asyncpg.PostgresConnectionError)
         self.eventreminders.start()
@@ -25,7 +37,7 @@ class TasksCog(commands.Cog):
         self.latest_log.start()
 
     @tasks.loop(time=global_utils.premier_reminder_times)
-    async def eventreminders(self):
+    async def eventreminders(self) -> None:
         """[task] Sends reminders for upcoming events near starting times of West Coast premier events"""
 
         global_utils.log("Checking for event reminders")
@@ -54,7 +66,7 @@ class TasksCog(commands.Cog):
             reminder_class = ""
             if time_remaining <= 0:  # allow this reminder until 10 minutes after the event has already started
                 if time_remaining >= -60 * 10:
-                    reminder_class = global_utils.premier_reminder_classes[0]
+                    reminder_class = self.premier_reminder_types[0]
                     if event.status == discord.EventStatus.scheduled:
                         await event.start()
                 elif time_remaining <= -3600:  # remove the event
@@ -63,9 +75,9 @@ class TasksCog(commands.Cog):
                     elif event.status == discord.EventStatus.scheduled:
                         await event.cancel()
             elif time_remaining <= 60 * 30:
-                reminder_class = global_utils.premier_reminder_classes[1]
+                reminder_class = self.premier_reminder_types[1]
             elif time_remaining <= 3600 * 3:
-                reminder_class = global_utils.premier_reminder_classes[2]
+                reminder_class = self.premier_reminder_types[2]
 
             if reminder_class == "":  # there is no event reminder to send
                 continue
@@ -76,15 +88,15 @@ class TasksCog(commands.Cog):
                 global_utils.prem_channel) if g.id == global_utils.val_server else self.bot.get_channel(global_utils.debug_channel)
             role = discord.utils.get(g.roles, name=r)
 
-            reminder_messages = {global_utils.premier_reminder_classes[0]: f"has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!",
-                                 global_utils.premier_reminder_classes[1]: f"is starting in 30 minutes (at {global_utils.discord_local_time(start_time)})!",
-                                 global_utils.premier_reminder_classes[2]: f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
+            reminder_messages = {self.premier_reminder_types[0]: f"has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!",
+                                 self.premier_reminder_types[1]: f"is starting in 30 minutes (at {global_utils.discord_local_time(start_time)})!",
+                                 self.premier_reminder_types[2]: f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
 
 
             for k, v in reminder_messages.items():
                 reminder = [
-                    "(reminder)", f"{event.name} on {global_utils.italics(event.description)}", v]
-                if k != global_utils.premier_reminder_classes[2]:
+                    "(reminder)", f"{event.name} on {global_utils.style_text(event.description, 'i')}", v]
+                if k != self.premier_reminder_types[2]:
                     reminder.insert(1, f"{role.mention}")
 
                 reminder_messages[k] = " ".join(reminder)
@@ -101,7 +113,7 @@ class TasksCog(commands.Cog):
             await self.send_reminder(channel, reminder_messages[reminder_class], reminder_class, subbed_users)
             global_utils.log(log_message)
 
-    async def send_reminder(self, channel : discord.TextChannel, message : str, reminder_class : str = "", subbed_users : list = []):
+    async def send_reminder(self, channel : discord.TextChannel, message : str, reminder_class : str = "", subbed_users : list = []) -> None:
         """Sends a reminder message to a channel
 
         Parameters
@@ -116,9 +128,9 @@ class TasksCog(commands.Cog):
             The list of users who have RSVP'ed to the event
         """
         # who to ping when
-        pings = {"subbed": global_utils.premier_reminder_classes[0],
-                 "message": global_utils.premier_reminder_classes[1],
-                 "none": global_utils.premier_reminder_classes[2]}
+        pings = {"subbed": self.premier_reminder_types[0],
+                 "message": self.premier_reminder_types[1],
+                 "none": self.premier_reminder_types[2]}
         
         is_silent = reminder_class != pings["message"] 
 
@@ -154,7 +166,7 @@ class TasksCog(commands.Cog):
         await channel.send(message, silent=is_silent)
 
     @tasks.loop(hours=1)
-    async def clear_old_reminders(self):
+    async def clear_old_reminders(self) -> None:
         """[task] Clears old reminder messages from the premier and debug channels"""
         channels = global_utils.prem_channel, global_utils.debug_channel
 
@@ -179,7 +191,7 @@ class TasksCog(commands.Cog):
                 f"Deleted {len(messages)} old reminder messages from {channel.name}")
 
     @tasks.loop(count=1)
-    async def syncreminders(self):
+    async def syncreminders(self) -> None:
         """[task] Resyncs reminder timers in case the bot went offline with reminders still in the queue"""
         iterable = deepcopy(global_utils.reminders)
 
@@ -205,17 +217,24 @@ class TasksCog(commands.Cog):
 
     # wait until a few seconds after midnight to start new log in case of some delay/desync issue
     @tasks.loop(time=global_utils.est_to_utc(time(hour=0, minute=0, second=5)))
-    async def latest_log(self):
+    async def latest_log(self) -> None:
         """[task] Creates a new log file at midnight and updates the logger to write to the new file"""
         new_date = datetime.now().strftime("%Y-%m-%d")
 
         if new_date != global_utils.last_log_date:
             global_utils.log("Starting new log file")
-            last_log_date = new_date
-            global_utils.last_log = f"./logs/{last_log_date}_stdout.log"
+            global_utils.last_log_date = new_date
+            global_utils.last_log = f"./logs/{global_utils.last_log_date}_stdout.log"
             sys.stdout.close()
             sys.stdout = open(global_utils.last_log, 'a')
 
 
-async def setup(bot):
+async def setup(bot: commands.bot) -> None:
+    """Adds the TasksCog cog to the bot
+
+    Parameters
+    ----------
+    bot : discord.ext.commands.bot
+        The bot to add the cog to. Automatically passed with the bot.load_extension method
+    """
     await bot.add_cog(TasksCog(bot), guilds=[discord.Object(global_utils.val_server), discord.Object(global_utils.debug_server)])

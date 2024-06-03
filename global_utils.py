@@ -10,8 +10,10 @@ from discord.ext import commands
 
 
 class Utils:
-    def __init__(self):
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    def __init__(self) -> None:
+        """Initializes the global utility class, which contains various utility functions and global variables for the bot
+        """
+        os.chdir(os.path.dirname(os.path.abspath(__file__))) # ensure the working directory is the same as the script
         if not os.path.exists('logs'):
             os.makedirs('logs')
 
@@ -19,30 +21,19 @@ class Utils:
         self.last_log = f'./logs/{self.last_log_date}_stdout.log'
         sys.stdout = open(self.last_log, 'a')
 
-        self.bot_token = os.getenv("DISCORD_BOT_TOKEN")
-
-        if not self.bot_token:
-            raise ValueError(
-                "DISCORD_BOT_TOKEN is not set in the environment variables")
-
         self.debug_server = 1217649405759324232
         self.debug_role = "southern"
         self.debug_channel = 1217649405759324235
-        self.debug_voice = 1217649405759324236
 
         self.val_server = 1100632842528096330
         self.prem_role = "The Valorats"
         self.bot_channel = 1218420817394925668
         self.prem_channel = 1193661647752003614
         self.notes_channel = 1237971459461218376
-        self.voice_channel = 1100632843174031476
-        # no voice channel, these are the general channels the bot will be in. use specific channel checks for other uses
-        self.all_channels = [self.debug_channel,
-                             self.bot_channel, self.prem_channel]
 
         self.my_id = 461265370813038633
-        self.sam_id = 180107711806046208
-        self.admin_ids = [self.my_id, self.sam_id]
+        sam_id = 180107711806046208
+        self.admin_ids = [self.my_id, sam_id]
 
         self.tz = pytz.timezone("US/Eastern")
 
@@ -64,8 +55,6 @@ class Utils:
 
         self.premier_reminder_times = [self.est_to_utc(
             t) for t in self.premier_reminder_times]
-
-        self.premier_reminder_classes = ["start", "prestart", "day"]
 
         self.map_pool = self.get_pool()
         self.map_preferences = self.get_preferences()
@@ -102,7 +91,7 @@ class Utils:
             "kill": "Kill the bot",
         }
 
-    def get_pool(self):
+    def get_pool(self) -> list[str]:
         """Extracts the map pool from the map_pool.txt file
 
         Returns
@@ -113,13 +102,13 @@ class Utils:
         with open("./local_storage/map_pool.txt", "r") as file:
             return file.read().splitlines()
 
-    def save_pool(self):
+    def save_pool(self) -> None:
         """Saves any changes to the map pool during runtime to the map_pool.txt file
         """
         with open("./local_storage/map_pool.txt", "w") as file:
             file.write("\n".join(self.map_pool))
 
-    def get_preferences(self):
+    def get_preferences(self) -> dict:
         """Extracts the map preferences from the map_preferences.json file
 
         Returns
@@ -130,13 +119,13 @@ class Utils:
         with open("./local_storage/map_preferences.json", "r") as file:
             return json.load(file)
 
-    def save_preferences(self):
+    def save_preferences(self) -> None:
         """Saves any changes to the map preferences during runtime to the map_preferences.json file
         """
         with open("./local_storage/map_preferences.json", "w") as file:
             json.dump(self.map_preferences, file)
 
-    def get_weights(self):
+    def get_weights(self) -> dict:
         """Extracts the map weights from the map_weights.json file
 
         Returns
@@ -147,13 +136,13 @@ class Utils:
         with open("./local_storage/map_weights.json", "r") as file:
             return json.load(file)
 
-    def save_weights(self):
+    def save_weights(self) -> None:
         """Saves any changes to the map weights during runtime to the map_weights.json file
         """
         with open("./local_storage/map_weights.json", "w") as file:
             json.dump(self.map_weights, file)
 
-    def get_reminders(self):
+    def get_reminders(self) -> dict:
         """Extracts the reminders from the reminders.json file
 
         Returns
@@ -164,13 +153,13 @@ class Utils:
         with open("./local_storage/reminders.json", "r") as file:
             return json.load(file)
 
-    def save_reminders(self):
+    def save_reminders(self) -> None:
         """Saves any changes to the reminders during runtime to the reminders.json file
         """
         with open("./local_storage/reminders.json", "w") as file:
             json.dump(self.reminders, file)
 
-    def get_notes(self):
+    def get_notes(self) -> dict:
         """Extracts the practice notes from the notes.json file. This file does not actually contain the notes, but rather the message IDs of the notes in the notes channel.
 
         Returns
@@ -181,49 +170,13 @@ class Utils:
         with open("./local_storage/notes.json", "r") as file:
             return json.load(file)
 
-    def save_notes(self):
+    def save_notes(self) -> None:
         """Saves any changes to the practice notes during runtime to the notes.json file
         """
         with open("./local_storage/notes.json", "w") as file:
             json.dump(self.notes, file)
 
-    def est_to_utc(self, t: time):
-        """Converts an EST time to a UTC time
-
-        Parameters
-        ----------
-        t : time
-            The EST time to convert
-
-        Returns
-        -------
-        datetime.time
-            The converted, UTC time
-        """
-        d = datetime.combine(datetime.today(), t)
-        return self.tz.localize(d).astimezone(pytz.utc).time()
-
-    def discord_local_time(self, time: datetime, _datetime=False):
-        """Converts a datetime object to a Discord-formatted local time string (shows the time in the user's local time zone)
-
-        Parameters
-        ----------
-        time : datetime
-            The datetime object to convert
-        _datetime : bool, optional
-            Whether to include the date in the formatted string, by default False
-
-        Returns
-        -------
-        str
-            The Discord-formatted local time string
-        """
-        epoch_time = time.timestamp()
-        style = "F" if _datetime else "t"  # F for full date and time
-        formatted = f"<t:{str(int(epoch_time))}:{style}>"
-        return formatted
-
-    def log(self, message: str):
+    def log(self, message: str) -> None:
         """Logs a message to the current stdout log file
 
         Parameters
@@ -239,7 +192,7 @@ class Utils:
             file.write(
                 f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {message}\n')
 
-    def debug_log(self, message: str):
+    def debug_log(self, message: str) -> None:
         """Logs a message to the debug log file
 
         Parameters
@@ -251,67 +204,43 @@ class Utils:
             file.write(
                 f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {message}\n')
 
-    def italics(self, text: str):
-        """Formats text to be italicized in Discord
+    def est_to_utc(self, t: time) -> time:
+        """Converts an EST time to a UTC time
 
         Parameters
         ----------
-        text : str
-            The text to format
+        t : time
+            The EST time to convert
+
+        Returns
+        -------
+        datetime.time
+            The converted, UTC time
+        """
+        d = datetime.combine(datetime.today(), t)
+        return self.tz.localize(d).astimezone(pytz.utc).time()
+
+    def discord_local_time(self, date_time: datetime, with_date=False) -> str:
+        """Converts a datetime object to a Discord-formatted local time string (shows the time in the user's local time zone)
+
+        Parameters
+        ----------
+        date_time : datetime
+            The datetime object to convert
+        with_date : bool, optional
+            Whether to include the date in the formatted string, by default False
 
         Returns
         -------
         str
-            The formatted text
+            The Discord-formatted local time string
         """
-        return f"_{text}_"
+        epoch_time = date_time.timestamp()
+        style = "F" if with_date else "t"  # F for full date and time
+        formatted = f"<t:{str(int(epoch_time))}:{style}>"
+        return formatted
 
-    def underline(self, text: str):
-        """Formats text to be underlined in Discord
-
-        Parameters
-        ----------
-        text : str
-            The text to format
-
-        Returns
-        -------
-        str
-            The formatted text
-        """
-        return f"__{text}__"
-
-    def bold(self, text: str):
-        """Formats text to be bold in Discord
-
-        Parameters
-        ----------
-        text : str
-            The text to format
-
-        Returns
-        -------
-        str
-            The formatted text
-        """
-        return f"**{text}**"
-
-    def inline_code(self, text: str):
-        """Formats text to be in an inline code block in Discord
-
-        Parameters
-        ----------
-        text : str
-            The text to format
-
-        Returns
-        -------
-        str
-            The formatted text
-        """
-        return f"`{text}`"
-
-    def style_text(self, text: str, style: str):
+    def style_text(self, text: str, style: str) -> str:
         """Formats text to a specified style in Discord
 
         Parameters
@@ -319,10 +248,15 @@ class Utils:
         text : str
             The text to format
         style : str
-            The style to apply to the text. Options are "(i)talics", "(u)nderline", "(b)old", or "(c)ode". 
+            The style string to apply to the text. Options are "(i)talics", "(u)nderline", "(b)old", or "(c)ode". 
 
-            Just use the first letter of the style (case-insensitive and spaces are ignored). 
+            Just use the first letter of the desired style (case-insensitive and spaces are ignored). 
             If a style character is not recognized, it will be ignored.
+        
+        Example:
+        ```python
+        style_text("Hello, World!", 'ib')  # returns "_**Hello, World!**_"
+        ```
 
         Returns
         -------
@@ -334,23 +268,23 @@ class Utils:
 
         output = text
 
-        all_styles = {'i': self.italics, 'u': self.underline,
-                      'b': self.bold, 'c': self.inline_code}
+        all_styles = {'i': '_', 'u': '__', 'b': '**', 'c': '`'}
 
         for s in style:
             if s not in all_styles:
                 continue
-
-            output = all_styles[s](output)
+            
+            s = all_styles[s]
+            output = f"{s}{output}{s}"
 
         return output
 
-    async def load_cogs(self, bot: commands.Bot):
+    async def load_cogs(self, bot: commands.Bot) -> None:
         """Load/reload all cogs in the cogs directory
 
         Parameters
         ----------
-        bot : commands.Bot
+        bot : discord.ext.commands.Bot
             The bot object that the cogs will be loaded into
         """
         for file in os.listdir('./cogs'):
@@ -362,7 +296,7 @@ class Utils:
                 except commands.ExtensionNotLoaded:  # otherwise
                     await bot.load_extension(f)  # load them
     
-    def already_logged(self, log_message: str):
+    def already_logged(self, log_message: str) -> bool:
         """Checks if a log message has already been logged in the current stdout log file
 
         Parameters
@@ -384,15 +318,17 @@ class Utils:
         return log_message in log_contents if log_contents != "" else False
     
 
-    async def has_permission(self, id: int, ctx: commands.Context | Interaction):
+    async def is_admin(self, user_id: int, ctx: commands.Context | Interaction, respond: bool = True) -> bool:
         """Determines if the user is either Sam or Bizzy for use in admin commands
 
         Parameters
         ----------
-        id : int
+        user_id : int
             The user ID to check
-        ctx : commands.Context | Interaction
+        ctx : discord.ext.commands.Context | discord.Interaction
             The context object that initiated the command. Used to notify the user that they don't have permission (and log the attempt).
+        respond : bool, optional
+            Whether to respond to the user with a message, by default True
 
         Returns
         -------
@@ -400,15 +336,16 @@ class Utils:
             Whether the user has permission to use the command
         """
         message = "You do not have permission to use this command"
-
-        if id in self.admin_ids:
+        if user_id in self.admin_ids:
             return True
 
         if type(ctx) == commands.Context:
-            await ctx.send(message, ephemeral=True)
+            if respond:
+                await ctx.send(message, ephemeral=True)
             command = ctx.invoked_with
         else:
-            await ctx.response.send_message(message, ephemeral=True)
+            if respond:
+                await ctx.response.send_message(message, ephemeral=True)
             command = ctx.command.name
 
         self.log(

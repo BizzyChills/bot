@@ -6,11 +6,20 @@ from global_utils import global_utils
 
 
 class VotingCommands(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
+        """Initializes the VotingCommands cog
+
+        Parameters
+        ----------
+        bot : discord.ext.commands.Bot
+            The bot to add the cog to. Automatically passed with the bot.load_extension method
+        """
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        """[event] Executes when the VotingCommands cog is ready
+        """
         # print("Voting cog loaded")
         pass
 
@@ -31,7 +40,7 @@ class VotingCommands(commands.Cog):
         _map="The map to vote for",
         preference="Your preference for the map"
     )
-    async def prefermap(self, interaction: discord.Interaction, _map: str, preference: str):
+    async def prefermap(self, interaction: discord.Interaction, _map: str, preference: str) -> None:
         """[command] Declares a preference for a map to play in premier playoffs
 
         Parameters
@@ -57,14 +66,14 @@ class VotingCommands(commands.Cog):
 
             # no change in preference, return
             if old_preference == preference:
-                await interaction.response.send_message(f"{interaction.user.mention} you have already marked {global_utils.italics(_map.title())} with a preference of {global_utils.inline_code(preference_decoder[preference])}", ephemeral=True)
+                await interaction.response.send_message(f"{interaction.user.mention} you have already marked {global_utils.style_text(_map.title(), 'i')} with a preference of {global_utils.style_text(preference_decoder[preference], 'c')}", ephemeral=True)
                 return
 
-            output = f"Your preference for {global_utils.italics(_map.title())} has been changed from {global_utils.inline_code(preference_decoder[old_preference])} to {global_utils.inline_code(preference_decoder[preference])}"
+            output = f"Your preference for {global_utils.style_text(_map.title(), 'i')} has been changed from {global_utils.style_text(preference_decoder[old_preference], 'c')} to {global_utils.style_text(preference_decoder[preference], 'c')}"
 
             global_utils.map_weights[_map] -= preference_weights[old_preference]
         else:
-            output = f"You marked {global_utils.italics(_map.title())} with a preference of {global_utils.inline_code(preference_decoder[preference])}"
+            output = f"You marked {global_utils.style_text(_map.title(), 'i')} with a preference of {global_utils.style_text(preference_decoder[preference], 'c')}"
 
         global_utils.map_preferences[_map][uuid] = preference
 
@@ -87,7 +96,7 @@ class VotingCommands(commands.Cog):
     @app_commands.describe(
         announce="Show the output of the command to everyone when used in the premier channel"
     )
-    async def mapvotes(self, interaction: discord.Interaction, announce: int = 0):
+    async def mapvotes(self, interaction: discord.Interaction, announce: int = 0) -> None:
         """[command] Displays each user's preferences for each map in the map pool
 
         Parameters
@@ -106,7 +115,7 @@ class VotingCommands(commands.Cog):
         output = ""
 
         for _map in global_utils.map_pool:
-            header = f'- {global_utils.italics(_map.title())} ({global_utils.bold(global_utils.map_weights[_map])}):\n'
+            header = f"- {global_utils.style_text(_map.title(), 'i')} ({global_utils.style_text(global_utils.map_weights[_map], 'b')}):\n"
             body = ""
             for user in all_users:
                 if str(user.id) in global_utils.map_preferences[_map]:
@@ -115,7 +124,7 @@ class VotingCommands(commands.Cog):
                     weight = {"+": "Like", "~": "Neutral",
                               "-": "Dislike"}[encoded_weight]
 
-                    body += f' - {user.mention}: {global_utils.inline_code(weight)}\n'
+                    body += f" - {user.mention}: {global_utils.style_text(weight, 'c')}\n"
 
             if body == "":
                 body = "No votes for this map."
@@ -136,7 +145,7 @@ class VotingCommands(commands.Cog):
     @app_commands.describe(
         announce="Show the output of the command to everyone (only in the premier channel)"
     )
-    async def mapweights(self, interaction: discord.Interaction, announce: int = 0):
+    async def mapweights(self, interaction: discord.Interaction, announce: int = 0) -> None:
         """[command] Displays the weights of each map in the map pool based on user preferences
 
         Parameters
@@ -165,5 +174,12 @@ class VotingCommands(commands.Cog):
         await interaction.response.send_message(output, ephemeral=ephem)
 
 
-async def setup(bot):
+async def setup(bot: commands.bot) -> None:
+    """Adds the VotingCommands cog to the bot
+
+    Parameters
+    ----------
+    bot : discord.ext.commands.bot
+        The bot to add the cog to. Automatically passed with the bot.load_extension method
+    """
     await bot.add_cog(VotingCommands(bot), guilds=[discord.Object(global_utils.val_server), discord.Object(global_utils.debug_server)])

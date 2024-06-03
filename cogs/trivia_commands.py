@@ -10,13 +10,22 @@ from global_utils import global_utils
 
 
 class TriviaCommands(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
+        """Initializes the TriviaCommands cog and creates/stores the trivia questions
+
+        Parameters
+        ----------
+        bot : discord.ext.commands.Bot
+            The bot to add the cog to. Automatically passed with the bot.load_extension method
+        """
         self.bot = bot
 
         self.trivia_questions = self.get_questions()
 
     @commands.Cog.listener()
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        """[event] Executes when the TriviaCommands cog is ready
+        """
         # print("Trivia cog loaded")
         pass
 
@@ -95,13 +104,13 @@ class TriviaCommands(commands.Cog):
 
         return questions
 
-    async def delayed_gratification(self, user: discord.User):
+    async def delayed_gratification(self, user: discord.User) -> None:
         """[command] Sends the prize message to the user after 5 minutes while taunting them with messages every minute until then
 
         Parameters
         ----------
         user : discord.User
-            The user to send the message to
+            The user who has completed the trivia game
         """
 
         taunts = [
@@ -118,10 +127,10 @@ class TriviaCommands(commands.Cog):
         await user.send("Alright, I thought hard about my actions and I've decided to give you an actual prize. Here it is: \*gives you a pat on the back\* Congratulations!")
 
         await sleep(5)
-        await user.send(f"Just kidding. Here is your actual prize, no foolin: {global_utils.inline_code('https://cs.indstate.edu/~cs60901/final/')}")
+        await user.send(f"Just kidding. Here is your actual prize, no foolin: {global_utils.style_text('https://cs.indstate.edu/~cs60901/final/', 'c')}")
 
-    async def clear_dm(self, user: discord.User):
-        """Clears the DMs between the bot and the user
+    async def clear_dm(self, user: discord.User) -> None:
+        """Clears all bot messages in the user's DMs
 
         Parameters
         ----------
@@ -135,16 +144,16 @@ class TriviaCommands(commands.Cog):
             if message.author == self.bot.user:
                 await message.delete(delay=5)
 
-    async def trivia(self, user: discord.User):
+    async def trivia(self, user: discord.User) -> None:
         """[command] Plays a game of trivia with the user
 
         Parameters
         ----------
-        message : discord.Message
-            The message object that was sent
+        user : discord.User
+            The user to play trivia with
         """
 
-        await user.send((f"Welcome to trivia! You will have {global_utils.inline_code('10 seconds')} to answer each question.\n\n"
+        await user.send((f"Welcome to trivia! You will have {global_utils.style_text('10 seconds', 'c')} to answer each question.\n\n"
                          "Since I'm nice, I'll let you know that almost every answer can be found in the server (or with a simple Google search). Good luck!"
                          ))
 
@@ -162,8 +171,8 @@ class TriviaCommands(commands.Cog):
         questions = sample(questions, len(questions))  # shuffle the questions
 
         for i in range(len(questions)):
-            question_header = global_utils.bold(f"Question {i + 1}:\n")
-            question_body = global_utils.italics(questions[i]['question'])
+            question_header = global_utils.style_text(f"Question {i + 1}:\n", 'b')
+            question_body = global_utils.style_text(questions[i]['question'], 'i')
             await user.send(f"{question_header}{question_body}")
             try:
                 answer = await self.bot.wait_for("message", check=lambda m: m.author == user, timeout=10)
@@ -177,17 +186,17 @@ class TriviaCommands(commands.Cog):
                 if questions[i]["question"] == "What is Bizzy's name?":
                     await user.send("Awwww, you tried. Go back to the server and use /trivia to try again")
                 else:
-                    await user.send(f"Incorrect. Go back to the server and use {global_utils.inline_code('/trivia')} to try again (yes this is intentionally tedious)")
+                    await user.send(f"Incorrect. Go back to the server and use {global_utils.style_text('/trivia', 'c')} to try again (yes this is intentionally tedious)")
 
                 return await self.clear_dm(user)
 
-        await user.send(f"Congratulations, you win! Here is your prize: \*{global_utils.italics('gives you a pat on the back')}\*")
+        await user.send(f"Congratulations, you win! Here is your prize: \*{global_utils.style_text('gives you a pat on the back', 'i')}\*")
 
         await self.delayed_gratification(user)
 
     @app_commands.command(name="trivia", description=global_utils.command_descriptions["trivia"])
-    async def trivia_help(self, interaction: discord.Interaction):
-        """[command] Simply imforms the user to use the text command !trivia so that the Context object can be used to message multiple times
+    async def trivia_help(self, interaction: discord.Interaction) -> None:
+        """[command] Starts a game of trivia with the user (in their DMs)
 
         Parameters
         ----------
@@ -196,8 +205,16 @@ class TriviaCommands(commands.Cog):
         """
         user = interaction.user
         await interaction.response.send_message("Please open the DM with the bot to play trivia. It may take a few minutes to start.", ephemeral=True)
+        await sleep(2) # give the user time to read the message and move to the DMs
         await self.trivia(user)
 
 
-async def setup(bot):
+async def setup(bot: commands.bot) -> None:
+    """Adds the TriviaCommands cog to the bot
+
+    Parameters
+    ----------
+    bot : discord.ext.commands.bot
+        The bot to add the cog to. Automatically passed with the bot.load_extension method
+    """
     await bot.add_cog(TriviaCommands(bot), guilds=[discord.Object(global_utils.val_server), discord.Object(global_utils.debug_server)])

@@ -6,15 +6,24 @@ from global_utils import global_utils
 
 
 class InfoCommands(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
+        """Initializes the InfoCommands cog
+
+        Parameters
+        ----------
+        bot : discord.ext.commands.Bot
+            The bot to add the cog to. Automatically passed with the bot.load_extension method
+        """
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        """[event] Executes when the InfoCommands cog is ready
+        """
         # print("Info cog loaded")
         pass
 
-    def format_schedule(self, schedule: list, header: str = None):
+    def format_schedule(self, schedule: list, header: str = None) -> str:
         """Formats the schedule for display in Discord
 
         Parameters
@@ -27,7 +36,7 @@ class InfoCommands(commands.Cog):
         Returns
         -------
         str
-            The formatted schedule
+            The formatted schedule as a string to display in Discord
         """
         schedule = sorted(schedule, key=lambda x: x[1])
 
@@ -57,7 +66,7 @@ class InfoCommands(commands.Cog):
     @app_commands.describe(
         announce="Show the output of the command to everyone (only used in the premier channel)"
     )
-    async def schedule(self, interaction: Interaction, announce: int = 0):
+    async def schedule(self, interaction: Interaction, announce: int = 0) -> None:
         """[command] Displays the premier schedule from server events
 
         Parameters
@@ -71,8 +80,8 @@ class InfoCommands(commands.Cog):
 
         events = interaction.guild.scheduled_events
 
-        event_header = f"{global_utils.bold('Upcoming Premier Events:')}"
-        practice_header = f"\n\n{global_utils.bold('Upcoming Premier Practices:')}"
+        event_header = f"{global_utils.style_text('Upcoming Premier Events:', 'b')}"
+        practice_header = f"\n\n{global_utils.style_text('Upcoming Premier Practices:', 'b')}"
         message = []
         practice_message = []
 
@@ -84,18 +93,18 @@ class InfoCommands(commands.Cog):
 
             if "premier practice" in event.name.lower():
                 practice_message.append(
-                    (f"{global_utils.discord_local_time(event.start_time, _datetime=True)}", event.start_time, map_name))
+                    (f"{global_utils.discord_local_time(event.start_time, with_date=True)}", event.start_time, map_name))
             elif "premier" in event.name.lower():
                 message.append(
-                    (f"{global_utils.discord_local_time(event.start_time, _datetime=True)}", event.start_time, map_name))
+                    (f"{global_utils.discord_local_time(event.start_time, with_date=True)}", event.start_time, map_name))
 
         if message == []:
-            message = f"{global_utils.bold('No premier events scheduled')}"
+            message = f"{global_utils.style_text('No premier events scheduled', 'b')}"
         else:
             message = self.format_schedule(message, event_header)
 
         if practice_message == []:
-            practice_message = f"\n\n{global_utils.bold('No premier practices scheduled')}"
+            practice_message = f"\n\n{global_utils.style_text('No premier practices scheduled', 'b')}"
         else:
             practice_message = self.format_schedule(
                 practice_message, practice_header)
@@ -126,7 +135,7 @@ class InfoCommands(commands.Cog):
         _map="The map to add or remove (ADMIN ONLY)",
         announce="Show the output of the command to everyone (only used in the premier channel)"
     )
-    async def mappool(self, interaction: Interaction, action: str = "", _map: str = "", announce: int = 0):
+    async def mappool(self, interaction: Interaction, action: str = "", _map: str = "", announce: int = 0) -> None:
         """[command] Adds/removes maps from the map pool or display the map pool
 
         Parameters
@@ -152,7 +161,7 @@ class InfoCommands(commands.Cog):
             await interaction.response.send_message(output, ephemeral=ephem)
             return
 
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         if _map ^ action:  # both parameters must be set to perform an action
@@ -202,7 +211,7 @@ class InfoCommands(commands.Cog):
         note_number="The note number to display (1-indexed). Leave empty to see options.",
         announce="Return the note so that it is visible to everyone (only in notes channel)"
     )
-    async def notes(self, interaction: Interaction, _map: str, note_number: int = 0, announce: int = 0):
+    async def notes(self, interaction: Interaction, _map: str, note_number: int = 0, announce: int = 0) -> None:
         """[command] Displays practice notes for a map
 
         Parameters
@@ -214,9 +223,9 @@ class InfoCommands(commands.Cog):
         note_number : int, optional
             The note number to display (1-indexed). Leaving this empty will show all options, by default 0
         announce : int, optional
-            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+            Treated as a boolean, determines whether to announce the output when used in the notes channel, by default 0
         """
-        ephem = interaction.channel.id != global_utils.prem_channel or not announce
+        ephem = interaction.channel.id != global_utils.notes_channel or not announce
 
         if _map not in global_utils.practice_notes or len(global_utils.practice_notes[_map]) == 0:
             await interaction.response.send_message(f'No notes found for {_map.title()}', ephemeral=True)
@@ -228,12 +237,12 @@ class InfoCommands(commands.Cog):
 
         if note_number == 0:
             notes_list = global_utils.practice_notes[_map]
-            output = global_utils.bold("Practice notes for ")
-            output += global_utils.style_text(_map.title(), "ib") + ":\n"
+            output = global_utils.style_text("Practice notes for ", 'b')
+            output += global_utils.style_text(_map.title(), 'ib') + ":\n"
             for i, note_id in enumerate(notes_list.keys()):
                 note_number = f"Note {i+1}"
                 note_desc = notes_list[note_id]
-                output += f'- {global_utils.bold(note_number)}: {global_utils.italics(note_desc)}\n'
+                output += f"- {global_utils.style_text(note_number, 'b')}: {global_utils.style_text(note_desc, 'i')}\n"
 
             await interaction.response.send_message(output, ephemeral=True)
             return
@@ -253,5 +262,12 @@ class InfoCommands(commands.Cog):
         await interaction.followup.send(output, ephemeral=ephem)
 
 
-async def setup(bot):
+async def setup(bot: commands.bot) -> None:
+    """Adds the InfoCommands cog to the bot
+
+    Parameters
+    ----------
+    bot : discord.ext.commands.bot
+        The bot to add the cog to. Automatically passed with the bot.load_extension method
+    """
     await bot.add_cog(InfoCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])

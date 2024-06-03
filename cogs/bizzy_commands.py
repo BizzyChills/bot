@@ -9,11 +9,20 @@ from global_utils import global_utils
 
 
 class BizzyCommands(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
+        """Initializes the BizzyCommands cog
+
+        Parameters
+        ----------
+        bot : discord.ext.commands.Bot
+            The bot to add the cog to. Automatically passed with the bot.load_extension method
+        """
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        """[event] Executes when the BizzyCommands cog is ready
+        """
         # print("Bizzy cog loaded")
         pass
 
@@ -35,7 +44,7 @@ class BizzyCommands(commands.Cog):
 
     # only available in the debug server
     @app_commands.command(name="clear", description=global_utils.command_descriptions["clear"])
-    async def clear(self, interaction: Interaction):
+    async def clear(self, interaction: Interaction) -> None:
         """[command] Clears the calling channel in the debug server
 
         Parameters
@@ -52,55 +61,6 @@ class BizzyCommands(commands.Cog):
         await interaction.channel.purge(limit=None, bulk=True)
         await interaction.followup.send("Cleared the entire channel", ephemeral=True)
 
-    # /clearslash has been deprecated; I couldn't think of a use case for it that couldn't be done by removing the bot from the server.
-    # @app_commands.command(name="clearslash", description=global_utils.command_descriptions["clearslash"])
-    # async def clearslash(self, interaction: Interaction):
-    #     """[command] Clears all of the bot's slash commands in the calling server
-
-    #     Parameters
-    #     ----------
-    #     interaction : discord.Interaction
-    #         The interaction object that initiated the command
-    #     """
-    #     if interaction.user.id != global_utils.my_id:
-    #         await interaction.response.send_message(f'You do not have permission to use this command', ephemeral=True)
-    #         return
-
-    #     g = Object(id=interaction.guild.id)
-
-    #     await interaction.response.defer(ephemeral=True, thinking=True)
-    #     self.bot.tree.clear_commands(guild=g)
-    #     await self.sync_commands(interaction.guild.id)
-
-    #     global_utils.log(f"Bot's slash commands cleared in server: {interaction.guild.name}")
-
-    #     await interaction.followup.send(f'Cleared all of {self.bot.user.name}\'s slash commands', ephemeral=True)
-
-    # /sync has been deprecated; use /reload sync=1 instead. There is negligible cost in running /reload, so just sync there when needed
-    # @commands.hybrid_command(name="sync", description=global_utils.command_descriptions["sync"])
-    # @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
-    # async def sync(self, ctx: Context):
-    #     """[command] Syncs the bot's app commands in the calling server
-
-    #     Parameters
-    #     ----------
-    #     ctx : discord.Context
-    #         The context object that initiated the command
-    #     """
-    #     if ctx.author.id != global_utils.my_id:
-    #         await ctx.send(f'You do not have permission to use this command', ephemeral=True)
-
-    #     async with ctx.typing(ephemeral=True):
-
-    #         synced = await self.sync_commands(ctx.guild.id)
-
-    #     m = await ctx.send(f'Commands synced: {len(synced)}', ephemeral=True)
-
-    #     await ctx.message.delete(delay=3)
-    #     await m.delete(delay=3)
-
-    #     global_utils.log(f"Bot commands synced for {ctx.guild.name}")
-
     @commands.hybrid_command(name="reload", description=global_utils.command_descriptions["reload"])
     @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
     @app_commands.choices(
@@ -111,7 +71,7 @@ class BizzyCommands(commands.Cog):
     @app_commands.describe(
         sync="Sync commands after reloading"
     )
-    async def reload(self, ctx: Context, sync: int = 0):
+    async def reload(self, ctx: Context, sync: int = 0) -> None:
         """[command] Reloads all cogs in the bot
 
         Parameters
@@ -148,5 +108,12 @@ class BizzyCommands(commands.Cog):
         await m.delete(delay=3)
 
 
-async def setup(bot):
+async def setup(bot: commands.bot) -> None:
+    """Adds the BizzyCommands cog to the bot
+
+    Parameters
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot to add the cog to. Automatically passed in by the bot.load_extension method
+    """
     await bot.add_cog(BizzyCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])

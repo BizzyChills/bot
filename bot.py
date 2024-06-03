@@ -1,5 +1,6 @@
 import sys
 import asyncio
+from os import getenv
 
 from discord import Interaction, Intents, app_commands
 from discord.ext import commands
@@ -10,10 +11,16 @@ from global_utils import global_utils
 bot = commands.Bot(command_prefix='!',
                    intents=Intents.all(), help_command=None)
 
+bot_token = getenv("DISCORD_BOT_TOKEN")
+
+if not bot_token:
+    raise ValueError(
+        "DISCORD_BOT_TOKEN is not set in the environment variables")
+
 
 @bot.event
-async def on_ready():
-    """[event] Logs the bot's connection to Discord and starts the log file
+async def on_ready() -> None:
+    """[event] Executes when the bot is ready
     """
     sys.stderr = open(f'./logs/{global_utils.last_log_date}_stderr.log', 'a')
 
@@ -22,7 +29,7 @@ async def on_ready():
 
 
 @bot.tree.error
-async def on_app_command_error(interaction: Interaction, error: app_commands.AppCommandError):
+async def on_app_command_error(interaction: Interaction, error: app_commands.AppCommandError) -> None:
     """[error] Handles slash command errors
 
     Parameters
@@ -51,7 +58,7 @@ async def on_app_command_error(interaction: Interaction, error: app_commands.App
 
 
 @bot.event
-async def on_command_error(ctx: Context, error: commands.CommandError):
+async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
     """[error] Handles text command errors
 
     Parameters
@@ -71,9 +78,15 @@ async def on_command_error(ctx: Context, error: commands.CommandError):
         await ctx.message.delete(delay=5)
 
 
-async def main():
+async def main() -> None:
+    """Loads all cogs and starts the bot
+    """
     await global_utils.load_cogs(bot)
-    await bot.start(global_utils.bot_token)
+    await bot.start(bot_token)
 
-asyncio.run(main())
-bot.run(global_utils.bot_token)
+if __name__ == '__main__':
+    asyncio.run(main())
+    # bot.run(bot_token)
+else:
+    print("This script is not meant to be imported. Please run it directly.")
+    sys.exit(1)

@@ -11,11 +11,22 @@ from global_utils import global_utils
 
 
 class AdminPremierCommands(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.bot) -> None:
+        """Initializes the AdminPremierCommands cog and stored the IDs of the voice channels for premier events
+
+        Parameters
+        ----------
+        bot : discord.ext.commands.bot
+            The bot to add the cog to. Automatically passed with the bot.load_extension method
+        """
         self.bot = bot
+        self.debug_voice = 1217649405759324236 # debug voice channel
+        self.voice_channel = 1100632843174031476 # premier voice channel
 
     @commands.Cog.listener()
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        """[event] Executes when the AdminPremierCommands cog is ready
+        """
         # print("AdminPremier cog loaded")
         pass
 
@@ -24,7 +35,7 @@ class AdminPremierCommands(commands.Cog):
         map_list="The map order separated by commas (whitespace between maps does not matter). Ex: 'map1, map2, map3'",
         date="The date (mm/dd) of the Thursday that starts the first event. Events will be added for Thursday, Saturday, and Sunday."
     )
-    async def addevents(self, interaction: discord.Interaction, map_list: str, date: str):
+    async def addevents(self, interaction: discord.Interaction, map_list: str, date: str) -> None:
         """[command] Adds all premier events to the schedule at a rate of 5 events/minute
 
         Parameters
@@ -39,7 +50,7 @@ class AdminPremierCommands(commands.Cog):
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
         # don't need to send a message here, global_utils.has_permission will do it
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         guild = interaction.guild
@@ -50,7 +61,7 @@ class AdminPremierCommands(commands.Cog):
 
         for _map in new_maps:
             if _map not in global_utils.map_pool:
-                await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only add premier events. Ensure that {global_utils.inline_code("map_list")} is formatted properly and that {global_utils.inline_code("/mappool")} has been updated.', ephemeral=True)
+                await interaction.response.send_message(f"{_map.title()} is not in the map pool. I only add premier events. Ensure that {global_utils.style_text('map_list', 'c')} is formatted properly and that {global_utils.style_text('/mappool', 'c')} has been updated.", ephemeral=True)
                 return
 
         try:
@@ -78,8 +89,8 @@ class AdminPremierCommands(commands.Cog):
 
         now = global_utils.tz.localize(datetime.now())
 
-        vc_object = discord.utils.get(guild.voice_channels, id=global_utils.voice_channel) if interaction.guild.id == global_utils.val_server else discord.utils.get(
-            guild.voice_channels, id=global_utils.debug_voice)
+        vc_object = discord.utils.get(guild.voice_channels, id=self.voice_channel) if interaction.guild.id == global_utils.val_server else discord.utils.get(
+            guild.voice_channels, id=self.debug_voice)
 
         for i, _map in enumerate(new_maps):
             for j, start_time in enumerate(start_times):
@@ -122,7 +133,7 @@ class AdminPremierCommands(commands.Cog):
         all_events="Cancel all events for the specified map",
         announce="Announce the cancellation when used in the premier channel"
     )
-    async def cancelevent(self, interaction: discord.Interaction, _map: str, all_events: int = 0, announce: int = 0):
+    async def cancelevent(self, interaction: discord.Interaction, _map: str, all_events: int = 0, announce: int = 0) -> None:
         """[command] Cancels the next premier event (or all events on a map). It's important to note that events are not practices.
 
         Parameters
@@ -137,7 +148,7 @@ class AdminPremierCommands(commands.Cog):
             Treated as a boolean, whether to announce the cancellation when used in the premier channel, by default 0
         """
 
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         if _map not in global_utils.map_pool and _map != "playoffs":
@@ -190,7 +201,7 @@ class AdminPremierCommands(commands.Cog):
         """
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         guild = interaction.guild
@@ -246,7 +257,7 @@ class AdminPremierCommands(commands.Cog):
         all_practices="Cancel all events for the specified map",
         announce="Announce the cancellation when used in the premier channel"
     )
-    async def cancelpractice(self, interaction: discord.Interaction, _map: str, all_practices: int = 0, announce: int = 0):
+    async def cancelpractice(self, interaction: discord.Interaction, _map: str, all_practices: int = 0, announce: int = 0) -> None:
         """[command] Cancels the next premier practice event (or all practices on a map)
 
         Parameters
@@ -261,11 +272,11 @@ class AdminPremierCommands(commands.Cog):
             Treated as a boolean, whether to announce the cancellation when used in the premier channel, by default 0
         """
 
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         if _map not in global_utils.map_pool:
-            await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only cancel premier events. Ensure that {global_utils.inline_code("/mappool")} is updated.', ephemeral=True)
+            await interaction.response.send_message(f"{_map.title()} is not in the map pool. I only cancel premier events. Ensure that {global_utils.style_text('/mappool', 'c')} is updated.", ephemeral=True)
             return
 
         guild = interaction.guild
@@ -316,7 +327,7 @@ class AdminPremierCommands(commands.Cog):
         confirm='Confirm clear. Note: This will clear all events with "Premier" in the name.',
         announce="Announce that the schedule has been cleared when used in the premier channel"
     )
-    async def clearschedule(self, interaction: discord.Interaction, confirm: str, announce: int = 0):
+    async def clearschedule(self, interaction: discord.Interaction, confirm: str, announce: int = 0) -> None:
         """[command] Clears the premier schedule (by deleting all events with "Premier" in the name)
 
         Parameters
@@ -330,7 +341,7 @@ class AdminPremierCommands(commands.Cog):
         """
         # confirm is automatically chcecked by discord, so we just need to ensure it is a required argument to "confirm"
 
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
@@ -363,7 +374,7 @@ class AdminPremierCommands(commands.Cog):
         note_id="The message ID of the note to add a reference to",
         description="Provide a short description of the note. Used to identify the note when using /notes"
     )
-    async def addnote(self, interaction: discord.Interaction, _map: str, note_id: str, description: str):
+    async def addnote(self, interaction: discord.Interaction, _map: str, note_id: str, description: str) -> None:
         """[command] Creates a "symbolic" link/reference to a practice note for the specified map (used to reference notes in the notes channel)
 
         Parameters
@@ -377,7 +388,7 @@ class AdminPremierCommands(commands.Cog):
         description : str
             The description of the note. Used to easily identify this note when using /notes
         """
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         note_id = int(note_id)
@@ -413,7 +424,7 @@ class AdminPremierCommands(commands.Cog):
         _map="The map to remove the note reference from",
         note_number="The note number to remove (1-indexed). Leave empty to see options."
     )
-    async def removenote(self, interaction: discord.Interaction, _map: str, note_number: int = 0):
+    async def removenote(self, interaction: discord.Interaction, _map: str, note_number: int = 0) -> None:
         """[command] Removes a practice note reference for the specified map (this does not remove the original message)
 
         Parameters
@@ -425,7 +436,7 @@ class AdminPremierCommands(commands.Cog):
         note_number : int, optional
             The note number to remove (1-indexed). Leave empty/0 to see options, by default 0
         """
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         if _map not in global_utils.practice_notes or len(global_utils.practice_notes[_map]) == 0:
@@ -438,12 +449,12 @@ class AdminPremierCommands(commands.Cog):
 
         if note_number == 0:
             notes_list = global_utils.practice_notes[_map]
-            output = global_utils.bold("Practice notes for ")
-            output += global_utils.style_text(_map.title(), "ib") + ":\n"
+            output = global_utils.style_text("Practice notes for ", 'b')
+            output += global_utils.style_text(_map.title(), 'ib') + ":\n"
             for i, note_id in enumerate(notes_list.keys()):
                 note_number = f"Note {i+1}"
                 note_desc = notes_list[note_id]
-                output += f'- {global_utils.bold(note_number)}: {global_utils.italics(note_desc)}\n'
+                output += f"- {global_utils.style_text(note_number, 'b')}: {global_utils.style_text(note_desc, 'i')}\n"
 
             await interaction.response.send_message(output, ephemeral=True)
             return
@@ -452,7 +463,7 @@ class AdminPremierCommands(commands.Cog):
             note_number - 1]
         global_utils.practice_notes[_map].pop(note_id)
 
-        await interaction.response.send_message(f'Removed a practice note for {_map.title()}', ephemeral=True)
+        await interaction.response.send_message(f"Removed a practice note for {global_utils.style_text(_map.title(), 'i')}", ephemeral=True)
 
         global_utils.save_notes()
         global_utils.log(
@@ -460,11 +471,20 @@ class AdminPremierCommands(commands.Cog):
 
 
 class AdminMessageCommands(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.bot) -> None:
+        """Initializes the AdminMessageCommands cog
+
+        Parameters
+        ----------
+        bot : discord.ext.commands.bot
+            The bot to add the cog to. Automatically passed with the bot.load_extension method
+        """
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        """[event] Executes when the AdminMessageCommands cog is ready
+        """
         # print("AdminManage cog loaded")
         pass
 
@@ -481,7 +501,7 @@ class AdminMessageCommands(commands.Cog):
         unit="The unit of time associated with the interval",
         message="The reminder message to send to the premier role"
     )
-    async def remind(self, interaction: discord.Interaction, interval: int, unit: str, *, message: str):
+    async def remind(self, interaction: discord.Interaction, interval: int, unit: str, *, message: str) -> None:
         """[command] Sends a reminder to the premier role (and in the premier channel) after a specified interval
 
         Parameters
@@ -496,7 +516,7 @@ class AdminMessageCommands(commands.Cog):
             The reminder message to send to the premier role
         """
 
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         if interval <= 0:
@@ -557,7 +577,7 @@ class AdminMessageCommands(commands.Cog):
     @app_commands.describe(
         message_id="The ID of the message to pin"
     )
-    async def pin(self, interaction: discord.Interaction, message_id: str):
+    async def pin(self, interaction: discord.Interaction, message_id: str) -> None:
         """[command] Pins a message by ID
 
         Parameters
@@ -567,7 +587,7 @@ class AdminMessageCommands(commands.Cog):
         message_id : str
             The ID of the message to pin
         """
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         try:
@@ -586,7 +606,7 @@ class AdminMessageCommands(commands.Cog):
     @app_commands.describe(
         message_id="The ID of the message to unpin"
     )
-    async def unpin(self, interaction: discord.Interaction, message_id: str):
+    async def unpin(self, interaction: discord.Interaction, message_id: str) -> None:
         """[command] Unpins a message by ID
 
         Parameters
@@ -596,7 +616,7 @@ class AdminMessageCommands(commands.Cog):
         message_id : str
             The ID of the message to unpin
         """
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         try:
@@ -615,7 +635,7 @@ class AdminMessageCommands(commands.Cog):
     @app_commands.describe(
         message_id="The ID of the message to delete"
     )
-    async def deletemessage(self, interaction: discord.Interaction, message_id: str):
+    async def deletemessage(self, interaction: discord.Interaction, message_id: str) -> None:
         """[command] Deletes a message by ID
 
         Parameters
@@ -625,7 +645,7 @@ class AdminMessageCommands(commands.Cog):
         message_id : str
             The ID of the message to delete
         """
-        if not await global_utils.has_permission(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         try:
@@ -641,7 +661,7 @@ class AdminMessageCommands(commands.Cog):
 
     @commands.hybrid_command(name="kill", description=global_utils.command_descriptions["kill"])
     @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
-    async def kill(self, ctx: Context, *, reason: str = "no reason given"):
+    async def kill(self, ctx: Context, *, reason: str = "no reason given") -> None:
         """[command] Kills the bot (shutdown)
 
         Parameters
@@ -651,7 +671,7 @@ class AdminMessageCommands(commands.Cog):
         reason : str, optional
             The reason for killing the bot, by default "no reason given"
         """
-        if not await global_utils.has_permission(ctx.author.id, ctx):
+        if not await global_utils.is_admin(ctx.author.id, ctx):
             return
 
         m = await ctx.send(f'Goodbye cruel world!', ephemeral=True)
@@ -664,6 +684,13 @@ class AdminMessageCommands(commands.Cog):
         await self.bot.close()
 
 
-async def setup(bot):
+async def setup(bot: commands.bot) -> None:
+    """Adds the AdminPremierCommands and AdminMessageCommands cogs to the bot
+
+    Parameters
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot to add the cog to. Automatically passed with the bot.load_extension method
+    """
     await bot.add_cog(AdminPremierCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])
     await bot.add_cog(AdminMessageCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])
