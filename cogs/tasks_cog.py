@@ -31,10 +31,10 @@ class TasksCog(commands.Cog):
         global_utils.log("Checking for event reminders")
 
         guild = self.bot.get_guild(global_utils.val_server)
-        prem_events = guild.scheduled_events
+        prem_events = guild.fetch_scheduled_events() # sometimes, events are cancelled or rescheduled, so we need to fetch the events again
 
         debug_guild = self.bot.get_guild(global_utils.debug_server)
-        debug_events = debug_guild.scheduled_events
+        debug_events = debug_guild.scheduled_events # don't really care if debug events are cancelled or rescheduled. we can just restart the bot when debugging
 
         current_time = datetime.now(pytz.utc)
 
