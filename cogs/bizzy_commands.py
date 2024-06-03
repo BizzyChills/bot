@@ -1,7 +1,6 @@
 from discord import Interaction, Object, app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
-from asyncio import sleep
 
 from datetime import datetime, timedelta
 
