@@ -48,7 +48,7 @@ class BizzyCommands(commands.Cog):
 
         Parameters
         ----------
-        interaction : Interaction
+        interaction : discord.Interaction
             The interaction object that initiated the command
         """
         if interaction.guild.id != global_utils.debug_server:

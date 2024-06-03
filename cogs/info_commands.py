@@ -71,7 +71,7 @@ class InfoCommands(commands.Cog):
 
         Parameters
         ----------
-        interaction : Interaction
+        interaction : discord.Interaction
             The interaction object that initiated the command
         announce : int, optional
             Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
@@ -140,7 +140,7 @@ class InfoCommands(commands.Cog):
 
         Parameters
         ----------
-        interaction : Interaction
+        interaction : discord.Interaction
             The interaction object that initiated the command
         action : str, optional
             The action to take on the map pool (ADMIN ONLY), by default ""
@@ -216,7 +216,7 @@ class InfoCommands(commands.Cog):
 
         Parameters
         ----------
-        interaction : Interaction
+        interaction : discord.Interaction
             The interaction object that initiated the command
         _map : str
             The map to display the note for

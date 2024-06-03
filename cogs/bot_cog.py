@@ -22,7 +22,7 @@ class BotCog(commands.Cog):
         # global_utils.log("Bot cog loaded")
         pass
 
-    @app_commands.command(name="commands", description="Display all bot commands")
+    @app_commands.command(name="commands", description=global_utils.command_descriptions["commands"])
     @app_commands.choices(
         shorten=[
             app_commands.Choice(name="(Optional) Yes", value=1),
@@ -40,7 +40,7 @@ class BotCog(commands.Cog):
 
         Parameters
         ----------
-        interaction : Interaction
+        interaction : discord.Interaction
             The interaction object that initiated the command
         shorten : int, optional
             Treated as a boolean, determines whether to display the full list of commands or a shortened list, by default 0
@@ -104,6 +104,16 @@ class BotCog(commands.Cog):
 
         await interaction.followup.send('\n'.join(output), ephemeral=ephem, silent=True)
 
+    @app_commands.command(name="source", description=global_utils.command_descriptions["source"])
+    async def source(self, interaction: Interaction) -> None:
+        """[command] Link the repo containing the source code for the bot
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        await interaction.response.send_message(f"Here is my source code: {global_utils.style_text(global_utils.source_code, 'c')}", ephemeral=True)
 
 async def setup(bot: commands.bot) -> None:
     """Adds the BotCog cog to the bot

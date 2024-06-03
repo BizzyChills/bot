@@ -18,6 +18,8 @@ class Utils:
         if not os.path.exists('logs'):
             os.makedirs('logs')
 
+        self.source_code = "https://github.com/BizzyChills/bot/"
+
         self.last_log_date = datetime.now().strftime("%Y-%m-%d")
         self.last_log = f'./logs/{self.last_log_date}_stdout.log'
         sys.stdout = open(self.last_log, 'a')
@@ -65,7 +67,8 @@ class Utils:
         self.practice_notes = self.get_notes()
 
         self.command_descriptions = {
-            "commands": "Display this message",
+            "source": "Link the repo containing the source code for the bot",
+            "commands": "Display all bot commands",
             "schedule": "Display the premier event and practice schedules",
             "mappool_common": "Display the current competitive map pool",
             "mappool_admin": "Modify the map pool",
