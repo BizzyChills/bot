@@ -20,8 +20,8 @@ class AdminPremierCommands(commands.Cog):
             The bot to add the cog to. Automatically passed with the bot.load_extension method
         """
         self.bot = bot
-        self.debug_voice = 1217649405759324236 # debug voice channel
-        self.voice_channel = 1100632843174031476 # premier voice channel
+        self.debug_voice = 1217649405759324236  # debug voice channel
+        self.voice_channel = 1100632843174031476  # premier voice channel
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:

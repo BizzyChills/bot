@@ -171,8 +171,10 @@ class TriviaCommands(commands.Cog):
         questions = sample(questions, len(questions))  # shuffle the questions
 
         for i in range(len(questions)):
-            question_header = global_utils.style_text(f"Question {i + 1}:\n", 'b')
-            question_body = global_utils.style_text(questions[i]['question'], 'i')
+            question_header = global_utils.style_text(
+                f"Question {i + 1}:\n", 'b')
+            question_body = global_utils.style_text(
+                questions[i]['question'], 'i')
             await user.send(f"{question_header}{question_body}")
             try:
                 answer = await self.bot.wait_for("message", check=lambda m: m.author == user, timeout=10)
@@ -205,7 +207,8 @@ class TriviaCommands(commands.Cog):
         """
         user = interaction.user
         await interaction.response.send_message("Please open the DM with the bot to play trivia. It may take a few minutes to start.", ephemeral=True)
-        await sleep(2) # give the user time to read the message and move to the DMs
+        # give the user time to read the message and move to the DMs
+        await sleep(2)
         await self.trivia(user)
 
 

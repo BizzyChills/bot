@@ -13,7 +13,8 @@ class Utils:
     def __init__(self) -> None:
         """Initializes the global utility class, which contains various utility functions and global variables for the bot
         """
-        os.chdir(os.path.dirname(os.path.abspath(__file__))) # ensure the working directory is the same as the script
+        os.chdir(os.path.dirname(os.path.abspath(__file__))
+                 )  # ensure the working directory is the same as the script
         if not os.path.exists('logs'):
             os.makedirs('logs')
 
@@ -44,7 +45,8 @@ class Utils:
             time(hour=19, second=2),  # 3 hours before for thur and sun
             time(hour=20, second=2),  # 3 hours before for sat
 
-            time(hour=21, minute=30, second=2),  # 30 mins before for thur and sun
+            # 30 mins before for thur and sun
+            time(hour=21, minute=30, second=2),
 
             # right on time for thur and sun
             time(hour=22, second=2),
@@ -252,7 +254,7 @@ class Utils:
 
             Just use the first letter of the desired style (case-insensitive and spaces are ignored). 
             If a style character is not recognized, it will be ignored.
-        
+
         Example:
         ```python
         style_text("Hello, World!", 'ib')  # returns "_**Hello, World!**_"
@@ -273,7 +275,7 @@ class Utils:
         for s in style:
             if s not in all_styles:
                 continue
-            
+
             s = all_styles[s]
             output = f"{s}{output}{s}"
 
@@ -295,7 +297,7 @@ class Utils:
                     await bot.reload_extension(f)
                 except commands.ExtensionNotLoaded:  # otherwise
                     await bot.load_extension(f)  # load them
-    
+
     def already_logged(self, log_message: str) -> bool:
         """Checks if a log message has already been logged in the current stdout log file
 
@@ -314,9 +316,8 @@ class Utils:
 
         with open(self.last_log, "r") as file:
             log_contents = file.read()
-        
+
         return log_message in log_contents if log_contents != "" else False
-    
 
     async def is_admin(self, user_id: int, ctx: commands.Context | Interaction, respond: bool = True) -> bool:
         """Determines if the user is either Sam or Bizzy for use in admin commands

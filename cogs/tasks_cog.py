@@ -43,10 +43,12 @@ class TasksCog(commands.Cog):
         global_utils.log("Checking for event reminders")
 
         guild = self.bot.get_guild(global_utils.val_server)
-        prem_events = guild.fetch_scheduled_events() # sometimes, events are cancelled or rescheduled, so we need to fetch the events again
+        # sometimes, events are cancelled or rescheduled, so we need to fetch the events again
+        prem_events = guild.fetch_scheduled_events()
 
         debug_guild = self.bot.get_guild(global_utils.debug_server)
-        debug_events = debug_guild.scheduled_events # don't really care if debug events are cancelled or rescheduled. we can just restart the bot when debugging
+        # don't really care if debug events are cancelled or rescheduled. we can just restart the bot when debugging
+        debug_events = debug_guild.scheduled_events
 
         current_time = datetime.now(pytz.utc)
 
@@ -81,7 +83,7 @@ class TasksCog(commands.Cog):
 
             if reminder_class == "":  # there is no event reminder to send
                 continue
-            
+
             g = event.guild
             r = global_utils.prem_role if g.id == global_utils.val_server else global_utils.debug_role
             channel = self.bot.get_channel(
@@ -92,7 +94,6 @@ class TasksCog(commands.Cog):
                                  self.premier_reminder_types[1]: f"is starting in 30 minutes (at {global_utils.discord_local_time(start_time)})!",
                                  self.premier_reminder_types[2]: f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"}
 
-
             for k, v in reminder_messages.items():
                 reminder = [
                     "(reminder)", f"{event.name} on {global_utils.style_text(event.description, 'i')}", v]
@@ -100,10 +101,11 @@ class TasksCog(commands.Cog):
                     reminder.insert(1, f"{role.mention}")
 
                 reminder_messages[k] = " ".join(reminder)
-                
+
             log_message = f"Posted '{reminder_class}' reminder for event: {event.name} on {event.description} starting at {start_time.astimezone(global_utils.tz).strftime('%Y-%m-%d %H:%M:%S')} EST"
 
-            if global_utils.already_logged(log_message):  # if the reminder has already been posted, skip it
+            # if the reminder has already been posted, skip it
+            if global_utils.already_logged(log_message):
                 continue
 
             subbed_users = []
@@ -113,7 +115,7 @@ class TasksCog(commands.Cog):
             await self.send_reminder(channel, reminder_messages[reminder_class], reminder_class, subbed_users)
             global_utils.log(log_message)
 
-    async def send_reminder(self, channel : discord.TextChannel, message : str, reminder_class : str = "", subbed_users : list = []) -> None:
+    async def send_reminder(self, channel: discord.TextChannel, message: str, reminder_class: str = "", subbed_users: list = []) -> None:
         """Sends a reminder message to a channel
 
         Parameters
@@ -131,8 +133,8 @@ class TasksCog(commands.Cog):
         pings = {"subbed": self.premier_reminder_types[0],
                  "message": self.premier_reminder_types[1],
                  "none": self.premier_reminder_types[2]}
-        
-        is_silent = reminder_class != pings["message"] 
+
+        is_silent = reminder_class != pings["message"]
 
         # We're not showing the RSVP list for the "today" reminder
         if reminder_class != pings["none"]:
@@ -146,13 +148,13 @@ class TasksCog(commands.Cog):
         await channel.send(message, silent=is_silent)
 
         # don't show the RSVP list for the "today" reminder
-        if reminder_class == pings["none"]: 
+        if reminder_class == pings["none"]:
             return
 
         if len(subbed_users) > 0:
             message = ("RSVP'ed users: \n" +
-                        "- " +
-                        "\n- ".join([user.mention for user in subbed_users]))
+                       "- " +
+                       "\n- ".join([user.mention for user in subbed_users]))
         else:
             message = "No one has RSVP'ed."
 
