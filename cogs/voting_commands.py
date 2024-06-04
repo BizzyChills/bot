@@ -20,7 +20,7 @@ class VotingCommands(commands.Cog):
     async def on_ready(self) -> None:
         """[event] Executes when the VotingCommands cog is ready
         """
-        # print("Voting cog loaded")
+        # global_utils.log("Voting cog loaded")
         pass
 
     @app_commands.command(name="prefermap", description=global_utils.command_descriptions["prefermap"])
@@ -60,20 +60,29 @@ class VotingCommands(commands.Cog):
         old_preference = ""
         uuid = str(interaction.user.id)
 
+        map_display = global_utils.style_text(_map.title(), 'i')
+        preference_display = global_utils.style_text(
+            preference_decoder[preference], 'c')
+
         # if you've voted for this map before, need to remove the old weight
         if uuid in global_utils.map_preferences[_map]:
             old_preference = global_utils.map_preferences[_map][uuid]
 
             # no change in preference, return
             if old_preference == preference:
-                await interaction.response.send_message(f"{interaction.user.mention} you have already marked {global_utils.style_text(_map.title(), 'i')} with a preference of {global_utils.style_text(preference_decoder[preference], 'c')}", ephemeral=True)
+                mention = interaction.user.mention
+                message = f"{mention} you have already marked {map_display} with a preference of {preference_display}"
+                await interaction.response.send_message(message, ephemeral=True)
                 return
 
-            output = f"Your preference for {global_utils.style_text(_map.title(), 'i')} has been changed from {global_utils.style_text(preference_decoder[old_preference], 'c')} to {global_utils.style_text(preference_decoder[preference], 'c')}"
+            old_preference_display = global_utils.style_text(
+                preference_decoder[old_preference], 'c')
+
+            output = f"Your preference for {map_display} has been changed from {old_preference_display} to {preference_display}"
 
             global_utils.map_weights[_map] -= preference_weights[old_preference]
         else:
-            output = f"You marked {global_utils.style_text(_map.title(), 'i')} with a preference of {global_utils.style_text(preference_decoder[preference], 'c')}"
+            output = f"You marked {map_display} with a preference of {preference_display}"
 
         global_utils.map_preferences[_map][uuid] = preference
 
@@ -85,7 +94,6 @@ class VotingCommands(commands.Cog):
             f'{interaction.user.name} marked {_map.title()} with a preference of "{preference_decoder[preference]}"')
 
         global_utils.save_preferences()
-        global_utils.save_weights()
 
     @app_commands.command(name="mapvotes", description=global_utils.command_descriptions["mapvotes"])
     @app_commands.choices(

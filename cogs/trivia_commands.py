@@ -26,7 +26,7 @@ class TriviaCommands(commands.Cog):
     async def on_ready(self) -> None:
         """[event] Executes when the TriviaCommands cog is ready
         """
-        # print("Trivia cog loaded")
+        # global_utils.log("Trivia cog loaded")
         pass
 
     def get_questions(self) -> dict:
@@ -162,7 +162,7 @@ class TriviaCommands(commands.Cog):
         questions = self.trivia_questions["easy"] + \
             self.trivia_questions["medium"] + self.trivia_questions["hard"]
 
-        if randint(0, 4) == 3:  # The prize for trivia is my name. 25% chance to troll the user by asking them my name lmao
+        if randint(1, 4) == 3:  # The prize for trivia is my name. 25% chance to troll the user by asking them my name lmao
             questions.append({
                 "question": "What is Bizzy's name?",
                 "answer": "Isaiah"

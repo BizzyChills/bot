@@ -21,7 +21,7 @@ class UselessCommands(commands.Cog):
     async def on_ready(self) -> None:
         """[event] Executes when the UselessCommands cog is ready
         """
-        # print("Useless cog loaded")
+        # global_utils.log("Useless cog loaded")
         pass
 
     @app_commands.command(name="hello", description=global_utils.command_descriptions["hello"])

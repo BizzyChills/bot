@@ -125,10 +125,12 @@ class Utils:
             return json.load(file)
 
     def save_preferences(self) -> None:
-        """Saves any changes to the map preferences during runtime to the map_preferences.json file
+        """Saves any changes to the map preferences during runtime to the map_preferences.json file and also saves the map weights
         """
         with open("./local_storage/map_preferences.json", "w") as file:
             json.dump(self.map_preferences, file)
+
+        self.save_weights()
 
     def get_weights(self) -> dict:
         """Extracts the map weights from the map_weights.json file

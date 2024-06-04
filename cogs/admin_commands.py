@@ -27,7 +27,7 @@ class AdminPremierCommands(commands.Cog):
     async def on_ready(self) -> None:
         """[event] Executes when the AdminPremierCommands cog is ready
         """
-        # print("AdminPremier cog loaded")
+        # global_utils.log("AdminPremier cog loaded")
         pass
 
     @app_commands.command(name="addevents", description=global_utils.command_descriptions["addevents"])
@@ -49,14 +49,12 @@ class AdminPremierCommands(commands.Cog):
         """
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
-        # don't need to send a message here, global_utils.has_permission will do it
         if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
         guild = interaction.guild
 
-        # remove commas and split by space
-        # split by comma and remove whitespace
+        # split by comma and remove extra whitespace
         new_maps = [m.strip().lower() for m in map_list.split(",")]
 
         for _map in new_maps:
@@ -485,7 +483,7 @@ class AdminMessageCommands(commands.Cog):
     async def on_ready(self) -> None:
         """[event] Executes when the AdminMessageCommands cog is ready
         """
-        # print("AdminManage cog loaded")
+        # global_utils.log("AdminManage cog loaded")
         pass
 
     @app_commands.command(name="remind", description=global_utils.command_descriptions["remind"])
@@ -547,7 +545,7 @@ class AdminMessageCommands(commands.Cog):
             when = current_time + timedelta(minutes=interval)
             output = f'(reminder) I will remind {role} in {interval} minute(s) with the message: "{message}"'
             interval *= 60
-        elif unit == "hours":  # could be else, but elif for clarity
+        elif unit == "hours":
             when = current_time + timedelta(hours=interval)
             output = f'(reminder) I will remind {role} in {interval} hour(s) with the message: "{message}"'
             interval *= 3600

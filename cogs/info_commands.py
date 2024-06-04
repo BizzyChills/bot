@@ -2,6 +2,8 @@ from discord.ext import commands
 from discord import Interaction, errors, Object
 from discord import app_commands
 
+from datetime import datetime
+
 from global_utils import global_utils
 
 
@@ -20,15 +22,15 @@ class InfoCommands(commands.Cog):
     async def on_ready(self) -> None:
         """[event] Executes when the InfoCommands cog is ready
         """
-        # print("Info cog loaded")
+        # global_utils.log("Info cog loaded")
         pass
 
-    def format_schedule(self, schedule: list, header: str = None) -> str:
+    def format_schedule(self, schedule: list[tuple[str, datetime, str]], header: str = None) -> str:
         """Formats the schedule for display in Discord
 
         Parameters
         ----------
-        schedule : list
+        schedule : list[tuple[str, datetime, str]]
             The schedule to format. This should be a list of tuples with the following structure: [(event_display_string, event_datetime, event_map), ...]
         header : str, optional
             The header to display at the top of the schedule, by default None
@@ -50,7 +52,7 @@ class InfoCommands(commands.Cog):
 
         output = ""
         for map_name, event_displays in subsections.items():
-            subheader = f"- {global_utils.style_text(map_name, 'iU')}:"
+            subheader = f"- {global_utils.style_text(map_name, 'iu')}:"
             event_displays = " - " + '\n - '.join(event_displays)
 
             output += f"{subheader}\n{event_displays}\n"
@@ -123,7 +125,7 @@ class InfoCommands(commands.Cog):
         ],
 
         _map=[
-            # mappool only has maps that are currently playable, need to get all maps
+            # map_pool only has maps that are currently playable, need to get all maps
             app_commands.Choice(name=f"{s.title()}", value=s) for s in global_utils.map_preferences.keys()
         ],
         announce=[
@@ -164,8 +166,8 @@ class InfoCommands(commands.Cog):
         if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
-        if _map ^ action:  # both parameters must be set to perform an action
-            await interaction.response.send_message(f'Please provide an action and a map.', ephemeral=True)
+        if _map ^ action:  # only one argument is set, need both to continue
+            await interaction.response.send_message(f"Please provide an action {global_utils.style_text('and', 'bu')} a map.", ephemeral=True)
             return
 
         output = ""

@@ -22,7 +22,7 @@ class BizzyCommands(commands.Cog):
     async def on_ready(self) -> None:
         """[event] Executes when the BizzyCommands cog is ready
         """
-        # print("Bizzy cog loaded")
+        # global_utils.log("Bizzy cog loaded")
         pass
 
     async def sync_commands(self, guild_id: int = global_utils.debug_server) -> int:
