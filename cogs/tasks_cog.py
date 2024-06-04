@@ -107,7 +107,12 @@ class TasksCog(commands.Cog):
         # don't really care about the issue on debug
         debug_events = debug_guild.scheduled_events
 
-        for event in list(prem_events) + list(debug_events):
+        # the more urgent the reminder, the later it should be sent (since it will be closer to the bottom of the chat)
+        events = sorted(prem_events, key=lambda x: x.start_time, reverse=True) + \
+                 sorted(debug_events, key=lambda x: x.start_time, reverse=True)
+        # also, start with the val server's events first
+
+        for event in events:
             if "premier" not in event.name.lower():
                 continue
 
