@@ -94,7 +94,7 @@ class BotCog(commands.Cog):
         output = common_commands
 
         if not shorten:
-            if await global_utils.is_admin(interaction.user, interaction, respond=False):
+            if await global_utils.is_admin(interaction.user.id, interaction, respond=False):
                 output += admin_commands
 
             if interaction.user.id == global_utils.my_id:
