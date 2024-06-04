@@ -355,7 +355,7 @@ class Utils:
             command = ctx.command.name
 
         self.log(
-            f"User {id} attempted to use the admin command '{command}'")
+            f"User with id {user_id} attempted to use the admin command '{command}'")
         return False
 
 
