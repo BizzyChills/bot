@@ -354,8 +354,10 @@ class Utils:
                 await ctx.response.send_message(message, ephemeral=True)
             command = ctx.command.name
 
-        self.log(
-            f"User with id {user_id} attempted to use the admin command '{command}'")
+        # commands uses this function just to display extra commands if admin. User is not trying to use an admin command
+        if command != "commands":
+            self.log(
+                f"User with id {user_id} attempted to use the admin command '{command}'")
         return False
 
 
