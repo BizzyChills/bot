@@ -489,9 +489,9 @@ class AdminMessageCommands(commands.Cog):
     @app_commands.command(name="remind", description=global_utils.command_descriptions["remind"])
     @app_commands.choices(
         unit=[
-            app_commands.Choice(name="Hours", value="hours"),
-            app_commands.Choice(name="Minutes", value="minutes"),
-            app_commands.Choice(name="Seconds", value="seconds"),
+            app_commands.Choice(name="hours", value="hours"),
+            app_commands.Choice(name="minutes", value="minutes"),
+            app_commands.Choice(name="seconds", value="seconds"),
         ]
     )
     @app_commands.describe(
