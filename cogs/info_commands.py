@@ -79,15 +79,17 @@ class InfoCommands(commands.Cog):
             Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
         """
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
+        
+        await interaction.response.defer(ephemeral=ephem, thinking=True)
 
-        events = await global_utils.get_events(interaction.guild)
+        guild = interaction.guild
+        events = guild.scheduled_events
 
         event_header = f"{global_utils.style_text('Upcoming Premier Events:', 'b')}"
         practice_header = f"\n\n{global_utils.style_text('Upcoming Premier Practices:', 'b')}"
         message = []
         practice_message = []
 
-        await interaction.response.defer(ephemeral=ephem, thinking=True)
 
         for event in events:
             map_name = event.description if "playoffs" not in event.name.lower(

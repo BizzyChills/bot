@@ -183,21 +183,6 @@ class Utils:
         with open("./local_storage/notes.json", "w") as file:
             json.dump(self.notes, file)
 
-    async def get_events(self, guild: Guild) -> list[ScheduledEvent]:
-        """Retrieves all events in the guild's schedule
-
-        Parameters
-        ----------
-        guild : discord.Guild
-            The guild to retrieve the schedule from
-
-        Returns
-        -------
-        list
-            A list of ScheduledEvent objects containing all events in the guild's schedule
-        """
-        return guild.scheduled_events if guild.id == self.debug_server else await guild.fetch_scheduled_events()
-
     def log(self, message: str) -> None:
         """Logs a message to the current stdout log file
 

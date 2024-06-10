@@ -105,11 +105,8 @@ class TasksCog(commands.Cog):
 
         for g_id in [global_utils.val_server, global_utils.debug_server]:
             guild = self.bot.get_guild(g_id)
-            # sometimes, events are cancelled or rescheduled, so we need to fetch the events again
-            tmp = await global_utils.get_events(guild)
-
             # the more urgent the reminder, the later it should be sent (since it will be closer to the bottom of the chat)
-            events += sorted(tmp, key=lambda x: x.start_time, reverse=True)
+            events += sorted(guild.scheduled_events, key=lambda x: x.start_time, reverse=True)
 
         for event in events:
             if "premier" not in event.name.lower():
@@ -264,6 +261,13 @@ class TasksCog(commands.Cog):
             sys.stdout.close()
             sys.stdout = open(global_utils.last_log, 'a')
 
+    @tasks.loop(minutes=5)
+    async def update_cache(self) -> None:
+        """[task] Updates the cache of the bot with whatever this function has been made to update (like scheduled_events)"""
+        guilds = [self.bot.get_guild(global_utils.val_server), self.bot.get_guild(global_utils.debug_server)]
+
+        for guild in guilds:
+            guild.scheduled_events = await guild.fetch_scheduled_events()
 
 async def setup(bot: commands.bot) -> None:
     """Adds the TasksCog cog to the bot

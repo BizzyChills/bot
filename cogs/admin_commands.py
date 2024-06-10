@@ -153,12 +153,12 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only cancel premier events.', ephemeral=True)
             return
 
-        guild = interaction.guild
-        events = await global_utils.get_events(guild)
-
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
-
         await interaction.response.defer(ephemeral=ephem, thinking=True)
+        
+        guild = interaction.guild
+        events = guild.scheduled_events
+
         message = "Event not found in the schedule."
 
         for event in events:
@@ -202,17 +202,17 @@ class AdminPremierCommands(commands.Cog):
         if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        
         guild = interaction.guild
-        events = await global_utils.get_events(guild)
+        events = guild.scheduled_events
 
         if len([event for event in events if event.name == "Premier" and event.description != "Playoffs"]) == 0:
-            await interaction.response.send_message(f'Please add the premier events first using the `/addevents` command', ephemeral=True)
+            await interaction.followup.send(f'Please add the premier events first using the `/addevents` command', ephemeral=True)
             return
 
         wed_hour = global_utils.est_to_utc(time(hour=22)).hour
         fri_hour = wed_hour + 1
-
-        await interaction.response.defer(ephemeral=True, thinking=True)
 
         for event in events:
             if event.start_time.astimezone(global_utils.tz).weekday() != 3 or "Premier" not in event.name:
@@ -277,12 +277,13 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(f"{_map.title()} is not in the map pool. I only cancel premier events. Ensure that {global_utils.style_text('/mappool', 'c')} is updated.", ephemeral=True)
             return
 
-        guild = interaction.guild
-        events = await global_utils.get_events(guild)
-
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
+
+        guild = interaction.guild
+        events = guild.scheduled_events
+
         message = f"No practices found for {_map.title()} in the schedule."
 
         for event in events:
@@ -345,8 +346,9 @@ class AdminPremierCommands(commands.Cog):
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
+
         guild = interaction.guild
-        events = await global_utils.get_events(guild)
+        events = guild.scheduled_events
 
         for event in events:
             if "Premier" in event.name:
