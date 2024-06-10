@@ -154,7 +154,7 @@ class AdminPremierCommands(commands.Cog):
             return
 
         guild = interaction.guild
-        events = guild.scheduled_events
+        events = await global_utils.get_events(guild)
 
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
@@ -203,7 +203,7 @@ class AdminPremierCommands(commands.Cog):
             return
 
         guild = interaction.guild
-        events = guild.scheduled_events
+        events = await global_utils.get_events(guild)
 
         if len([event for event in events if event.name == "Premier" and event.description != "Playoffs"]) == 0:
             await interaction.response.send_message(f'Please add the premier events first using the `/addevents` command', ephemeral=True)
@@ -278,7 +278,7 @@ class AdminPremierCommands(commands.Cog):
             return
 
         guild = interaction.guild
-        events = guild.scheduled_events
+        events = await global_utils.get_events(guild)
 
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
@@ -346,7 +346,7 @@ class AdminPremierCommands(commands.Cog):
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
         guild = interaction.guild
-        events = guild.scheduled_events
+        events = await global_utils.get_events(guild)
 
         for event in events:
             if "Premier" in event.name:

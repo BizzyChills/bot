@@ -80,7 +80,7 @@ class InfoCommands(commands.Cog):
         """
         ephem = interaction.channel.id != global_utils.prem_channel or not announce
 
-        events = interaction.guild.scheduled_events
+        events = await global_utils.get_events(interaction.guild)
 
         event_header = f"{global_utils.style_text('Upcoming Premier Events:', 'b')}"
         practice_header = f"\n\n{global_utils.style_text('Upcoming Premier Practices:', 'b')}"

@@ -59,6 +59,8 @@ class TasksCog(commands.Cog):
         if time_remaining <= 0:  # allow this reminder until 10 minutes after the event has already started
             if time_remaining >= -60 * 10:
                 reminder_type = self.premier_reminder_types[0]
+                if event.status == discord.EventStatus.scheduled:
+                    await event.start()
             elif time_remaining <= -3600:  # remove the event
                 if event.status == discord.EventStatus.active:
                     await event.end()
@@ -99,18 +101,15 @@ class TasksCog(commands.Cog):
 
         global_utils.log("Checking for event reminders")
 
-        guild = self.bot.get_guild(global_utils.val_server)
-        # sometimes, events are cancelled or rescheduled, so we need to fetch the events again
-        prem_events = await guild.fetch_scheduled_events()
+        events = []
 
-        debug_guild = self.bot.get_guild(global_utils.debug_server)
-        # don't really care about the issue on debug
-        debug_events = debug_guild.scheduled_events
+        for g_id in [global_utils.val_server, global_utils.debug_server]:
+            guild = self.bot.get_guild(g_id)
+            # sometimes, events are cancelled or rescheduled, so we need to fetch the events again
+            tmp = await global_utils.get_events(guild)
 
-        # the more urgent the reminder, the later it should be sent (since it will be closer to the bottom of the chat)
-        events = sorted(prem_events, key=lambda x: x.start_time, reverse=True) + \
-                 sorted(debug_events, key=lambda x: x.start_time, reverse=True)
-        # also, start with the val server's events first
+            # the more urgent the reminder, the later it should be sent (since it will be closer to the bottom of the chat)
+            events += sorted(tmp, key=lambda x: x.start_time, reverse=True)
 
         for event in events:
             if "premier" not in event.name.lower():
