@@ -165,7 +165,7 @@ class InfoCommands(commands.Cog):
             await interaction.response.send_message(output, ephemeral=ephem)
             return
 
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         if _map ^ action:  # only one argument is set, need both to continue

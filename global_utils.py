@@ -91,6 +91,7 @@ class Utils:
             "pin": "Pin a message",
             "unpin": "Unpin a message",
             "clear": "(debug only) clear the debug channel",
+            "feature": "Promote a new feature in the current channel",
             "deletemessage": "Delete a message by ID",
             "reload": "Reload the bot's cogs",
             "kill": "Kill the bot",
@@ -324,15 +325,13 @@ class Utils:
 
         return log_message in log_contents if log_contents != "" else False
 
-    async def is_admin(self, user_id: int, ctx: commands.Context | Interaction, respond: bool = True) -> bool:
+    async def is_admin(self, ctx: commands.Context | Interaction, respond: bool = True) -> bool:
         """Determines if the user is either Sam or Bizzy for use in admin commands
 
         Parameters
         ----------
-        user_id : int
-            The user ID to check
         ctx : discord.ext.commands.Context | discord.Interaction
-            The context object that initiated the command. Used to notify the user that they don't have permission (and log the attempt).
+            The context object that initiated the command. Can be either a text command or a slash command
         respond : bool, optional
             Whether to respond to the user with a message, by default True
 
@@ -342,18 +341,24 @@ class Utils:
             Whether the user has permission to use the command
         """
         message = "You do not have permission to use this command"
-        if user_id in self.admin_ids:
-            return True
+
+
 
         if type(ctx) == commands.Context:
-            if respond:
-                await ctx.send(message, ephemeral=True)
+            responder = ctx.send
             command = ctx.invoked_with
+            user_id = ctx.author.id
         else:
-            if respond:
-                await ctx.response.send_message(message, ephemeral=True)
+            responder = ctx.response.send_message
             command = ctx.command.name
+            user_id = ctx.user.id
 
+        if user_id in self.admin_ids:
+            return True
+        
+        if respond:
+            await responder(message, ephemeral=True)
+        
         # commands uses this function just to display extra commands if admin. User is not trying to use an admin command
         if command != "commands":
             self.log(

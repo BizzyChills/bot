@@ -49,7 +49,7 @@ class AdminPremierCommands(commands.Cog):
         """
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         guild = interaction.guild
@@ -146,7 +146,7 @@ class AdminPremierCommands(commands.Cog):
             Treated as a boolean, whether to announce the cancellation when used in the premier channel, by default 0
         """
 
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         if _map not in global_utils.map_pool and _map != "playoffs":
@@ -199,7 +199,7 @@ class AdminPremierCommands(commands.Cog):
         """
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         await interaction.response.defer(ephemeral=True, thinking=True)
@@ -270,7 +270,7 @@ class AdminPremierCommands(commands.Cog):
             Treated as a boolean, whether to announce the cancellation when used in the premier channel, by default 0
         """
 
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         if _map not in global_utils.map_pool:
@@ -340,7 +340,7 @@ class AdminPremierCommands(commands.Cog):
         """
         # confirm is automatically chcecked by discord, so we just need to ensure it is a required argument to "confirm"
 
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
@@ -388,7 +388,7 @@ class AdminPremierCommands(commands.Cog):
         description : str
             The description of the note. Used to easily identify this note when using /notes
         """
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         note_id = int(note_id)
@@ -436,7 +436,7 @@ class AdminPremierCommands(commands.Cog):
         note_number : int, optional
             The note number to remove (1-indexed). Leave empty/0 to see options, by default 0
         """
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         if _map not in global_utils.practice_notes or len(global_utils.practice_notes[_map]) == 0:
@@ -516,7 +516,7 @@ class AdminMessageCommands(commands.Cog):
             The reminder message to send to the premier role
         """
 
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         if interval <= 0:
@@ -587,7 +587,7 @@ class AdminMessageCommands(commands.Cog):
         message_id : str
             The ID of the message to pin
         """
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         try:
@@ -616,7 +616,7 @@ class AdminMessageCommands(commands.Cog):
         message_id : str
             The ID of the message to unpin
         """
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         try:
@@ -645,7 +645,7 @@ class AdminMessageCommands(commands.Cog):
         message_id : str
             The ID of the message to delete
         """
-        if not await global_utils.is_admin(interaction.user.id, interaction):
+        if not await global_utils.is_admin(interaction):
             return
 
         try:
@@ -671,7 +671,7 @@ class AdminMessageCommands(commands.Cog):
         reason : str, optional
             The reason for killing the bot, by default "no reason given"
         """
-        if not await global_utils.is_admin(ctx.author.id, ctx):
+        if not await global_utils.is_admin(ctx):
             return
 
         m = await ctx.send(f'Goodbye cruel world!', ephemeral=True)

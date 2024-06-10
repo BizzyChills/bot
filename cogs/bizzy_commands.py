@@ -60,6 +60,28 @@ class BizzyCommands(commands.Cog):
         await interaction.channel.purge(limit=None, bulk=True)
         await interaction.followup.send("Cleared the entire channel", ephemeral=True)
 
+    @app_commands.command(name="feature", description=global_utils.command_descriptions["feature"])
+    @app_commands.describe(
+        feature_name="The new feature to promote",
+        message="The promotion message"
+    )
+    async def feature(self, interaction: Interaction, feature_name: str, message: str) -> None:
+        """[command] Promotes a new feature in the current channel
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        feature : str
+            The new feature to promote
+        message : str
+            The promotion message
+        """
+        if not global_utils.is_admin(interaction):
+            return
+
+        await interaction.response.send_message(f"{global_utils.style_text(feature_name, 'b')}\n{message}", ephemeral=True)
+
     @commands.hybrid_command(name="reload", description=global_utils.command_descriptions["reload"])
     @app_commands.guilds(Object(id=global_utils.val_server_id), Object(global_utils.debug_server_id))
     @app_commands.choices(
