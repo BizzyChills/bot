@@ -73,4 +73,4 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(UselessCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])
+    await bot.add_cog(UselessCommands(bot), guilds=[Object(global_utils.val_server_id), Object(global_utils.debug_server_id)])

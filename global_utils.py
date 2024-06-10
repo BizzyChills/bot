@@ -24,15 +24,15 @@ class Utils:
         self.last_log = f'./logs/{self.last_log_date}_stdout.log'
         sys.stdout = open(self.last_log, 'a')
 
-        self.debug_server = 1217649405759324232
-        self.debug_role = "southern"
-        self.debug_channel = 1217649405759324235
+        self.debug_server_id = 1217649405759324232
+        self.debug_role_name = "southern"
+        self.debug_channel_id = 1217649405759324235
 
-        self.val_server = 1100632842528096330
-        self.prem_role = "The Valorats"
-        self.bot_channel = 1218420817394925668
-        self.prem_channel = 1193661647752003614
-        self.notes_channel = 1237971459461218376
+        self.val_server_id = 1100632842528096330
+        self.prem_role_name = "The Valorats"
+        self.bot_channel_id = 1218420817394925668
+        self.prem_channel_id = 1193661647752003614
+        self.notes_channel_id = 1237971459461218376
 
         self.my_id = 461265370813038633
         sam_id = 180107711806046208

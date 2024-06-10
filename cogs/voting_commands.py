@@ -114,18 +114,18 @@ class VotingCommands(commands.Cog):
         announce : int, optional
             Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
         """
-        ephem = interaction.channel.id != global_utils.prem_channel or not announce
+        ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 
-        role = global_utils.prem_role if interaction.guild.id == global_utils.val_server else global_utils.debug_role
-        all_users = discord.utils.get(
-            interaction.guild.roles, name=role).members
+        role_name = global_utils.prem_role_name if interaction.guild.id == global_utils.val_server_id else global_utils.debug_role_name
+        premier_team = discord.utils.get(
+            interaction.guild.roles, name=role_name).members
 
         output = ""
 
         for _map in global_utils.map_pool:
             header = f"- {global_utils.style_text(_map.title(), 'i')} ({global_utils.style_text(global_utils.map_weights[_map], 'b')}):\n"
             body = ""
-            for user in all_users:
+            for user in premier_team:
                 if str(user.id) in global_utils.map_preferences[_map]:
                     encoded_weight = global_utils.map_preferences[_map][str(
                         user.id)]
@@ -163,7 +163,7 @@ class VotingCommands(commands.Cog):
         announce : int, optional
             Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
         """
-        ephem = interaction.channel.id != global_utils.prem_channel or not announce
+        ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 
         output = ""
 
@@ -190,4 +190,4 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(VotingCommands(bot), guilds=[discord.Object(global_utils.val_server), discord.Object(global_utils.debug_server)])
+    await bot.add_cog(VotingCommands(bot), guilds=[discord.Object(global_utils.val_server_id), discord.Object(global_utils.debug_server_id)])

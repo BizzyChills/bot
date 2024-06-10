@@ -20,8 +20,8 @@ class AdminPremierCommands(commands.Cog):
             The bot to add the cog to. Automatically passed with the bot.load_extension method
         """
         self.bot = bot
-        self.debug_voice = 1217649405759324236  # debug voice channel
-        self.voice_channel = 1100632843174031476  # premier voice channel
+        self.debug_voice_id = 1217649405759324236  # debug voice channel
+        self.voice_channel_id = 1100632843174031476  # premier voice channel
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
@@ -87,8 +87,8 @@ class AdminPremierCommands(commands.Cog):
 
         now = global_utils.tz.localize(datetime.now())
 
-        vc_object = discord.utils.get(guild.voice_channels, id=self.voice_channel) if interaction.guild.id == global_utils.val_server else discord.utils.get(
-            guild.voice_channels, id=self.debug_voice)
+        voice_channel = discord.utils.get(guild.voice_channels, id=self.voice_channel_id) if interaction.guild.id == global_utils.val_server_id else discord.utils.get(
+            guild.voice_channels, id=self.debug_voice_id)
 
         for i, _map in enumerate(new_maps):
             for j, start_time in enumerate(start_times):
@@ -103,7 +103,7 @@ class AdminPremierCommands(commands.Cog):
                     event_name = "Premier Playoffs"
                     event_desc = "Playoffs"
 
-                await guild.create_scheduled_event(name=event_name, description=event_desc, channel=vc_object,
+                await guild.create_scheduled_event(name=event_name, description=event_desc, channel=voice_channel,
                                                    start_time=start_time, end_time=start_time +
                                                    timedelta(hours=1),
                                                    entity_type=discord.EntityType.voice, privacy_level=discord.PrivacyLevel.guild_only)
@@ -153,7 +153,7 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(f'{_map.title()} is not in the map pool. I only cancel premier events.', ephemeral=True)
             return
 
-        ephem = interaction.channel.id != global_utils.prem_channel or not announce
+        ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
         await interaction.response.defer(ephemeral=ephem, thinking=True)
         
         guild = interaction.guild
@@ -277,7 +277,7 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(f"{_map.title()} is not in the map pool. I only cancel premier events. Ensure that {global_utils.style_text('/mappool', 'c')} is updated.", ephemeral=True)
             return
 
-        ephem = interaction.channel.id != global_utils.prem_channel or not announce
+        ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
@@ -343,7 +343,7 @@ class AdminPremierCommands(commands.Cog):
         if not await global_utils.is_admin(interaction.user.id, interaction):
             return
 
-        ephem = interaction.channel.id != global_utils.prem_channel or not announce
+        ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
@@ -398,7 +398,7 @@ class AdminPremierCommands(commands.Cog):
             await interaction.response.send_message(f'Message not found', ephemeral=True)
             return
 
-        if message.channel.id != global_utils.notes_channel:
+        if message.channel.id != global_utils.notes_channel_id:
             await interaction.response.send_message(f'Invalid message ID. The message must be in the notes channel.', ephemeral=True)
             return
 
@@ -528,14 +528,14 @@ class AdminMessageCommands(commands.Cog):
         current_time = datetime.now()
 
         g = interaction.guild
-        if g.id == global_utils.val_server:
-            r = global_utils.prem_role
-            reminder_channel = self.bot.get_channel(global_utils.prem_channel)
+        if g.id == global_utils.val_server_id:
+            role_name = global_utils.prem_role_name
+            reminder_channel = self.bot.get_channel(global_utils.prem_channel_id)
         else:
-            r = global_utils.debug_role
-            reminder_channel = self.bot.get_channel(global_utils.debug_channel)
+            role_name = global_utils.debug_role_name
+            reminder_channel = self.bot.get_channel(global_utils.debug_channel_id)
 
-        role = discord.utils.get(g.roles, name=r)
+        role = discord.utils.get(g.roles, name=role_name)
 
         message = f"(reminder) {role.mention} {message}"
         output = ""
@@ -660,7 +660,7 @@ class AdminMessageCommands(commands.Cog):
             f'{interaction.user.display_name} deleted message {message_id}')
 
     @commands.hybrid_command(name="kill", description=global_utils.command_descriptions["kill"])
-    @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
+    @app_commands.guilds(Object(id=global_utils.val_server_id), Object(global_utils.debug_server_id))
     async def kill(self, ctx: Context, *, reason: str = "no reason given") -> None:
         """[command] Kills the bot (shutdown)
 
@@ -692,5 +692,5 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.Bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(AdminPremierCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])
-    await bot.add_cog(AdminMessageCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])
+    await bot.add_cog(AdminPremierCommands(bot), guilds=[Object(global_utils.val_server_id), Object(global_utils.debug_server_id)])
+    await bot.add_cog(AdminMessageCommands(bot), guilds=[Object(global_utils.val_server_id), Object(global_utils.debug_server_id)])

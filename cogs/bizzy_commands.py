@@ -25,7 +25,7 @@ class BizzyCommands(commands.Cog):
         # global_utils.log("Bizzy cog loaded")
         pass
 
-    async def sync_commands(self, guild_id: int = global_utils.debug_server) -> int:
+    async def sync_commands(self, guild_id: int = global_utils.debug_server_id) -> int:
         """Syncs the bot's app commands within the given guild
 
         Parameters
@@ -51,7 +51,7 @@ class BizzyCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-        if interaction.guild.id != global_utils.debug_server:
+        if interaction.guild.id != global_utils.debug_server_id:
             await interaction.response.send_message(
                 "This command is not available in this server", ephemeral=True)
             return
@@ -61,7 +61,7 @@ class BizzyCommands(commands.Cog):
         await interaction.followup.send("Cleared the entire channel", ephemeral=True)
 
     @commands.hybrid_command(name="reload", description=global_utils.command_descriptions["reload"])
-    @app_commands.guilds(Object(id=global_utils.val_server), Object(global_utils.debug_server))
+    @app_commands.guilds(Object(id=global_utils.val_server_id), Object(global_utils.debug_server_id))
     @app_commands.choices(
         sync=[
             app_commands.Choice(name="Sync", value=1),
@@ -115,4 +115,4 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.Bot
         The bot to add the cog to. Automatically passed in by the bot.load_extension method
     """
-    await bot.add_cog(BizzyCommands(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])
+    await bot.add_cog(BizzyCommands(bot), guilds=[Object(global_utils.val_server_id), Object(global_utils.debug_server_id)])

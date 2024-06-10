@@ -75,8 +75,8 @@ class TasksCog(commands.Cog):
             return "", ""
 
         g = event.guild
-        r = global_utils.prem_role if g.id == global_utils.val_server else global_utils.debug_role
-        role = discord.utils.get(g.roles, name=r)
+        role_name = global_utils.prem_role_name if g.id == global_utils.val_server_id else global_utils.debug_role_name
+        role = discord.utils.get(g.roles, name=role_name)
 
         if reminder_type == self.premier_reminder_types[0]:
             message = f"has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!"
@@ -103,7 +103,7 @@ class TasksCog(commands.Cog):
 
         events = []
 
-        for g_id in [global_utils.val_server, global_utils.debug_server]:
+        for g_id in [global_utils.val_server_id, global_utils.debug_server_id]:
             guild = self.bot.get_guild(g_id)
             # the more urgent the reminder, the later it should be sent (since it will be closer to the bottom of the chat)
             events += sorted(guild.scheduled_events, key=lambda x: x.start_time, reverse=True)
@@ -129,7 +129,7 @@ class TasksCog(commands.Cog):
                 subbed_users.append(user)
 
             channel = self.bot.get_channel(
-                global_utils.prem_channel) if event.guild.id == global_utils.val_server else self.bot.get_channel(global_utils.debug_channel)
+                global_utils.prem_channel_id) if event.guild.id == global_utils.val_server_id else self.bot.get_channel(global_utils.debug_channel_id)
 
             await self.send_reminder(channel, message, reminder_type, len(subbed_users))
 
@@ -201,7 +201,7 @@ class TasksCog(commands.Cog):
     @tasks.loop(hours=1)
     async def clear_old_reminders(self) -> None:
         """[task] Clears old reminder messages from the premier and debug channels"""
-        channels = global_utils.prem_channel, global_utils.debug_channel
+        channels = global_utils.prem_channel_id, global_utils.debug_channel_id
 
         for channel_id in channels:
             channel = self.bot.get_channel(channel_id)
@@ -231,7 +231,7 @@ class TasksCog(commands.Cog):
         for server in iterable.keys():
             for time, message in iterable[server].items():
                 channel = self.bot.get_channel(
-                    global_utils.prem_channel) if server == str(global_utils.val_server) else self.bot.get_channel(global_utils.debug_channel)
+                    global_utils.prem_channel_id) if server == str(global_utils.val_server_id) else self.bot.get_channel(global_utils.debug_channel_id)
 
                 time_dt = datetime.fromisoformat(time)
 
@@ -264,9 +264,10 @@ class TasksCog(commands.Cog):
     @tasks.loop(minutes=5)
     async def update_cache(self) -> None:
         """[task] Updates the cache of the bot with whatever this function has been made to update (like scheduled_events)"""
-        guilds = [self.bot.get_guild(global_utils.val_server), self.bot.get_guild(global_utils.debug_server)]
+        guild_ids = [global_utils.val_server_id, global_utils.debug_server_id]
 
-        for guild in guilds:
+        for g_id in guild_ids:
+            guild = self.bot.get_guild(g_id)
             guild.scheduled_events = await guild.fetch_scheduled_events()
 
 async def setup(bot: commands.bot) -> None:
@@ -277,4 +278,4 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(TasksCog(bot), guilds=[discord.Object(global_utils.val_server), discord.Object(global_utils.debug_server)])
+    await bot.add_cog(TasksCog(bot), guilds=[discord.Object(global_utils.val_server_id), discord.Object(global_utils.debug_server_id)])

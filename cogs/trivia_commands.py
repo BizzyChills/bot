@@ -220,4 +220,4 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(TriviaCommands(bot), guilds=[discord.Object(global_utils.val_server), discord.Object(global_utils.debug_server)])
+    await bot.add_cog(TriviaCommands(bot), guilds=[discord.Object(global_utils.val_server_id), discord.Object(global_utils.debug_server_id)])

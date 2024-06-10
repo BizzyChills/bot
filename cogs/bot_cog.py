@@ -47,7 +47,7 @@ class BotCog(commands.Cog):
         announce : int, optional
             Treated as a boolean, determines whether to announce the output when used in the bot channel, by default 0
         """
-        ephem = interaction.channel.id != global_utils.bot_channel or not announce
+        ephem = interaction.channel.id != global_utils.bot_channel_id or not announce
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
@@ -123,4 +123,4 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(BotCog(bot), guilds=[Object(global_utils.val_server), Object(global_utils.debug_server)])
+    await bot.add_cog(BotCog(bot), guilds=[Object(global_utils.val_server_id), Object(global_utils.debug_server_id)])
