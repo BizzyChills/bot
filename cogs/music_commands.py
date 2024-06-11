@@ -577,5 +577,5 @@ async def setup(bot: commands.Bot) -> None:
     bot : discord.ext.commands.Bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(MusicCommands(bot), guild=discord.Object(
-        global_utils.debug_server_id))
+    await bot.add_cog(MusicCommands(bot), guilds=[discord.Object(
+        global_utils.debug_server_id), discord.Object(global_utils.val_server_id)])
