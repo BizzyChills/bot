@@ -30,7 +30,7 @@ class AdminPremierCommands(commands.Cog):
         # global_utils.log("AdminPremier cog loaded")
         pass
 
-    @app_commands.command(name="addevents", description=global_utils.command_descriptions["addevents"])
+    @app_commands.command(name="add-events", description=global_utils.command_descriptions["add-events"])
     @app_commands.describe(
         map_list="The map order separated by commas (whitespace between maps does not matter). Ex: 'map1, map2, map3'",
         date="The date (mm/dd) of the Thursday that starts the first event. Events will be added for Thursday, Saturday, and Sunday."
@@ -115,12 +115,12 @@ class AdminPremierCommands(commands.Cog):
             f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
         await interaction.followup.send(f'The Premier schedule has been created.\n{output}', ephemeral=True)
 
-    @app_commands.command(name="cancelevent", description=global_utils.command_descriptions["cancelevent"])
+    @app_commands.command(name="cancel-event", description=global_utils.command_descriptions["cancel-event"])
     @app_commands.choices(
         _map=[
             app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_pool] + [app_commands.Choice(name="playoffs", value="playoffs")],
         all_events=[
-            app_commands.Choice(name="All events on selected map", value=1),
+            app_commands.Choice(name="Yes", value=1),
         ],
         announce=[
             app_commands.Choice(name="Yes", value=1),
@@ -155,7 +155,7 @@ class AdminPremierCommands(commands.Cog):
 
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
         await interaction.response.defer(ephemeral=ephem, thinking=True)
-        
+
         guild = interaction.guild
         events = guild.scheduled_events
 
@@ -188,7 +188,7 @@ class AdminPremierCommands(commands.Cog):
         global_utils.log(
             f"{interaction.user.display_name} cancelled event - {message}")
 
-    @app_commands.command(name="addpractices", description=global_utils.command_descriptions["addpractices"])
+    @app_commands.command(name="add-practices", description=global_utils.command_descriptions["add-practices"])
     async def addpractices(self, interaction: discord.Interaction):
         """[command] Adds all premier practice events to the schedule at a rate of 5 practices/minute. Ensure that the premier events have been added first using /addevents
 
@@ -203,7 +203,7 @@ class AdminPremierCommands(commands.Cog):
             return
 
         await interaction.response.defer(ephemeral=True, thinking=True)
-        
+
         guild = interaction.guild
         events = guild.scheduled_events
 
@@ -238,13 +238,13 @@ class AdminPremierCommands(commands.Cog):
             f'{interaction.user.display_name} has posted the premier practice schedule')
         await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True)
 
-    @app_commands.command(name="cancelpractice", description=global_utils.command_descriptions["cancelpractice"])
+    @app_commands.command(name="cancel-practice", description=global_utils.command_descriptions["cancel-practice"])
     @app_commands.choices(
         _map=[
             app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_pool
         ],
         all_practices=[
-            app_commands.Choice(name="All practices on selected map", value=1),
+            app_commands.Choice(name="Yes", value=1),
         ],
         announce=[
             app_commands.Choice(name="Yes", value=1),
@@ -312,7 +312,7 @@ class AdminPremierCommands(commands.Cog):
         global_utils.log(
             f"{interaction.user.display_name} cancelled practice(s) - {message}")
 
-    @app_commands.command(name="clearschedule", description=global_utils.command_descriptions["clearschedule"])
+    @app_commands.command(name="clear-schedule", description=global_utils.command_descriptions["clear-schedule"])
     @app_commands.choices(
         confirm=[
             app_commands.Choice(
@@ -363,7 +363,7 @@ class AdminPremierCommands(commands.Cog):
             f'{interaction.user.display_name} has cleared the premier schedule')
         await interaction.followup.send(f'Cleared the premier schedule', ephemeral=ephem)
 
-    @app_commands.command(name="addnote", description=global_utils.command_descriptions["addnote"])
+    @app_commands.command(name="add-note", description=global_utils.command_descriptions["add-note"])
     @app_commands.choices(
         _map=[
             app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
@@ -414,7 +414,7 @@ class AdminPremierCommands(commands.Cog):
 
         await interaction.response.send_message(f'Added a practice note for {_map.title()}. Access using `/notes {_map}`', ephemeral=True)
 
-    @app_commands.command(name="removenote", description=global_utils.command_descriptions["removenote"])
+    @app_commands.command(name="remove-note", description=global_utils.command_descriptions["remove-note"])
     @app_commands.choices(
         _map=[
             app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
@@ -530,10 +530,12 @@ class AdminMessageCommands(commands.Cog):
         g = interaction.guild
         if g.id == global_utils.val_server_id:
             role_name = global_utils.prem_role_name
-            reminder_channel = self.bot.get_channel(global_utils.prem_channel_id)
+            reminder_channel = self.bot.get_channel(
+                global_utils.prem_channel_id)
         else:
             role_name = global_utils.debug_role_name
-            reminder_channel = self.bot.get_channel(global_utils.debug_channel_id)
+            reminder_channel = self.bot.get_channel(
+                global_utils.debug_channel_id)
 
         role = discord.utils.get(g.roles, name=role_name)
 
@@ -631,7 +633,7 @@ class AdminMessageCommands(commands.Cog):
         global_utils.log(
             f'{interaction.user.display_name} unpinned message {message_id}')
 
-    @app_commands.command(name="deletemessage", description=global_utils.command_descriptions["deletemessage"])
+    @app_commands.command(name="delete-message", description=global_utils.command_descriptions["delete-message"])
     @app_commands.describe(
         message_id="The ID of the message to delete"
     )

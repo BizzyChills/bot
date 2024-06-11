@@ -86,7 +86,7 @@ class BizzyCommands(commands.Cog):
     @app_commands.guilds(Object(id=global_utils.val_server_id), Object(global_utils.debug_server_id))
     @app_commands.choices(
         sync=[
-            app_commands.Choice(name="Sync", value=1),
+            app_commands.Choice(name="Yes", value=1),
         ]
     )
     @app_commands.describe(
@@ -115,6 +115,7 @@ class BizzyCommands(commands.Cog):
             global_utils.premier_reminder_times[0] = global_utils.est_to_utc(
                 right_now)
 
+            self.bot.dispatch("reload_cogs")
             await global_utils.load_cogs(self.bot)  # also *re*loads the cogs
 
             message = "All cogs reloaded"

@@ -79,7 +79,7 @@ class InfoCommands(commands.Cog):
             Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
         """
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
-        
+
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
         guild = interaction.guild
@@ -89,7 +89,6 @@ class InfoCommands(commands.Cog):
         practice_header = f"\n\n{global_utils.style_text('Upcoming Premier Practices:', 'b')}"
         message = []
         practice_message = []
-
 
         for event in events:
             map_name = event.description if "playoffs" not in event.name.lower(
@@ -117,7 +116,7 @@ class InfoCommands(commands.Cog):
 
         await interaction.followup.send(message, ephemeral=ephem)
 
-    @app_commands.command(name="mappool", description=global_utils.command_descriptions["mappool_common"])
+    @app_commands.command(name="map-pool", description=global_utils.command_descriptions["map-pool-common"])
     @app_commands.choices(
         action=[
             app_commands.Choice(name="Add", value="add"),

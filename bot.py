@@ -85,7 +85,10 @@ async def main() -> None:
     await bot.start(bot_token)
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        asyncio.run(bot.close())
     # bot.run(bot_token)
 else:
     print("This script is not meant to be imported. Please run it directly.")

@@ -25,10 +25,10 @@ class BotCog(commands.Cog):
     @app_commands.command(name="commands", description=global_utils.command_descriptions["commands"])
     @app_commands.choices(
         shorten=[
-            app_commands.Choice(name="(Optional) Yes", value=1),
+            app_commands.Choice(name="Yes", value=1),
         ],
         announce=[
-            app_commands.Choice(name="(Optional) Yes", value=1),
+            app_commands.Choice(name="Yes", value=1),
         ]
     )
     @app_commands.describe(
@@ -55,35 +55,51 @@ class BotCog(commands.Cog):
 
                            f"- {global_utils.style_text('HELP', 'b')}:",
                            f" - {global_utils.style_text('/commands', 'c')}",
+                           f" - {global_utils.style_text('/source', 'c')}",
 
                            f"- {global_utils.style_text('INFO', 'b')}:",
                            f" - {global_utils.style_text('/schedule', 'c')}",
-                           f" - {global_utils.style_text('/mappool', 'c')}",
+                           f" - {global_utils.style_text('/map-pool', 'c')}",
                            f" - {global_utils.style_text('/notes', 'c')}",
 
                            f"- {global_utils.style_text('VOTING', 'b')}:",
-                           f" - {global_utils.style_text('/prefermap', 'c')}",
-                           f" - {global_utils.style_text('/mapvotes', 'c')}",
-                           f" - {global_utils.style_text('/mapweights', 'c')}",]
+                           f" - {global_utils.style_text('/prefer-map', 'c')}",
+                           f" - {global_utils.style_text('/map-votes', 'c')}",
+                           f" - {global_utils.style_text('/map-weights', 'c')}",
+
+                           f"- {global_utils.style_text('MUSIC', 'b')}:",
+                           f" - {global_utils.style_text('/join-voice', 'c')}",
+                           f" - {global_utils.style_text('/leave-voice', 'c')}",
+                           f" - {global_utils.style_text('/play-song', 'c')}",
+                           f" - {global_utils.style_text('/pause-song', 'c')}",
+                           f" - {global_utils.style_text('/resume-song', 'c')}",
+                           f" - {global_utils.style_text('/stop-song', 'c')}",
+                           f" - {global_utils.style_text('/skip-song', 'c')}",
+                           f" - {global_utils.style_text('/loop-song', 'c')}",
+                           f" - {global_utils.style_text('/add-song', 'c')}",
+                           f" - {global_utils.style_text('/playlist', 'c')}",
+                           
+                           ]
 
         admin_commands = [f"- {global_utils.style_text('ADMIN ONLY', 'b')}:",
-                          f" - {global_utils.style_text('/mappool', 'c')}",
-                          f" - {global_utils.style_text('/addevents', 'c')}",
-                          f" - {global_utils.style_text('/cancelevent', 'c')}",
-                          f" - {global_utils.style_text('/addpractices', 'c')}",
-                          f" - {global_utils.style_text('/cancelpractice', 'c')}",
-                          f" - {global_utils.style_text('/clearschedule', 'c')}",
-                          f" - {global_utils.style_text('/addnote', 'c')}",
-                          f" - {global_utils.style_text('/removenote', 'c')}",
+                          f" - {global_utils.style_text('/map-pool', 'c')}",
+                          f" - {global_utils.style_text('/add-events', 'c')}",
+                          f" - {global_utils.style_text('/cancel-event', 'c')}",
+                          f" - {global_utils.style_text('/add-practices', 'c')}",
+                          f" - {global_utils.style_text('/cancel-practice', 'c')}",
+                          f" - {global_utils.style_text('/clear-schedule', 'c')}",
+                          f" - {global_utils.style_text('/add-note', 'c')}",
+                          f" - {global_utils.style_text('/remove-note', 'c')}",
                           f" - {global_utils.style_text('/remind', 'c')}",
                           f" - {global_utils.style_text('/pin', 'c')}",
                           f" - {global_utils.style_text('/unpin', 'c')}",
-                          f" - {global_utils.style_text('/deletemessage', 'c')}",
+                          f" - {global_utils.style_text('/delete-message', 'c')}",
                           f" - {global_utils.style_text('(! | /)kill', 'c')}",]
 
         my_commands = [f"- {global_utils.style_text('BIZZY ONLY', 'b')}:",
                        f" - {global_utils.style_text('(! | /)reload', 'c')}",
-                       f" - {global_utils.style_text('/clear', 'c')}",]
+                       f" - {global_utils.style_text('/clear', 'c')}",
+                       f" - {global_utils.style_text('/feature', 'c')}",]
 
         useless_commands = [f"- {global_utils.style_text('MISC', 'b')}:",
                             f" - {global_utils.style_text('/hello', 'c')}",
@@ -114,6 +130,7 @@ class BotCog(commands.Cog):
             The interaction object that initiated the command
         """
         await interaction.response.send_message(f"Here is my source code: {global_utils.style_text(global_utils.source_code, 'c')}", ephemeral=True)
+
 
 async def setup(bot: commands.bot) -> None:
     """Adds the BotCog cog to the bot

@@ -23,7 +23,7 @@ class VotingCommands(commands.Cog):
         # global_utils.log("Voting cog loaded")
         pass
 
-    @app_commands.command(name="prefermap", description=global_utils.command_descriptions["prefermap"])
+    @app_commands.command(name="prefer-map", description=global_utils.command_descriptions["prefer-map"])
     @app_commands.choices(
         _map=[
             discord.app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
@@ -95,7 +95,7 @@ class VotingCommands(commands.Cog):
 
         global_utils.save_preferences()
 
-    @app_commands.command(name="mapvotes", description=global_utils.command_descriptions["mapvotes"])
+    @app_commands.command(name="map-votes", description=global_utils.command_descriptions["map-votes"])
     @app_commands.choices(
         announce=[
             discord.app_commands.Choice(name="Yes", value=1),
@@ -144,7 +144,7 @@ class VotingCommands(commands.Cog):
 
         await interaction.response.send_message(output, ephemeral=ephem, silent=True)
 
-    @app_commands.command(name="mapweights", description=global_utils.command_descriptions["mapweights"])
+    @app_commands.command(name="map-weights", description=global_utils.command_descriptions["map-weights"])
     @app_commands.choices(
         announce=[
             discord.app_commands.Choice(name="Yes", value=1),

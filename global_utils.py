@@ -5,7 +5,8 @@ import json
 from datetime import datetime, time, timedelta
 import pytz
 
-from discord import Interaction, Guild, ScheduledEvent  # reduce bloat, only for type hints
+# reduce bloat, only for type hints
+from discord import Interaction, Guild, ScheduledEvent
 from discord.ext import commands
 
 
@@ -67,34 +68,58 @@ class Utils:
         self.practice_notes = self.get_notes()
 
         self.command_descriptions = {
-            "source": "Link the repo containing the source code for the bot",
+            # help
             "commands": "Display all bot commands",
+            "source": "Link the repo containing the source code for the bot",
+
+            # info
             "schedule": "Display the premier event and practice schedules",
-            "mappool_common": "Display the current competitive map pool",
-            "mappool_admin": "Modify the map pool",
+            "map-pool-common": "Display the current competitive map pool",
             "notes": "Display a practice note from the notes channel. Leave note_id blank to display all options",
-            "prefermap": "Declare your preference for a map to play for premier playoffs",
-            "mapvotes": "Display each member's map preferences",
-            "mapweights": "Display the total weights for each map in the map pool",
+
+            # voting
+            "prefer-map": "Declare your preference for a map to play for premier playoffs",
+            "map-votes": "Display each member's map preferences",
+            "map-weights": "Display the total weights for each map in the map pool",
+
+            # music
+            "join-voice": "Join your voice channel",
+            "leave-voice": "Leave your voice channel",
+            "play-song": "Begin/resume playback of current song (or next song if current is None)",
+            "pause-song": "Pause playback of current song",
+            "resume-song": "Resume playback of current song",
+            "stop-song": "Stop playback of current song (cannot resume)",
+            "skip-song": "Skip current song and play next song in playlist (if any)",
+            "loop-song": "Toggle looping of the current song",
+            "add-song": "Add a song (or any video really) to the playlist via YouTube URL (can take a while!)",
+            "playlist": "Display the current song as well as the songs in the playlist",
+
+
+            # admin
+            "map-pool-admin": "Modify the map pool",
+            "add-events": "Add all premier events to the schedule",
+            "cancel-event": "Cancel a premier map for today/all days",
+            "add-practices": "Add all premier practices to the schedule (a map must still have a Thursday event to add practices)",
+            "cancel-practice": "Cancel a premier practice for today/all days",
+            "clear-schedule": "Clear the schedule of all premier events AND practices",
+            "add-note": "Add a reference/link to a practice note in the notes channel",
+            "remove-note": "Remove a reference/link to practice note in the notes channel (this does not delete the note itself)",
+            "remind": "Set a reminder for the premier role",
+            "pin": "Pin a message",
+            "unpin": "Unpin a message",
+            "delete-message": "Delete a message by ID",
+            "kill": "Kill the bot",
+
+            # bizzy
+            "clear": "(debug only) clear the debug channel",
+            "feature": "Promote a new feature in the current channel",
+            "reload": "Reload the bot's cogs",
+
+            # misc
             "hello": "Say hello",
             "feed": "Feed the bot",
             "unfeed": "Unfeed the bot",
             "trivia": "Play a game of trivia with the bot to earn a prize!",
-            "remind": "Set a reminder for the premier role",
-            "addevents": "Add all premier events to the schedule",
-            "addpractices": "Add all premier practices to the schedule (a map must still have a Thursday event to add practices)",
-            "cancelevent": "Cancel a premier map for today/all days",
-            "cancelpractice": "Cancel a premier practice for today/all days",
-            "clearschedule": "Clear the schedule of all premier events AND practices",
-            "addnote": "Add a reference/link to a practice note in the notes channel",
-            "removenote": "Remove a reference/link to practice note in the notes channel (this does not delete the note itself)",
-            "pin": "Pin a message",
-            "unpin": "Unpin a message",
-            "clear": "(debug only) clear the debug channel",
-            "feature": "Promote a new feature in the current channel",
-            "deletemessage": "Delete a message by ID",
-            "reload": "Reload the bot's cogs",
-            "kill": "Kill the bot",
         }
 
     def get_pool(self) -> list[str]:
@@ -342,8 +367,6 @@ class Utils:
         """
         message = "You do not have permission to use this command"
 
-
-
         if type(ctx) == commands.Context:
             responder = ctx.send
             command = ctx.invoked_with
@@ -355,10 +378,10 @@ class Utils:
 
         if user_id in self.admin_ids:
             return True
-        
+
         if respond:
             await responder(message, ephemeral=True)
-        
+
         # commands uses this function just to display extra commands if admin. User is not trying to use an admin command
         if command != "commands":
             self.log(
