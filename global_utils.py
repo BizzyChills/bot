@@ -70,7 +70,7 @@ class Utils:
         self.command_descriptions = {
             # help
             "commands": "Display all bot commands",
-            "source": "Link the repo containing the source code for the bot",
+            "source-code": "Link the repo containing the source code for the bot",
 
             # info
             "schedule": "Display the premier event and practice schedules",

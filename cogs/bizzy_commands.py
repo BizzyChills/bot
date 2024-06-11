@@ -80,7 +80,7 @@ class BizzyCommands(commands.Cog):
         if not global_utils.is_admin(interaction):
             return
 
-        await interaction.response.send_message(f"New Command: {global_utils.style_text(feature_name, 'b')}\n{message}", ephemeral=True)
+        await interaction.response.send_message(f"New feature: {global_utils.style_text(feature_name, 'b')}\n{message}", ephemeral=True)
 
     @commands.hybrid_command(name="reload", description=global_utils.command_descriptions["reload"])
     @app_commands.guilds(Object(id=global_utils.val_server_id), Object(global_utils.debug_server_id))

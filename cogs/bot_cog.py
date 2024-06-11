@@ -55,7 +55,7 @@ class BotCog(commands.Cog):
 
                            f"- {global_utils.style_text('HELP', 'b')}:",
                            f" - {global_utils.style_text('/commands', 'c')}",
-                           f" - {global_utils.style_text('/source', 'c')}",
+                           f" - {global_utils.style_text('/source-code', 'c')}",
 
                            f"- {global_utils.style_text('INFO', 'b')}:",
                            f" - {global_utils.style_text('/schedule', 'c')}",
@@ -65,21 +65,7 @@ class BotCog(commands.Cog):
                            f"- {global_utils.style_text('VOTING', 'b')}:",
                            f" - {global_utils.style_text('/prefer-map', 'c')}",
                            f" - {global_utils.style_text('/map-votes', 'c')}",
-                           f" - {global_utils.style_text('/map-weights', 'c')}",
-
-                           f"- {global_utils.style_text('MUSIC', 'b')}:",
-                           f" - {global_utils.style_text('/join-voice', 'c')}",
-                           f" - {global_utils.style_text('/leave-voice', 'c')}",
-                           f" - {global_utils.style_text('/play-song', 'c')}",
-                           f" - {global_utils.style_text('/pause-song', 'c')}",
-                           f" - {global_utils.style_text('/resume-song', 'c')}",
-                           f" - {global_utils.style_text('/stop-song', 'c')}",
-                           f" - {global_utils.style_text('/skip-song', 'c')}",
-                           f" - {global_utils.style_text('/loop-song', 'c')}",
-                           f" - {global_utils.style_text('/add-song', 'c')}",
-                           f" - {global_utils.style_text('/playlist', 'c')}",
-                           
-                           ]
+                           f" - {global_utils.style_text('/map-weights', 'c')}",]
 
         admin_commands = [f"- {global_utils.style_text('ADMIN ONLY', 'b')}:",
                           f" - {global_utils.style_text('/map-pool', 'c')}",
@@ -101,11 +87,23 @@ class BotCog(commands.Cog):
                        f" - {global_utils.style_text('/clear', 'c')}",
                        f" - {global_utils.style_text('/feature', 'c')}",]
 
-        useless_commands = [f"- {global_utils.style_text('MISC', 'b')}:",
-                            f" - {global_utils.style_text('/hello', 'c')}",
-                            f" - {global_utils.style_text('/trivia', 'c')}",
-                            f" - {global_utils.style_text('/feed', 'c')}",
-                            f" - {global_utils.style_text('/unfeed', 'c')}",]
+        misc_commands = [f"- {global_utils.style_text('MISC', 'b')}:",
+                         f" - {global_utils.style_text('/hello', 'c')}",
+                         f" - {global_utils.style_text('/trivia', 'c')}",
+                         f" - {global_utils.style_text('/feed', 'c')}",
+                         f" - {global_utils.style_text('/unfeed', 'c')}",]
+
+        music_commands = [f"- {global_utils.style_text('MUSIC', 'b')}:",
+                          f" - {global_utils.style_text('/join-voice', 'c')}",
+                          f" - {global_utils.style_text('/leave-voice', 'c')}",
+                          f" - {global_utils.style_text('/play-song', 'c')}",
+                          f" - {global_utils.style_text('/pause-song', 'c')}",
+                          f" - {global_utils.style_text('/resume-song', 'c')}",
+                          f" - {global_utils.style_text('/stop-song', 'c')}",
+                          f" - {global_utils.style_text('/skip-song', 'c')}",
+                          f" - {global_utils.style_text('/loop-song', 'c')}",
+                          f" - {global_utils.style_text('/add-song', 'c')}",
+                          f" - {global_utils.style_text('/playlist', 'c')}",]
 
         output = common_commands
 
@@ -116,11 +114,12 @@ class BotCog(commands.Cog):
             if interaction.user.id == global_utils.my_id:
                 output += my_commands
 
-        output += useless_commands
+            output += music_commands
+            output += misc_commands
 
         await interaction.followup.send('\n'.join(output), ephemeral=ephem, silent=True)
 
-    @app_commands.command(name="source", description=global_utils.command_descriptions["source"])
+    @app_commands.command(name="source-code", description=global_utils.command_descriptions["source-code"])
     async def source(self, interaction: Interaction) -> None:
         """[command] Link the repo containing the source code for the bot
 

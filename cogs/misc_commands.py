@@ -5,7 +5,7 @@ from random import choice
 from global_utils import global_utils
 
 
-class UselessCommands(commands.Cog):
+class MiscCommands(commands.Cog):
     def __init__(self, bot: commands.bot) -> None:
         """Initializes the UselessCommands cog
 
@@ -73,4 +73,4 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(UselessCommands(bot), guilds=[Object(global_utils.val_server_id), Object(global_utils.debug_server_id)])
+    await bot.add_cog(MiscCommands(bot), guilds=[Object(global_utils.val_server_id), Object(global_utils.debug_server_id)])
