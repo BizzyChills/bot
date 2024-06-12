@@ -112,7 +112,7 @@ class VotingCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         announce : int, optional
-            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+            Treated as a boolean. Announce the output when used in the premier channel, by default 0
         """
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 
@@ -161,7 +161,7 @@ class VotingCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         announce : int, optional
-            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+            Treated as a boolean. Announce the output when used in the premier channel, by default 0
         """
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 

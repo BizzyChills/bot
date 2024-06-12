@@ -76,7 +76,7 @@ class InfoCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         announce : int, optional
-            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+            Treated as a boolean. Announce the output when used in the premier channel, by default 0
         """
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 
@@ -150,7 +150,7 @@ class InfoCommands(commands.Cog):
         _map : str, optional
             The map to add or remove (ADMIN ONLY), by default ""
         announce : int, optional
-            Treated as a boolean, determines whether to announce the output when used in the premier channel, by default 0
+            Treated as a boolean. Announce the output when used in the premier channel, by default 0
         """
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 
@@ -226,7 +226,7 @@ class InfoCommands(commands.Cog):
         note_number : int, optional
             The note number to display (1-indexed). Leaving this empty will show all options, by default 0
         announce : int, optional
-            Treated as a boolean, determines whether to announce the output when used in the notes channel, by default 0
+            Treated as a boolean. Announce the output when used in the notes channel, by default 0
         """
         ephem = interaction.channel.id != global_utils.notes_channel_id or not announce
 

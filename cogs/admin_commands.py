@@ -141,9 +141,9 @@ class AdminPremierCommands(commands.Cog):
         _map : str
             The map to cancel the closest event for
         all_events : int, optional
-            Treated as a boolean, whether to cancel all events for the specified map, by default 0
+            Treated as a boolean. Cancel all events for the specified map, by default 0
         announce : int, optional
-            Treated as a boolean, whether to announce the cancellation when used in the premier channel, by default 0
+            Treated as a boolean. Announce the cancellation when used in the premier channel, by default 0
         """
 
         if not await global_utils.is_admin(interaction):
@@ -265,9 +265,9 @@ class AdminPremierCommands(commands.Cog):
         _map : str
             The map to cancel the next practice for
         all_practices : int, optional
-            Treated as a boolean, whether to cancel all practices for the specified map, by default 0
+            Treated as a boolean. Cancel all practices for the specified map, by default 0
         announce : int, optional
-            Treated as a boolean, whether to announce the cancellation when used in the premier channel, by default 0
+            Treated as a boolean. Announce the cancellation when used in the premier channel, by default 0
         """
 
         if not await global_utils.is_admin(interaction):
@@ -336,7 +336,7 @@ class AdminPremierCommands(commands.Cog):
         confirm : str
             Confrims the schedule clear (discord indirectly ensures the user has confirmed this by requiring the argument to be present)
         announce : int, optional
-            Treated as a boolean, whether to announce the schedule clear when used in the premier channel, by default 0
+            Treated as a boolean. Announce the schedule clear when used in the premier channel, by default 0
         """
         # confirm is automatically chcecked by discord, so we just need to ensure it is a required argument to "confirm"
 

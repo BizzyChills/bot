@@ -25,13 +25,14 @@ class MusicCommands(commands.Cog):
         self.vc = None
         self.owner = None
         self.last_activity = None
-        # holds the last played (currently played/ended) playlist entry since it's removed from the playlist when played. used for looping
+        # need to hold the current song since it's removed from the playlist when played. used for looping
         self.current_song = None
         self.loop_song = False
         # holds the actual playlist in the form {(title, author): audio}
         self.playlist = {}
         # simply holds the URLs to avoid downloading the same song multiple times
         self.playlist_urls = {}
+        # hold the filepaths of the downloaded songs to delete them when done
         self.playlist_filepaths = {}
 
         # leave the vc after this many seconds if owner leaves
@@ -200,6 +201,114 @@ class MusicCommands(commands.Cog):
             ydl.download([url])
 
         return title, author
+
+    @app_commands.command(name="add-song", description=global_utils.command_descriptions["add-song"])
+    @app_commands.choices(
+        bump=[
+            app_commands.Choice(name="Yes", value=1),
+        ]
+    )
+    @app_commands.describe(
+        url="The YouTube URL of the song to add",
+        bump="Bumps the song to the start of the playlist"
+    )
+    async def addsong(self, interaction: discord.Interaction, url: str, bump: int = 0) -> None:  # for testing
+        """[command] Adds a song (or any video really) to the playlist via YouTube URL (can take a while!)
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        url : str
+            The YouTube URL of the song to add, by default "https://www.youtube.com/watch?v=jTJvyKZDFsY"
+        bump : int, optional
+            Treated as a boolean. Bump the song to the top of the playlist, by default 0
+        """
+
+        if self.vc is None:
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+            return
+
+        if interaction.user != self.owner:
+            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
+            return
+
+        self.update_activity()
+
+        if len(self.playlist) == self.playlist_limit:
+            await interaction.response.send_message(f"The playlist is currently limited to only {self.playlist_limit} songs. Use {global_utils.style_text('/skip', 'c')} to make space.")
+
+        # if url == "test":
+        #     test = r"C:\Users\Bizzy\Desktop\game_dev\connect4\audio\test.mp3" if os.name == "nt" else "/mnt/c/users/bizzy/Desktop/game_dev/connect4/audio/test.mp3"
+        #     audio = discord.FFmpegPCMAudio(source=test)
+
+        #     self.playlist.update({("Test", "Bizzy"): audio})
+        #     self.playlist_urls.update({("Test", "Bizzy"): None})
+        #     self.playlist_filepaths = {("Test", "Bizzy"): test}
+
+        #     await interaction.response.send_message("Test song added to playlist", ephemeral=True)
+        #     return
+
+        if url in self.playlist_urls.values():
+            await interaction.response.send_message("Song already in playlist. Wait for it to play before adding it again", ephemeral=True)
+            return
+
+        domain = urlparse(url).netloc
+        if domain != "www.youtube.com":
+            await interaction.response.send_message("Not a YouTube link", ephemeral=True)
+
+        await interaction.response.defer(ephemeral=True)
+
+        loop = asyncio.get_event_loop()
+        # this is blocking, so run it in a separate thread
+        title, author = await loop.run_in_executor(None, self.download_song, url)
+        self.playlist_urls.update({(title, author): url})
+
+        audio_filepath = f"./local_storage/temp_music/{title}.mp3"
+        self.playlist_filepaths.update({(title, author): audio_filepath})
+
+        audio = discord.FFmpegPCMAudio(source=audio_filepath)
+        info = (title, author)
+
+        if bump:
+            self.playlist = {info: audio} | self.playlist
+        else:
+            self.playlist.update({info: audio})
+
+        await interaction.followup.send("Added to playlist", ephemeral=True)
+
+    @app_commands.command(name="playlist", description=global_utils.command_descriptions["playlist"])
+    async def playlist(self, interaction: discord.Interaction) -> None:
+        """[command] Display the current song as well as the songs in the playlist
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        if self.vc is None:
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+            return
+
+        if interaction.user == self.owner:
+            self.update_activity()
+
+        playlist = ""
+        for i, info in enumerate(self.playlist, start=1):
+            title = info[0]
+            author = info[1]
+            playlist += f"{i}. {global_utils.style_text(title, 'b')} - {global_utils.style_text(author, 'i')}\n"
+
+        current_str = global_utils.style_text("None", 'b')
+        if self.current_song is not None:
+            current_title = self.current_song["info"][0]
+            current_author = self.current_song["info"][1]
+
+            current_str = f"{global_utils.style_text(current_title, 'b')} - {global_utils.style_text(current_author, 'i')}"
+
+        playlist = f"Currently playing: {current_str}\n\nNext up:\n{playlist if playlist != '' else global_utils.style_text('Playlist Empty', 'i')}"
+
+        await interaction.response.send_message(playlist, ephemeral=True)
 
     @app_commands.command(name="play-song", description=global_utils.command_descriptions["play-song"])
     async def play(self, interaction: discord.Interaction) -> None:
@@ -424,114 +533,6 @@ class MusicCommands(commands.Cog):
         self.loop_song = not self.loop_song
         message = "Looping" + (" enabled" if self.loop_song else " disabled")
         await interaction.response.send_message(message, ephemeral=True)
-
-    @app_commands.command(name="add-song", description=global_utils.command_descriptions["add-song"])
-    @app_commands.choices(
-        bump=[
-            app_commands.Choice(name="Yes", value=1),
-        ]
-    )
-    @app_commands.describe(
-        url="The YouTube URL of the song to add",
-        bump="Bumps the song to the start of the playlist"
-    )
-    async def addsong(self, interaction: discord.Interaction, url: str, bump: int = 0) -> None:  # for testing
-        """[command] Adds a song (or any video really) to the playlist via YouTube URL (can take a while!)
-
-        Parameters
-        ----------
-        interaction : discord.Interaction
-            The interaction object that initiated the command
-        url : str
-            The YouTube URL of the song to add, by default "https://www.youtube.com/watch?v=jTJvyKZDFsY"
-        bump : int, optional
-            Treated as a boolean, determines whether to bump the song to the start of the playlist, by default 0
-        """
-
-        if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
-            return
-
-        if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
-            return
-
-        self.update_activity()
-
-        if len(self.playlist) == self.playlist_limit:
-            await interaction.response.send_message(f"The playlist is currently limited to only {self.playlist_limit} songs. Use {global_utils.style_text('/skip', 'c')} to make space.")
-
-        # if url == "test":
-        #     test = r"C:\Users\Bizzy\Desktop\game_dev\connect4\audio\test.mp3" if os.name == "nt" else "/mnt/c/users/bizzy/Desktop/game_dev/connect4/audio/test.mp3"
-        #     audio = discord.FFmpegPCMAudio(source=test)
-
-        #     self.playlist.update({("Test", "Bizzy"): audio})
-        #     self.playlist_urls.update({("Test", "Bizzy"): None})
-        #     self.playlist_filepaths = {("Test", "Bizzy"): test}
-
-        #     await interaction.response.send_message("Test song added to playlist", ephemeral=True)
-        #     return
-
-        if url in self.playlist_urls.values():
-            await interaction.response.send_message("Song already in playlist. Wait for it to play before adding it again", ephemeral=True)
-            return
-
-        domain = urlparse(url).netloc
-        if domain != "www.youtube.com":
-            await interaction.response.send_message("Not a YouTube link", ephemeral=True)
-
-        await interaction.response.defer(ephemeral=True)
-
-        loop = asyncio.get_event_loop()
-        # this is blocking, so run it in a separate thread
-        title, author = await loop.run_in_executor(None, self.download_song, url)
-        self.playlist_urls.update({(title, author): url})
-
-        audio_filepath = f"./local_storage/temp_music/{title}.mp3"
-        self.playlist_filepaths.update({(title, author): audio_filepath})
-
-        audio = discord.FFmpegPCMAudio(source=audio_filepath)
-        info = (title, author)
-
-        if bump:
-            self.playlist = {info: audio} | self.playlist
-        else:
-            self.playlist.update({info: audio})
-
-        await interaction.followup.send("Added to playlist", ephemeral=True)
-
-    @app_commands.command(name="playlist", description=global_utils.command_descriptions["playlist"])
-    async def playlist(self, interaction: discord.Interaction) -> None:
-        """[command] Display the current song as well as the songs in the playlist
-
-        Parameters
-        ----------
-        interaction : discord.Interaction
-            The interaction object that initiated the command
-        """
-        if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
-            return
-
-        if interaction.user == self.owner:
-            self.update_activity()
-
-        playlist = ""
-        for i, info in enumerate(self.playlist, start=1):
-            title = info[0]
-            author = info[1]
-            playlist += f"{i}. {global_utils.style_text(title, 'b')} - {global_utils.style_text(author, 'i')}\n"
-
-        current_str = global_utils.style_text("None", 'b')
-        if self.current_song is not None:
-            current_title = self.current_song["info"][0]
-            current_author = self.current_song["info"][1]
-
-            current_str = f"{global_utils.style_text(current_title, 'b')} - {global_utils.style_text(current_author, 'i')}"
-
-        playlist = f"Currently playing: {current_str}\n\nNext up:\n{playlist if playlist != '' else global_utils.style_text('Playlist Empty', 'i')}"
-
-        await interaction.response.send_message(playlist, ephemeral=True)
 
     # I don't know the performance impact of this, but it's the only way I can think of to check for inactivity
     @tasks.loop(seconds=5)

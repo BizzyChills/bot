@@ -80,7 +80,7 @@ class BizzyCommands(commands.Cog):
         if not global_utils.is_admin(interaction):
             return
 
-        await interaction.response.send_message(f"New feature: {global_utils.style_text(feature_name, 'b')}\n{message}")
+        await interaction.response.send_message(f"New feature: {global_utils.style_text(feature_name, 'b')}\n\n{message}")
 
     @commands.hybrid_command(name="reload", description=global_utils.command_descriptions["reload"])
     @app_commands.guilds(Object(id=global_utils.val_server_id), Object(global_utils.debug_server_id))
@@ -100,7 +100,7 @@ class BizzyCommands(commands.Cog):
         ctx : discord.Context
             The context object that initiated the command
         sync : int, optional
-            Treated as a boolean, determines whether to sync the commands after reloading, by default 0
+            Treated as a boolean. Sync the commands after reloading, by default 0
         """
         if ctx.author.id != global_utils.my_id:
             content = f'{ctx.author.mention}You do not have permission to use this command'
