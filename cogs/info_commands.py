@@ -166,8 +166,10 @@ class InfoCommands(commands.Cog):
 
         if not await global_utils.is_admin(interaction):
             return
+        
+        xor = lambda a, b: bool(a) != bool(b)
 
-        if _map ^ action:  # only one argument is set, need both to continue
+        if xor(action, _map): # if one is set but not the other
             await interaction.response.send_message(f"Please provide an action {global_utils.style_text('and', 'bu')} a map.", ephemeral=True)
             return
 
@@ -180,7 +182,7 @@ class InfoCommands(commands.Cog):
         elif action == "add":
             if _map not in global_utils.map_pool:
                 global_utils.map_pool.append(_map)
-                output = f'{_map} has been added to the map pool'
+                output = f'{_map.title()} has been added to the map pool'
                 log_message = f'{interaction.user.display_name} has added {_map} to the map pool'
             else:
                 await interaction.response.send_message(f'{_map} is already in the map pool', ephemeral=True)
@@ -191,7 +193,7 @@ class InfoCommands(commands.Cog):
                 output = f'{_map.title()} has been removed from the map pool'
                 log_message = f'{interaction.user.display_name} has removed {_map.title()} from the map pool'
             else:
-                await interaction.response.send_message(f'{_map} is not in the map pool', ephemeral=True)
+                await interaction.response.send_message(f'{_map.title()} is not in the map pool', ephemeral=True)
                 return
 
         await interaction.response.send_message(output, ephemeral=ephem)

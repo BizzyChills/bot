@@ -136,6 +136,7 @@ class Utils:
     def save_pool(self) -> None:
         """Saves any changes to the map pool during runtime to the map_pool.txt file
         """
+        self.map_pool.sort()
         with open("./local_storage/map_pool.txt", "w") as file:
             file.write("\n".join(self.map_pool))
 
