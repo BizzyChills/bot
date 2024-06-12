@@ -1,16 +1,16 @@
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
-from datetime import datetime, timedelta
+
+from datetime import datetime
 import asyncio
+import os
+
+from urllib.parse import urlparse
 
 from global_utils import global_utils
 
 import yt_dlp
-from urllib.parse import urlparse
-
-import os
-
 
 class MusicCommands(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -25,15 +25,15 @@ class MusicCommands(commands.Cog):
         self.vc = None
         self.owner = None
         self.last_activity = None
+        # don't dc from vc if downloading a song
+        self.downloading = False
         # need to hold the current song since it's removed from the playlist when played. used for looping
         self.current_song = None
         self.loop_song = False
-        # holds the actual playlist in the form {(title, author): audio}
+        # holds the actual playlist in the form {(title, author): audio_filepath}
         self.playlist = {}
         # simply holds the URLs to avoid downloading the same song multiple times
         self.playlist_urls = {}
-        # hold the filepaths of the downloaded songs to delete them when done
-        self.playlist_filepaths = {}
 
         # leave the vc after this many seconds if owner leaves
         self.ownerless_timeout_seconds = 60
@@ -44,13 +44,6 @@ class MusicCommands(commands.Cog):
 
         self.playlist_limit = 10
 
-        # test = r"C:\Users\Bizzy\Desktop\game_dev\connect4\audio\test.mp3" if os.name == "nt" else "/mnt/c/users/bizzy/Desktop/game_dev/connect4/audio/test.mp3"
-        # audio = discord.FFmpegPCMAudio(source=test)
-
-        # self.playlist.update({("Test", "Bizzy"): audio})
-        # self.playlist_urls.update({("Test", "Bizzy"): None})
-        # self.playlist_filepaths = {("Test", "Bizzy"): test}
-
     @commands.Cog.listener()
     async def on_ready(self) -> None:
         """[event] Executes when the MusicCommands cog is ready
@@ -60,12 +53,6 @@ class MusicCommands(commands.Cog):
 
         for tmp in os.listdir("./local_storage/temp_music"):
             os.remove(f"./local_storage/temp_music/{tmp}")
-
-        # # debug
-        # self.owner = self.bot.get_user(global_utils.my_id)
-        # self.last_activity = datetime.now()
-        # vc = self.bot.get_guild(global_utils.debug_server_id).voice_channels[0]
-        # self.vc = await vc.connect()
 
         # pass
 
@@ -183,6 +170,8 @@ class MusicCommands(commands.Cog):
         tuple[str, str]
             The title and author of the song
         """
+        self.downloading = True
+
         ydl_opts = {
             'format': 'mp3/bestaudio/best',
             'postprocessors': [{
@@ -190,7 +179,7 @@ class MusicCommands(commands.Cog):
                 'preferredcodec': 'mp3',
                 # 'preferredquality': '192',
             }],
-            'outtmpl': './local_storage/temp_music/%(title)s.%(ext)s',
+            'outtmpl': './local_storage/temp_music/%(id)s.%(ext)s',
             'noplaylist': 'True',
         }
 
@@ -198,9 +187,12 @@ class MusicCommands(commands.Cog):
             info = ydl.extract_info(url)
             title = info['title']
             author = info['uploader']
+            video_id = info['id']
             ydl.download([url])
 
-        return title, author
+        self.update_activity()
+        self.downloading = False
+        return title, author, video_id
 
     @app_commands.command(name="add-song", description=global_utils.command_descriptions["add-song"])
     @app_commands.choices(
@@ -237,43 +229,31 @@ class MusicCommands(commands.Cog):
 
         if len(self.playlist) == self.playlist_limit:
             await interaction.response.send_message(f"The playlist is currently limited to only {self.playlist_limit} songs. Use {global_utils.style_text('/skip', 'c')} to make space.")
-
-        # if url == "test":
-        #     test = r"C:\Users\Bizzy\Desktop\game_dev\connect4\audio\test.mp3" if os.name == "nt" else "/mnt/c/users/bizzy/Desktop/game_dev/connect4/audio/test.mp3"
-        #     audio = discord.FFmpegPCMAudio(source=test)
-
-        #     self.playlist.update({("Test", "Bizzy"): audio})
-        #     self.playlist_urls.update({("Test", "Bizzy"): None})
-        #     self.playlist_filepaths = {("Test", "Bizzy"): test}
-
-        #     await interaction.response.send_message("Test song added to playlist", ephemeral=True)
-        #     return
+            return
 
         if url in self.playlist_urls.values():
             await interaction.response.send_message("Song already in playlist. Wait for it to play before adding it again", ephemeral=True)
             return
 
         domain = urlparse(url).netloc
-        if domain != "www.youtube.com":
+        if domain != "www.youtube.com" and domain != "youtu.be":
             await interaction.response.send_message("Not a YouTube link", ephemeral=True)
+            return
 
         await interaction.response.defer(ephemeral=True)
 
         loop = asyncio.get_event_loop()
         # this is blocking, so run it in a separate thread
-        title, author = await loop.run_in_executor(None, self.download_song, url)
-        self.playlist_urls.update({(title, author): url})
-
-        audio_filepath = f"./local_storage/temp_music/{title}.mp3"
-        self.playlist_filepaths.update({(title, author): audio_filepath})
-
-        audio = discord.FFmpegPCMAudio(source=audio_filepath)
+        title, author, video_id = await loop.run_in_executor(None, self.download_song, url)
         info = (title, author)
 
+        self.playlist_urls.update({info: url})
+        audio_filepath = f"./local_storage/temp_music/{video_id}.mp3"
+
         if bump:
-            self.playlist = {info: audio} | self.playlist
+            self.playlist = {info: audio_filepath} | self.playlist
         else:
-            self.playlist.update({info: audio})
+            self.playlist.update({info: audio_filepath})
 
         await interaction.followup.send("Added to playlist", ephemeral=True)
 
@@ -462,7 +442,7 @@ class MusicCommands(commands.Cog):
         else:
             message += f"Now playing: {title} - {author}"
 
-        await interaction.response.send_message("Skipped audio", ephemeral=True)
+        await interaction.response.send_message(message, ephemeral=True)
 
     def play_next_song(self, error: Exception = None) -> str:
         """Plays the next song in the playlist if there is one
@@ -503,10 +483,11 @@ class MusicCommands(commands.Cog):
 
         info = next(iter(self.playlist))
 
-        audio = self.playlist.pop(info)
-        audio_filepath = self.playlist_filepaths.pop(info)
-        self.vc.play(audio, after=self.play_next_song)
+        audio_filepath = self.playlist.pop(info)
         self.current_song = {"info": info, "audio_filepath": audio_filepath}
+
+        audio = discord.FFmpegPCMAudio(source=audio_filepath, stderr=open("./local_storage/debug_log.txt", "w"))
+        self.vc.play(audio, after=self.play_next_song)
 
         return info
 
@@ -540,7 +521,7 @@ class MusicCommands(commands.Cog):
         """[task] Checks for inactivity and leaves the voice channel if inactive
         """
 
-        if self.vc is None or self.vc.is_playing():
+        if self.vc.is_playing() or self.downloading or self.vc is None:
             return
 
         if (datetime.now() - self.last_activity).seconds >= self.inactivity_timeout_seconds:
@@ -557,7 +538,6 @@ class MusicCommands(commands.Cog):
         self.current_song = None
         self.playlist = {}
         self.playlist_urls = {}
-        self.playlist_filepaths = {}
 
     def update_activity(self, error: Exception = None) -> None:
         """Updates the last activity time
