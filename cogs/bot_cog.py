@@ -27,9 +27,11 @@ class BotCog(commands.Cog):
         list_type=[
             app_commands.Choice(name="only the bare minimum", value="basic"),
             app_commands.Choice(name="all non-admin commands", value="user"),
-            app_commands.Choice(name="bare minimum + admin commands", value="basic_admin"),
+            app_commands.Choice(
+                name="bare minimum + admin commands", value="basic_admin"),
             app_commands.Choice(name="only admin commands", value="admin"),
-            app_commands.Choice(name="all commands except Bizzy's", value="user_admin"),
+            app_commands.Choice(
+                name="all commands except Bizzy's", value="user_admin"),
             app_commands.Choice(name="every command available", value="all"),
         ],
         announce=[
@@ -58,19 +60,19 @@ class BotCog(commands.Cog):
 
         basic_commands = [f"{global_utils.style_text('Commands', 'b')} (start typing the command to see its description):",
 
-                           f"- {global_utils.style_text('HELP', 'b')}:",
-                           f" - {global_utils.style_text('/commands', 'c')}",
-                           f" - {global_utils.style_text('/source-code', 'c')}",
+                          f"- {global_utils.style_text('HELP', 'b')}:",
+                          f" - {global_utils.style_text('/commands', 'c')}",
+                          f" - {global_utils.style_text('/source-code', 'c')}",
 
-                           f"- {global_utils.style_text('INFO', 'b')}:",
-                           f" - {global_utils.style_text('/schedule', 'c')}",
-                           f" - {global_utils.style_text('/map-pool', 'c')}",
-                           f" - {global_utils.style_text('/notes', 'c')}",
+                          f"- {global_utils.style_text('INFO', 'b')}:",
+                          f" - {global_utils.style_text('/schedule', 'c')}",
+                          f" - {global_utils.style_text('/map-pool', 'c')}",
+                          f" - {global_utils.style_text('/notes', 'c')}",
 
-                           f"- {global_utils.style_text('VOTING', 'b')}:",
-                           f" - {global_utils.style_text('/prefer-map', 'c')}",
-                           f" - {global_utils.style_text('/map-votes', 'c')}",
-                           f" - {global_utils.style_text('/map-weights', 'c')}",]
+                          f"- {global_utils.style_text('VOTING', 'b')}:",
+                          f" - {global_utils.style_text('/prefer-map', 'c')}",
+                          f" - {global_utils.style_text('/map-votes', 'c')}",
+                          f" - {global_utils.style_text('/map-weights', 'c')}",]
 
         admin_commands = [f"- {global_utils.style_text('ADMIN ONLY', 'b')}:",
                           f" - {global_utils.style_text('/map-pool', 'c')}",
@@ -109,13 +111,12 @@ class BotCog(commands.Cog):
                           f" - {global_utils.style_text('/stop-song', 'c')}",
                           f" - {global_utils.style_text('/skip-song', 'c')}",
                           f" - {global_utils.style_text('/loop-song', 'c')}",]
-        
+
         user_commands = basic_commands + music_commands + misc_commands
         basic_admin_commands = basic_commands + admin_commands
         user_admin_commands = user_commands + admin_commands
         all_commands = user_admin_commands + my_commands
 
-        
         match list_type:
             case "basic":
                 output = basic_commands
