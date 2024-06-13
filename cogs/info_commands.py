@@ -122,10 +122,10 @@ class InfoCommands(commands.Cog):
             app_commands.Choice(name="Add", value="add"),
             app_commands.Choice(name="Remove", value="remove"),
             app_commands.Choice(
-                name="Clear all maps (even if _map is set)", value="clear"),
+                name="Clear all maps (even if map_name is set)", value="clear"),
         ],
 
-        _map=[
+        map_name=[
             # map_pool only has maps that are currently playable, need to get all maps
             app_commands.Choice(name=f"{s.title()}", value=s) for s in global_utils.map_preferences.keys()
         ],
@@ -135,10 +135,10 @@ class InfoCommands(commands.Cog):
     )
     @app_commands.describe(
         action="The action to take on the map pool (ADMIN ONLY)",
-        _map="The map to add or remove (ADMIN ONLY)",
+        map_name="The map to add or remove (ADMIN ONLY)",
         announce="Show the output of the command to everyone (only used in the premier channel)"
     )
-    async def mappool(self, interaction: Interaction, action: str = "", _map: str = "", announce: int = 0) -> None:
+    async def mappool(self, interaction: Interaction, action: str = "", map_name: str = "", announce: int = 0) -> None:
         """[command] Adds/removes maps from the map pool or display the map pool
 
         Parameters
@@ -147,14 +147,14 @@ class InfoCommands(commands.Cog):
             The interaction object that initiated the command
         action : str, optional
             The action to take on the map pool (ADMIN ONLY), by default ""
-        _map : str, optional
+        map_name : str, optional
             The map to add or remove (ADMIN ONLY), by default ""
         announce : int, optional
             Treated as a boolean. Announce the output when used in the premier channel, by default 0
         """
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 
-        if action == "" and _map == "":  # display the map pool
+        if action == "" and map_name == "":  # display the map pool
             if len(global_utils.map_pool) == 0:
                 output = f'The map pool is empty'
             else:
@@ -166,34 +166,35 @@ class InfoCommands(commands.Cog):
 
         if not await global_utils.is_admin(interaction):
             return
-        
-        xor = lambda a, b: bool(a) != bool(b)
 
-        if xor(action, _map): # if one is set but not the other
+        def xor(a, b): return bool(a) != bool(b)
+
+        if xor(action, map_name):  # if one is set but not the other
             await interaction.response.send_message(f"Please provide an action {global_utils.style_text('and', 'bu')} a map.", ephemeral=True)
             return
 
         output = ""
+        map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if action == "clear":
             global_utils.map_pool.clear()
             output = f'The map pool has been cleared'
             log_message = f'{interaction.user.display_name} has cleared the map pool'
         elif action == "add":
-            if _map not in global_utils.map_pool:
-                global_utils.map_pool.append(_map)
-                output = f'{_map.title()} has been added to the map pool'
-                log_message = f'{interaction.user.display_name} has added {_map} to the map pool'
+            if map_name not in global_utils.map_pool:
+                global_utils.map_pool.append(map_name)
+                output = f'{map_display_name} has been added to the map pool'
+                log_message = f'{interaction.user.display_name} has added {map_name} to the map pool'
             else:
-                await interaction.response.send_message(f'{_map} is already in the map pool', ephemeral=True)
+                await interaction.response.send_message(f'{map_display_name} is already in the map pool', ephemeral=True)
                 return
         elif action == "remove":
-            if _map in global_utils.map_pool:
-                global_utils.map_pool.remove(_map)
-                output = f'{_map.title()} has been removed from the map pool'
-                log_message = f'{interaction.user.display_name} has removed {_map.title()} from the map pool'
+            if map_name in global_utils.map_pool:
+                global_utils.map_pool.remove(map_name)
+                output = f'{map_display_name} has been removed from the map pool'
+                log_message = f'{interaction.user.display_name} has removed {map_name} from the map pool'
             else:
-                await interaction.response.send_message(f'{_map.title()} is not in the map pool', ephemeral=True)
+                await interaction.response.send_message(f'{map_display_name} is not in the map pool', ephemeral=True)
                 return
 
         await interaction.response.send_message(output, ephemeral=ephem)
@@ -204,7 +205,7 @@ class InfoCommands(commands.Cog):
 
     @app_commands.command(name="notes", description=global_utils.command_descriptions["notes"])
     @app_commands.choices(
-        _map=[
+        map_name=[
             app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
         ],
         announce=[
@@ -212,18 +213,18 @@ class InfoCommands(commands.Cog):
         ]
     )
     @app_commands.describe(
-        _map="The map to display the note for",
+        map_name="The map to display the note for",
         note_number="The note number to display (1-indexed). Leave empty to see options.",
         announce="Return the note so that it is visible to everyone (only in notes channel)"
     )
-    async def notes(self, interaction: Interaction, _map: str, note_number: int = 0, announce: int = 0) -> None:
+    async def notes(self, interaction: Interaction, map_name: str, note_number: int = 0, announce: int = 0) -> None:
         """[command] Displays practice notes for a map
 
         Parameters
         ----------
         interaction : discord.Interaction
             The interaction object that initiated the command
-        _map : str
+        map_name : str
             The map to display the note for
         note_number : int, optional
             The note number to display (1-indexed). Leaving this empty will show all options, by default 0
@@ -232,37 +233,38 @@ class InfoCommands(commands.Cog):
         """
         ephem = interaction.channel.id != global_utils.notes_channel_id or not announce
 
-        if _map not in global_utils.practice_notes or len(global_utils.practice_notes[_map]) == 0:
-            await interaction.response.send_message(f'No notes found for {_map.title()}', ephemeral=True)
+        map_display_name = global_utils.style_text(map_display_name, 'i')
+
+        if map_name not in global_utils.practice_notes or len(global_utils.practice_notes[map_name]) == 0:
+            await interaction.response.send_message(f'No notes found for {map_display_name}', ephemeral=True)
             return
 
-        if note_number < 0 or note_number > len(global_utils.practice_notes[_map]):
+        if note_number < 0 or note_number > len(global_utils.practice_notes[map_name]):
             await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
             return
 
         if note_number == 0:
-            notes_list = global_utils.practice_notes[_map]
+            notes_list = global_utils.practice_notes[map_name]
             output = global_utils.style_text("Practice notes for ", 'b')
-            output += global_utils.style_text(_map.title(), 'ib') + ":\n"
+            output += global_utils.style_text(map_display_name, 'b') + ":\n"
             for i, note_id in enumerate(notes_list.keys()):
                 note_number = f"Note {i+1}"
-                note_desc = notes_list[note_id]
-                output += f"- {global_utils.style_text(note_number, 'b')}: {global_utils.style_text(note_desc, 'i')}\n"
+                output += f"- {global_utils.style_text(note_number, 'b')}: {global_utils.style_text(notes_list[note_id], 'i')}\n"
 
             await interaction.response.send_message(output, ephemeral=True)
             return
 
-        note_id = list(global_utils.practice_notes[_map].keys())[
+        note_id = list(global_utils.practice_notes[map_name].keys())[
             note_number - 1]
         try:
             note = await interaction.channel.fetch_message(int(note_id))
         except errors.NotFound:
             await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True)
-            global_utils.practice_notes[_map].pop(note_id)
+            global_utils.practice_notes[map_name].pop(note_id)
             global_utils.save_notes()
             return
 
-        output = f'Practice note for {_map.title()} (created by {note.author.display_name}):\n\n{note.content}'
+        output = f'Practice note for {map_display_name} (created by {note.author.display_name}):\n\n{note.content}'
 
         await interaction.followup.send(output, ephemeral=ephem)
 

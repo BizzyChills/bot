@@ -25,7 +25,7 @@ class VotingCommands(commands.Cog):
 
     @app_commands.command(name="prefer-map", description=global_utils.command_descriptions["prefer-map"])
     @app_commands.choices(
-        _map=[
+        map_name=[
             discord.app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
         ],
 
@@ -37,17 +37,17 @@ class VotingCommands(commands.Cog):
 
     )
     @discord.app_commands.describe(
-        _map="The map to vote for",
+        map_name="The map to vote for",
         preference="Your preference for the map"
     )
-    async def prefermap(self, interaction: discord.Interaction, _map: str, preference: str) -> None:
+    async def prefermap(self, interaction: discord.Interaction, map_name: str, preference: str) -> None:
         """[command] Declares a preference for a map to play in premier playoffs
 
         Parameters
         ----------
         interaction : discord.Interaction
             The interaction object that initiated the command
-        _map : str
+        map_name : str
             The map to mark with a preference
         preference : str
             The preference value for the map
@@ -60,13 +60,13 @@ class VotingCommands(commands.Cog):
         old_preference = ""
         uuid = str(interaction.user.id)
 
-        map_display = global_utils.style_text(_map.title(), 'i')
+        map_display = global_utils.style_text(map_name.title(), 'i')
         preference_display = global_utils.style_text(
             preference_decoder[preference], 'c')
 
         # if you've voted for this map before, need to remove the old weight
-        if uuid in global_utils.map_preferences[_map]:
-            old_preference = global_utils.map_preferences[_map][uuid]
+        if uuid in global_utils.map_preferences[map_name]:
+            old_preference = global_utils.map_preferences[map_name][uuid]
 
             # no change in preference, return
             if old_preference == preference:
@@ -80,18 +80,18 @@ class VotingCommands(commands.Cog):
 
             output = f"Your preference for {map_display} has been changed from {old_preference_display} to {preference_display}"
 
-            global_utils.map_weights[_map] -= preference_weights[old_preference]
+            global_utils.map_weights[map_name] -= preference_weights[old_preference]
         else:
             output = f"You marked {map_display} with a preference of {preference_display}"
 
-        global_utils.map_preferences[_map][uuid] = preference
+        global_utils.map_preferences[map_name][uuid] = preference
 
-        global_utils.map_weights[_map] += preference_weights[preference]
+        global_utils.map_weights[map_name] += preference_weights[preference]
 
         await interaction.response.send_message(output, ephemeral=True)
 
         global_utils.log(
-            f'{interaction.user.name} marked {_map.title()} with a preference of "{preference_decoder[preference]}"')
+            f'{interaction.user.name} marked {map_name.title()} with a preference of "{preference_decoder[preference]}"')
 
         global_utils.save_preferences()
 
@@ -122,12 +122,12 @@ class VotingCommands(commands.Cog):
 
         output = ""
 
-        for _map in global_utils.map_pool:
-            header = f"- {global_utils.style_text(_map.title(), 'i')} ({global_utils.style_text(global_utils.map_weights[_map], 'b')}):\n"
+        for map_name in global_utils.map_pool:
+            header = f"- {global_utils.style_text(map_name.title(), 'i')} ({global_utils.style_text(global_utils.map_weights[map_name], 'b')}):\n"
             body = ""
             for user in premier_team:
-                if str(user.id) in global_utils.map_preferences[_map]:
-                    encoded_weight = global_utils.map_preferences[_map][str(
+                if str(user.id) in global_utils.map_preferences[map_name]:
+                    encoded_weight = global_utils.map_preferences[map_name][str(
                         user.id)]
                     weight = {"+": "Like", "~": "Neutral",
                               "-": "Dislike"}[encoded_weight]
@@ -135,7 +135,7 @@ class VotingCommands(commands.Cog):
                     body += f" - {user.mention}: {global_utils.style_text(weight, 'c')}\n"
 
             if body == "":
-                body = "No votes for this map."
+                body = " - No votes for this map.\n"
 
             output += header + body
 
@@ -170,11 +170,11 @@ class VotingCommands(commands.Cog):
         global_utils.map_weights = dict(sorted(global_utils.map_weights.items(
         ), key=lambda item: item[1], reverse=True))  # sort the weights in descending order
 
-        for _map in global_utils.map_weights.keys():
-            if _map not in global_utils.map_pool:
+        for map_name in global_utils.map_weights.keys():
+            if map_name not in global_utils.map_pool:
                 continue
 
-            output += f'{_map.title()}: {global_utils.map_weights[_map]}\n'
+            output += f'{map_name.title()}: {global_utils.map_weights[map_name]}\n'
 
         if output == "":
             output = "No weights to show for maps in the map pool."
