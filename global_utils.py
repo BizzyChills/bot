@@ -66,6 +66,10 @@ class Utils:
         self.reminders = self.get_reminders()
         self.practice_notes = self.get_notes()
 
+        self.positive_preference = "+"
+        self.neutral_preference = "~"
+        self.negative_preference = "-"
+
         self.command_descriptions = {
             # help
             "commands": "Display all bot commands",
@@ -176,8 +180,13 @@ class Utils:
     def save_weights(self) -> None:
         """Saves any changes to the map weights during runtime to the map_weights.json file
         """
+        for map_name, user_weights in self.map_preferences.items():
+            self.map_weights[map_name] = sum(
+                [1 if user_weights.get(str(user_id)) == "+" else -1 if user_weights.get(str(user_id)) == "-" else 0 for user_id in user_weights])
+
         self.map_weights = {k: self.map_weights[k]
                             for k in sorted(self.map_weights)}
+        
         with open("./local_storage/map_weights.json", "w") as file:
             json.dump(self.map_weights, file)
 

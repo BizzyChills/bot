@@ -30,9 +30,9 @@ class VotingCommands(commands.Cog):
         ],
 
         preference=[
-            discord.app_commands.Choice(name="Like/Will Play", value="+"),
-            discord.app_commands.Choice(name="Neutral/Don't Care", value="~"),
-            discord.app_commands.Choice(name="Dislike/Won't Play", value="-"),
+            discord.app_commands.Choice(name="Like/Will Play", value=global_utils.positive_preference),
+            discord.app_commands.Choice(name="Neutral/Don't Care", value=global_utils.neutral_preference),
+            discord.app_commands.Choice(name="Dislike/Won't Play", value=global_utils.negative_preference),
         ]
 
     )
@@ -52,10 +52,11 @@ class VotingCommands(commands.Cog):
         preference : str
             The preference value for the map
         """
-
         output = ""
-        preference_decoder = {"+": "Like", "~": "Neutral", "-": "Dislike"}
-        preference_weights = {"+": 1, "~": 0, "-": -1}
+        like = global_utils.positive_preference
+        neutral = global_utils.neutral_preference
+        dislike = global_utils.negative_preference
+        preference_decoder = {like: "Like", neutral: "Neutral", dislike: "Dislike"}
 
         old_preference = ""
         uuid = str(interaction.user.id)
@@ -80,20 +81,18 @@ class VotingCommands(commands.Cog):
 
             output = f"Your preference for {map_display} has been changed from {old_preference_display} to {preference_display}"
 
-            global_utils.map_weights[map_name] -= preference_weights[old_preference]
         else:
             output = f"You marked {map_display} with a preference of {preference_display}"
 
         global_utils.map_preferences[map_name][uuid] = preference
 
-        global_utils.map_weights[map_name] += preference_weights[preference]
+
+        global_utils.save_preferences()
 
         await interaction.response.send_message(output, ephemeral=True)
 
         global_utils.log(
             f'{interaction.user.name} marked {map_name.title()} with a preference of "{preference_decoder[preference]}"')
-
-        global_utils.save_preferences()
 
     @app_commands.command(name="map-votes", description=global_utils.command_descriptions["map-votes"])
     @app_commands.choices(
@@ -129,8 +128,12 @@ class VotingCommands(commands.Cog):
                 if str(user.id) in global_utils.map_preferences[map_name]:
                     encoded_weight = global_utils.map_preferences[map_name][str(
                         user.id)]
-                    weight = {"+": "Like", "~": "Neutral",
-                              "-": "Dislike"}[encoded_weight]
+                    
+                    like = global_utils.positive_preference
+                    neutral = global_utils.neutral_preference
+                    dislike = global_utils.negative_preference
+
+                    weight = {like: "Like", neutral: "Neutral", dislike: "Dislike"}[encoded_weight]
 
                     body += f" - {user.mention}: {global_utils.style_text(weight, 'c')}\n"
 
