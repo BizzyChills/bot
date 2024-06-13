@@ -30,6 +30,36 @@ class AdminPremierCommands(commands.Cog):
         # global_utils.log("AdminPremier cog loaded")
         pass
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """A global check for all app commands in this cog to ensure the user is an admin
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+
+        Returns
+        -------
+        bool
+            True if the user is an admin, False otherwise
+        """
+        return await global_utils.is_admin(interaction)
+
+    async def cog_check(self, ctx: Context) -> bool:
+        """A global check for all text commands in this cog to ensure the user is an admin
+
+        Parameters
+        ----------
+        ctx : discord.ext.commands.Context
+            The context object that initiated the command
+
+        Returns
+        -------
+        bool
+            True if the user is an admin, False otherwise
+        """
+        return await global_utils.is_admin(ctx)
+
     @app_commands.command(name="add-map", description=global_utils.command_descriptions["add-map"])
     @app_commands.describe(
         map_name="The name of the map that was added to the game"
@@ -111,9 +141,6 @@ class AdminPremierCommands(commands.Cog):
             The date (mm/dd) of the Thursday that starts the first event. Events will be added for Thursday, Saturday, and Sunday.
         """
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
-
-        if not await global_utils.is_admin(interaction):
-            return
 
         guild = interaction.guild
         map_display_name = global_utils.style_text(map_name.title(), 'i')
@@ -211,10 +238,6 @@ class AdminPremierCommands(commands.Cog):
         announce : int, optional
             Treated as a boolean. Announce the cancellation when used in the premier channel, by default 0
         """
-
-        if not await global_utils.is_admin(interaction):
-            return
-
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name not in global_utils.map_pool and map_name != "playoffs":
@@ -266,9 +289,6 @@ class AdminPremierCommands(commands.Cog):
             The interaction object that initiated the command
         """
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
-
-        if not await global_utils.is_admin(interaction):
-            return
 
         await interaction.response.defer(ephemeral=True, thinking=True)
 
@@ -337,10 +357,6 @@ class AdminPremierCommands(commands.Cog):
         announce : int, optional
             Treated as a boolean. Announce the cancellation when used in the premier channel, by default 0
         """
-
-        if not await global_utils.is_admin(interaction):
-            return
-
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name not in global_utils.map_pool:
@@ -409,9 +425,6 @@ class AdminPremierCommands(commands.Cog):
         """
         # confirm is automatically chcecked by discord, so we just need to ensure it is a required argument to "confirm"
 
-        if not await global_utils.is_admin(interaction):
-            return
-
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
@@ -457,9 +470,6 @@ class AdminPremierCommands(commands.Cog):
         description : str
             The description of the note. Used to easily identify this note when using /notes
         """
-        if not await global_utils.is_admin(interaction):
-            return
-
         note_id = int(note_id)
         try:
             message = interaction.channel.get_partial_message(note_id)
@@ -507,9 +517,6 @@ class AdminPremierCommands(commands.Cog):
         note_number : int, optional
             The note number to remove (1-indexed). Leave empty/0 to see options, by default 0
         """
-        if not await global_utils.is_admin(interaction):
-            return
-
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name not in global_utils.practice_notes or len(global_utils.practice_notes[map_name]) == 0:
@@ -559,6 +566,36 @@ class AdminMessageCommands(commands.Cog):
         """
         # global_utils.log("AdminManage cog loaded")
         pass
+    
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """A global check for all app commands in this cog to ensure the user is an admin
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+
+        Returns
+        -------
+        bool
+            True if the user is an admin, False otherwise
+        """
+        return await global_utils.is_admin(interaction)
+    
+    async def cog_check(self, ctx: Context) -> bool:
+        """A global check for all text commands in this cog to ensure the user is an admin
+
+        Parameters
+        ----------
+        ctx : discord.ext.commands.Context
+            The context object that initiated the command
+
+        Returns
+        -------
+        bool
+            True if the user is an admin, False otherwise
+        """
+        return await global_utils.is_admin(ctx)
 
     @app_commands.command(name="remind", description=global_utils.command_descriptions["remind"])
     @app_commands.choices(
@@ -587,10 +624,6 @@ class AdminMessageCommands(commands.Cog):
         message : str
             The reminder message to send to the premier role
         """
-
-        if not await global_utils.is_admin(interaction):
-            return
-
         if interval <= 0:
             await interaction.response.send_message(f'Please provide a valid interval greater than 0', ephemeral=True)
             return
@@ -661,9 +694,6 @@ class AdminMessageCommands(commands.Cog):
         message_id : str
             The ID of the message to pin
         """
-        if not await global_utils.is_admin(interaction):
-            return
-
         try:
             message = interaction.channel.get_partial_message(int(message_id))
             await message.pin()
@@ -690,9 +720,6 @@ class AdminMessageCommands(commands.Cog):
         message_id : str
             The ID of the message to unpin
         """
-        if not await global_utils.is_admin(interaction):
-            return
-
         try:
             message = interaction.channel.get_partial_message(int(message_id))
             await message.unpin()
@@ -719,9 +746,6 @@ class AdminMessageCommands(commands.Cog):
         message_id : str
             The ID of the message to delete
         """
-        if not await global_utils.is_admin(interaction):
-            return
-
         try:
             await interaction.channel.get_partial_message(int(message_id)).delete()
         except (ValueError, discord.errors.NotFound):
@@ -740,14 +764,11 @@ class AdminMessageCommands(commands.Cog):
 
         Parameters
         ----------
-        ctx : discord.Context
+        ctx : discord.ext.commands.Context
             The context object that initiated the command
         reason : str, optional
             The reason for killing the bot, by default "no reason given"
         """
-        if not await global_utils.is_admin(ctx):
-            return
-
         m = await ctx.send(f'Goodbye cruel world!', ephemeral=True)
 
         await ctx.message.delete(delay=3)
