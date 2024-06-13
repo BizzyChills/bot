@@ -76,7 +76,7 @@ class AdminPremierCommands(commands.Cog):
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name in global_utils.map_preferences:
-            await interaction.response.send_message(f'Map "{map_display_name}" is already in the list.')
+            await interaction.response.send_message(f'Map "{map_display_name}" is already in the game.', ephemeral=True)
             return
 
         global_utils.map_preferences = {
@@ -86,7 +86,7 @@ class AdminPremierCommands(commands.Cog):
         # note: this function also calls save_weights
         global_utils.save_preferences()
 
-        await interaction.response.send_message(f'Map "{map_display_name}" has been added to the list', ephemeral=True)
+        await interaction.response.send_message(f'Map "{map_display_name}" has been added to the game', ephemeral=True)
 
     @app_commands.command(name="remove-map", description=global_utils.command_descriptions["remove-map"])
     @app_commands.describe(
@@ -104,7 +104,7 @@ class AdminPremierCommands(commands.Cog):
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name not in global_utils.map_preferences.keys():
-            await interaction.response.send_message(f'No map named "{map_display_name}" in the list.')
+            await interaction.response.send_message(f'No map named "{map_display_name}" in the game.', ephemeral=True)
             return
 
         # if its in the mappool, remove it
@@ -121,7 +121,7 @@ class AdminPremierCommands(commands.Cog):
         # note: this function also calls save_weights
         global_utils.save_preferences()
 
-        await interaction.response.send_message(f'Map "{map_display_name}" removed from the list')
+        await interaction.response.send_message(f'Map "{map_display_name}" removed from the game', ephemeral=True)
 
     @app_commands.command(name="add-events", description=global_utils.command_descriptions["add-events"])
     @app_commands.describe(
