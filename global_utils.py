@@ -96,6 +96,8 @@ class Utils:
 
             # admin
             "map-pool-admin": "Modify the map pool",
+            "add-map": "Add a map to the list of all maps in the game",
+            "remove-map": "Remove a map from the list of all maps in the game",
             "add-events": "Add all premier events to the schedule",
             "cancel-event": "Cancel a premier map for today/all days",
             "add-practices": "Add all premier practices to the schedule (a map must still have a Thursday event to add practices)",
@@ -153,6 +155,8 @@ class Utils:
     def save_preferences(self) -> None:
         """Saves any changes to the map preferences during runtime to the map_preferences.json file and also saves the map weights
         """
+        self.map_preferences = {
+            k: self.map_preferences[k] for k in sorted(self.map_preferences)}
         with open("./local_storage/map_preferences.json", "w") as file:
             json.dump(self.map_preferences, file)
 
@@ -172,6 +176,8 @@ class Utils:
     def save_weights(self) -> None:
         """Saves any changes to the map weights during runtime to the map_weights.json file
         """
+        self.map_weights = {k: self.map_weights[k]
+                            for k in sorted(self.map_weights)}
         with open("./local_storage/map_weights.json", "w") as file:
             json.dump(self.map_weights, file)
 

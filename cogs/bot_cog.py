@@ -76,6 +76,8 @@ class BotCog(commands.Cog):
 
         admin_commands = [f"- {global_utils.style_text('ADMIN ONLY', 'b')}:",
                           f" - {global_utils.style_text('/map-pool', 'c')}",
+                          f" - {global_utils.style_text('/add-map', 'c')}",
+                          f" - {global_utils.style_text('/remove-map', 'c')}",
                           f" - {global_utils.style_text('/add-events', 'c')}",
                           f" - {global_utils.style_text('/cancel-event', 'c')}",
                           f" - {global_utils.style_text('/add-practices', 'c')}",
