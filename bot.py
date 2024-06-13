@@ -1,6 +1,6 @@
 import sys
 import asyncio
-from os import getenv
+from os import getenv, listdir, remove
 
 from discord import Interaction, Intents, app_commands
 from discord.ext import commands
@@ -22,7 +22,7 @@ if not bot_token:
 async def on_ready() -> None:
     """[event] Executes when the bot is ready
     """
-    sys.stderr = open(f'./logs/{global_utils.last_log_date}_stderr.log', 'a')
+    sys.stderr = open(f'./logs/{global_utils.log_date}_stderr.log', 'a')
 
     global_utils.log(
         f'Bot "{bot.user.name}" has connected to Discord. Starting log')
@@ -81,6 +81,7 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
 async def main() -> None:
     """Loads all cogs and starts the bot
     """
+    sys.stdout = open(global_utils.log_filepath, 'a')
     await global_utils.load_cogs(bot)
     await bot.start(bot_token)
 
@@ -88,6 +89,8 @@ if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
+        for file in listdir('./local_storage/temp_music'): # honestly, needs to be taken care of better. maybe later :p
+            remove(f'./local_storage/temp_music/{file}')
         asyncio.run(bot.close())
     # bot.run(bot_token)
 else:

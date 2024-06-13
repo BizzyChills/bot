@@ -52,7 +52,8 @@ class MusicCommands(commands.Cog):
         self.timed_checks.start()
 
         for tmp in os.listdir("./local_storage/temp_music"):
-            os.remove(f"./local_storage/temp_music/{tmp}")
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, self.delete_song, f"./local_storage/temp_music/{tmp}")
 
         # pass
 
@@ -79,7 +80,10 @@ class MusicCommands(commands.Cog):
             The voice state after the change
         """
 
-        if self.vc is None or member != self.owner:
+        if self.vc is None:
+            return
+        
+        if member != self.owner:
             return
 
         if self.owner not in self.vc.channel.members:
@@ -153,12 +157,20 @@ class MusicCommands(commands.Cog):
         if interaction.user != self.owner:
             await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
             return
+        
+        if self.current_song is not None:
+            audio = self.current_song["audio"]
+            audio.cleanup()
+
+        for file in os.listdir("./local_storage/temp_music"):
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, self.delete_song, f"./local_storage/temp_music/{file}")
 
         await self.reset_state()
         await interaction.response.send_message("Left the voice channel", ephemeral=True)
 
     def download_song(self, url: str) -> tuple[str, str]:
-        """Downloads a song from a YouTube URL asynchronously (call this function with asyncio.run() or await)
+        """Downloads a song from a YouTube URL and returns the title and author of the song
 
         Parameters
         ----------
@@ -193,6 +205,17 @@ class MusicCommands(commands.Cog):
         self.update_activity()
         self.downloading = False
         return title, author, video_id
+
+    def delete_song(self, filepath: str) -> None:
+        """Deletes a song file
+
+        Parameters
+        ----------
+        filepath : str
+            The file path of the song to delete
+        """
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
     @app_commands.command(name="add-song", description=global_utils.command_descriptions["add-song"])
     @app_commands.choices(
@@ -462,6 +485,8 @@ class MusicCommands(commands.Cog):
         self.update_activity(error)
         if self.current_song is not None:
             audio_filepath = self.current_song["audio_filepath"]
+            audio = self.current_song["audio"]
+            audio.cleanup()
 
             if self.loop_song:
                 if not self.vc.is_playing() and not self.vc.is_paused():
@@ -473,8 +498,8 @@ class MusicCommands(commands.Cog):
 
                     return info
             else:
-                if os.path.exists(audio_filepath):
-                    os.remove(audio_filepath)
+                loop = asyncio.get_event_loop()
+                loop.run_in_executor(None, self.delete_song, audio_filepath)
 
                 self.current_song = None
 
@@ -484,9 +509,10 @@ class MusicCommands(commands.Cog):
         info = next(iter(self.playlist))
 
         audio_filepath = self.playlist.pop(info)
-        self.current_song = {"info": info, "audio_filepath": audio_filepath}
-
         audio = discord.FFmpegPCMAudio(source=audio_filepath, stderr=open("./local_storage/debug_log.txt", "w"))
+
+        self.current_song = {"info": info, "audio": audio, "audio_filepath": audio_filepath}
+
         self.vc.play(audio, after=self.play_next_song)
 
         return info
@@ -530,7 +556,17 @@ class MusicCommands(commands.Cog):
     async def reset_state(self) -> None:
         """Resets the state of the MusicCommands cog (disconnects from voice channel, clears owner, and clears last activity)
         """
-        await self.vc.disconnect()
+        if self.vc is not None:
+            await self.vc.disconnect()
+        
+        if self.current_song is not None:
+            audio = self.current_song["audio"]
+            audio.cleanup()
+        
+        loop = asyncio.get_event_loop()
+        for file in os.listdir("./local_storage/temp_music"):
+            loop.run_in_executor(None, self.delete_song, f"./local_storage/temp_music/{file}")
+
         self.vc = None
         self.owner = None
         self.last_activity = None
@@ -548,7 +584,6 @@ class MusicCommands(commands.Cog):
             The error that occurred, if any
         """
         self.last_activity = datetime.now()
-
 
 async def setup(bot: commands.Bot) -> None:
     """Adds the MusicCommands cog to the bot

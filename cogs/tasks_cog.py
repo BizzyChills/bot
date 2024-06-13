@@ -255,12 +255,12 @@ class TasksCog(commands.Cog):
         """[task] Creates a new log file at midnight and updates the logger to write to the new file"""
         new_date = datetime.now().strftime("%Y-%m-%d")
 
-        if new_date != global_utils.last_log_date:
+        if new_date != global_utils.log_date:
             global_utils.log("Starting new log file")
-            global_utils.last_log_date = new_date
-            global_utils.last_log = f"./logs/{global_utils.last_log_date}_stdout.log"
+            global_utils.log_date = new_date
+            global_utils.log_filepath = f"./logs/{global_utils.log_date}_stdout.log"
             sys.stdout.close()
-            sys.stdout = open(global_utils.last_log, 'a')
+            sys.stdout = open(global_utils.log_filepath, 'a')
 
     @tasks.loop(minutes=5)
     async def update_cache(self) -> None:

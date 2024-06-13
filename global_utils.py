@@ -21,9 +21,8 @@ class Utils:
 
         self.source_code = "https://github.com/BizzyChills/bot/"
 
-        self.last_log_date = datetime.now().strftime("%Y-%m-%d")
-        self.last_log = f'./logs/{self.last_log_date}_stdout.log'
-        sys.stdout = open(self.last_log, 'a')
+        self.log_date = datetime.now().strftime("%Y-%m-%d")
+        self.log_filepath = f'./logs/{self.log_date}_stdout.log'
 
         self.debug_server_id = 1217649405759324232
         self.debug_role_name = "southern"
@@ -218,7 +217,7 @@ class Utils:
         message : str
             The message to log
         """
-        with open(self.last_log, 'a+') as file:
+        with open(self.log_filepath, 'a+') as file:
             if ("connected to Discord" in message):
                 prefix = "\n" if file.readline() != "" else ""
                 file.write(f"{prefix}{'-' * 50}\n")
@@ -346,7 +345,7 @@ class Utils:
         if log_message == "":
             return False
 
-        with open(self.last_log, "r") as file:
+        with open(self.log_filepath, "r") as file:
             log_contents = file.read()
 
         return log_message in log_contents if log_contents != "" else False
