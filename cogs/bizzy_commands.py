@@ -109,12 +109,6 @@ class BizzyCommands(commands.Cog):
 
         async with ctx.typing(ephemeral=True):
 
-            right_now = (datetime.now().replace(
-                microsecond=0) + timedelta(seconds=5)).time()
-
-            global_utils.premier_reminder_times[0] = global_utils.est_to_utc(
-                right_now)
-
             self.bot.dispatch("reload_cogs")
             await global_utils.load_cogs(self.bot)  # also *re*loads the cogs
 
