@@ -91,7 +91,7 @@ class Utils:
             "add-song": "Add a song (or any video really) to the playlist via YouTube URL (can take a while!)",
             "play-song": "Begin/resume playback of current song (or next song if current is None)",
             "pause-song": "Pause playback of current song",
-            "resume-song": "Resume playback of current song",
+            # "resume-song": "Resume playback of current song", # deprecated, just use play-song
             "stop-song": "Stop playback of current song (cannot resume)",
             "skip-song": "Skip current song and play next song in playlist (if any)",
             "loop-song": "Toggle looping of the current song",
@@ -186,7 +186,7 @@ class Utils:
 
         self.map_weights = {k: self.map_weights[k]
                             for k in sorted(self.map_weights)}
-        
+
         with open("./local_storage/map_weights.json", "w") as file:
             json.dump(self.map_weights, file)
 

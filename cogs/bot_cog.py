@@ -109,7 +109,7 @@ class BotCog(commands.Cog):
                           f" - {global_utils.style_text('/playlist', 'c')}",
                           f" - {global_utils.style_text('/play-song', 'c')}",
                           f" - {global_utils.style_text('/pause-song', 'c')}",
-                          f" - {global_utils.style_text('/resume-song', 'c')}",
+                        #   f" - {global_utils.style_text('/resume-song', 'c')}", # deprecated. just use /play-song
                           f" - {global_utils.style_text('/stop-song', 'c')}",
                           f" - {global_utils.style_text('/skip-song', 'c')}",
                           f" - {global_utils.style_text('/loop-song', 'c')}",]

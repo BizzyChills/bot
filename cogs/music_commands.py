@@ -374,31 +374,32 @@ class MusicCommands(commands.Cog):
         self.vc.pause()
         await interaction.response.send_message("Paused audio", ephemeral=True)
 
-    @app_commands.command(name="resume-song", description=global_utils.command_descriptions["resume-song"])
-    async def resume(self, interaction: discord.Interaction) -> None:
-        """[command] Resumes playback of current song
+    # deprecated, just use /play-song to resume
+    # @app_commands.command(name="resume-song", description=global_utils.command_descriptions["resume-song"])
+    # async def resume(self, interaction: discord.Interaction) -> None:
+    #     """[command] Resumes playback of current song
 
-        Parameters
-        ----------
-        interaction : discord.Interaction
-            The interaction object that initiated the command
-        """
-        if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
-            return
+    #     Parameters
+    #     ----------
+    #     interaction : discord.Interaction
+    #         The interaction object that initiated the command
+    #     """
+    #     if self.vc is None:
+    #         await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+    #         return
 
-        if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
-            return
+    #     if interaction.user != self.owner:
+    #         await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
+    #         return
 
-        self.update_activity()
+    #     self.update_activity()
 
-        if not self.vc.is_paused():
-            await interaction.response.send_message("I am not paused", ephemeral=True)
-            return
+    #     if not self.vc.is_paused():
+    #         await interaction.response.send_message("I am not paused", ephemeral=True)
+    #         return
 
-        self.vc.resume()
-        await interaction.response.send_message("Resumed audio", ephemeral=True)
+    #     self.vc.resume()
+    #     await interaction.response.send_message("Resumed audio", ephemeral=True)
 
     @app_commands.command(name="stop-song", description=global_utils.command_descriptions["stop-song"])
     async def stop(self, interaction: discord.Interaction) -> None:
