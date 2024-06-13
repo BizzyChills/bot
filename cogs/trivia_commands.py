@@ -112,7 +112,6 @@ class TriviaCommands(commands.Cog):
         user : discord.User
             The user who has completed the trivia game
         """
-
         taunts = [
             "Are you mad at me? Good.",
             "You went through all of that just for a pat on the back. How does that make you feel?",
@@ -152,7 +151,6 @@ class TriviaCommands(commands.Cog):
         user : discord.User
             The user to play trivia with
         """
-
         await user.send((f"Welcome to trivia! You will have {global_utils.style_text('10 seconds', 'c')} to answer each question.\n\n"
                          "Since I'm nice, I'll let you know that almost every answer can be found in the server (or with a simple Google search). Good luck!"
                          ))

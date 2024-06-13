@@ -33,7 +33,6 @@ class MiscCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         await interaction.response.send_message(f'Hello {interaction.user.mention}!', ephemeral=True)
 
     @app_commands.command(name="feed", description=global_utils.command_descriptions["feed"])
@@ -45,7 +44,6 @@ class MiscCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         await interaction.response.send_message("Yum yum! Thanks for the food!", ephemeral=True)
 
     @app_commands.command(name="unfeed", description=global_utils.command_descriptions["unfeed"])
@@ -57,7 +55,6 @@ class MiscCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         options = ["pukes", "poops", "performs own liposuction"]
 
         option = choice(options)

@@ -63,9 +63,6 @@ class MusicCommands(commands.Cog):
     async def on_reload(self) -> None:
         """[event] Executes when the MusicCommands cog is reloaded
         """
-        # self.timed_checks.stop()
-        # self.timed_checks.start()
-
         await self.reset_state()
 
     @commands.Cog.listener()
@@ -81,7 +78,6 @@ class MusicCommands(commands.Cog):
         after : discord.VoiceState
             The voice state after the change
         """
-
         if self.vc is None:
             return
 
@@ -106,7 +102,6 @@ class MusicCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         if interaction.user.voice is None:
             await interaction.response.send_message("You must be in a voice channel to use this command", ephemeral=True)
             return
@@ -151,7 +146,6 @@ class MusicCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         if self.vc is None:
             await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
             return
@@ -242,7 +236,6 @@ class MusicCommands(commands.Cog):
         bump : int, optional
             Treated as a boolean. Bump the song to the top of the playlist, by default 0
         """
-
         if self.vc is None:
             await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
             return
@@ -325,7 +318,6 @@ class MusicCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         if self.vc is None:
             await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
             return
@@ -365,7 +357,6 @@ class MusicCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         if self.vc is None:
             await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
             return
@@ -392,7 +383,6 @@ class MusicCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         if self.vc is None:
             await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
             return
@@ -419,7 +409,6 @@ class MusicCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         if self.vc is None:
             await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
             return
@@ -446,7 +435,6 @@ class MusicCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         if self.vc is None:
             await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
             return
@@ -483,7 +471,6 @@ class MusicCommands(commands.Cog):
         str
             The playlist info of the song that was played
         """
-
         # shouldn't be neccessary, since timeout checks for is_playing, but just in case
         self.update_activity(error)
         if self.current_song is not None:
@@ -531,7 +518,6 @@ class MusicCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-
         if self.vc is None:
             await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
             return
@@ -551,7 +537,6 @@ class MusicCommands(commands.Cog):
     async def timed_checks(self) -> None:
         """[task] Checks for inactivity and leaves the voice channel if inactive
         """
-
         if self.vc.is_playing() or self.downloading or self.vc is None:
             return
 

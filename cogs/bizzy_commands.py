@@ -97,7 +97,7 @@ class BizzyCommands(commands.Cog):
 
         Parameters
         ----------
-        ctx : discord.Context
+        ctx : discord.ext.commands.Context
             The context object that initiated the command
         sync : int, optional
             Treated as a boolean. Sync the commands after reloading, by default 0

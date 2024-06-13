@@ -98,7 +98,6 @@ class TasksCog(commands.Cog):
     @tasks.loop(time=global_utils.premier_reminder_times)
     async def eventreminders(self) -> None:
         """[task] Sends reminders for upcoming events near starting times of West Coast premier events"""
-
         global_utils.log("Checking for event reminders")
 
         events = []
