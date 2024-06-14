@@ -1,4 +1,5 @@
-from discord import Object, Interaction, app_commands
+import discord
+from discord import app_commands
 from discord.ext import commands
 
 from global_utils import global_utils
@@ -34,15 +35,11 @@ class BotCog(commands.Cog):
                 name="all commands except Bizzy's", value="user_admin"),
             app_commands.Choice(name="every command available", value="all"),
         ],
-        announce=[
-            app_commands.Choice(name="Yes", value=1),
-        ]
     )
     @app_commands.describe(
         list_type="The type of command list to display",
-        announce="Allow others to see the returned command list in the channel (only in bot channel)"
     )
-    async def commands(self, interaction: Interaction, list_type: str = "all", announce: int = 0) -> None:
+    async def commands(self, interaction: discord.Interaction, list_type: str = "all") -> None:
         """[command] Displays all bot commands
 
         Parameters
@@ -51,10 +48,8 @@ class BotCog(commands.Cog):
             The interaction object that initiated the command
         list_type : str, optional
             The type of command list to display, by default "user"
-        announce : int, optional
-            Treated as a boolean. Announce the output when used in the bot channel, by default 0
         """
-        ephem = interaction.channel.id != global_utils.bot_channel_id or not announce
+        ephem = True
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
@@ -106,13 +101,15 @@ class BotCog(commands.Cog):
                           f" - {global_utils.style_text('/join-voice', 'c')}",
                           f" - {global_utils.style_text('/leave-voice', 'c')}",
                           f" - {global_utils.style_text('/add-song', 'c')}",
-                          f" - {global_utils.style_text('/playlist', 'c')}",
-                          f" - {global_utils.style_text('/play-song', 'c')}",
-                          f" - {global_utils.style_text('/pause-song', 'c')}",
-                        #   f" - {global_utils.style_text('/resume-song', 'c')}", # deprecated. just use /play-song
-                          f" - {global_utils.style_text('/stop-song', 'c')}",
-                          f" - {global_utils.style_text('/skip-song', 'c')}",
-                          f" - {global_utils.style_text('/loop-song', 'c')}",]
+                          f" - {global_utils.style_text('/music (WIP)', 'c')}",
+                        #   f" - {global_utils.style_text('/playlist', 'c')}",
+                        #   f" - {global_utils.style_text('/play-song', 'c')}",
+                        #   f" - {global_utils.style_text('/pause-song', 'c')}",
+                        # #   f" - {global_utils.style_text('/resume-song', 'c')}", # deprecated. just use /play-song
+                        #   f" - {global_utils.style_text('/stop-song', 'c')}",
+                        #   f" - {global_utils.style_text('/skip-song', 'c')}",
+                        #   f" - {global_utils.style_text('/loop-song', 'c')}",
+                          ]
 
         user_commands = basic_commands + music_commands + misc_commands
         basic_admin_commands = basic_commands + admin_commands
@@ -140,12 +137,12 @@ class BotCog(commands.Cog):
         await interaction.followup.send('\n'.join(output), ephemeral=ephem, silent=True)
 
     @app_commands.command(name="source-code", description=global_utils.command_descriptions["source-code"])
-    async def source(self, interaction: Interaction) -> None:
+    async def source(self, interaction: discord.Object) -> None:
         """[command] Links the repo containing the source code for the bot
 
         Parameters
         ----------
-        interaction : discord.Interaction
+        interaction : discord.discord.Object
             The interaction object that initiated the command
         """
         await interaction.response.send_message(f"Here is my source code: {global_utils.style_text(global_utils.source_code, 'c')}", ephemeral=True)
@@ -159,4 +156,4 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(BotCog(bot), guilds=[Object(global_utils.val_server_id), Object(global_utils.debug_server_id)])
+    await bot.add_cog(BotCog(bot), guilds=[discord.Object(global_utils.val_server_id), discord.Object(global_utils.debug_server_id)])
