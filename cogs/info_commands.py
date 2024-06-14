@@ -1,5 +1,6 @@
+import discord
 from discord.ext import commands
-from discord import Interaction, errors, Object
+from discord import errors
 from discord import app_commands
 
 from datetime import datetime
@@ -60,25 +61,15 @@ class InfoCommands(commands.Cog):
         return f"{header}\n{output}" if header else output
 
     @app_commands.command(name="schedule", description=global_utils.command_descriptions["schedule"])
-    @app_commands.choices(
-        announce=[
-            app_commands.Choice(name="Yes", value=1),
-        ]
-    )
-    @app_commands.describe(
-        announce="Show the output of the command to everyone (only used in the premier channel)"
-    )
-    async def schedule(self, interaction: Interaction, announce: int = 0) -> None:
+    async def schedule(self, interaction: discord.Interaction) -> None:
         """[command] Displays the premier schedule from server events
 
         Parameters
         ----------
         interaction : discord.Interaction
             The interaction object that initiated the command
-        announce : int, optional
-            Treated as a boolean. Announce the output when used in the premier channel, by default 0
         """
-        ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
+        ephem = True
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
@@ -138,7 +129,7 @@ class InfoCommands(commands.Cog):
         map_name="The map to add or remove (ADMIN ONLY)",
         announce="Show the output of the command to everyone (only used in the premier channel)"
     )
-    async def mappool(self, interaction: Interaction, action: str = "", map_name: str = "", announce: int = 0) -> None:
+    async def mappool(self, interaction: discord.Interaction, action: str = "", map_name: str = "", announce: int = 0) -> None:
         """[command] Adds/removes maps from the map pool or display the map pool
 
         Parameters
@@ -217,7 +208,7 @@ class InfoCommands(commands.Cog):
         note_number="The note number to display (1-indexed). Leave empty to see options.",
         announce="Return the note so that it is visible to everyone (only in notes channel)"
     )
-    async def notes(self, interaction: Interaction, map_name: str, note_number: int = 0, announce: int = 0) -> None:
+    async def notes(self, interaction: discord.Interaction, map_name: str, note_number: int = 0, announce: int = 0) -> None:
         """[command] Displays practice notes for a map
 
         Parameters
@@ -277,4 +268,4 @@ async def setup(bot: commands.bot) -> None:
     bot : discord.ext.commands.bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(InfoCommands(bot), guilds=[Object(global_utils.val_server_id), Object(global_utils.debug_server_id)])
+    await bot.add_cog(InfoCommands(bot), guilds=[discord.Object(global_utils.val_server_id), discord.Object(global_utils.debug_server_id)])
