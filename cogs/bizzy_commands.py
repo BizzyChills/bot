@@ -25,6 +25,48 @@ class BizzyCommands(commands.Cog):
         # global_utils.log("Bizzy cog loaded")
         pass
 
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        """Checks if the interaction is from Bizzy
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object to check
+        
+        Returns
+        -------
+        bool
+            True if the interaction is from Bizzy, False otherwise
+        """
+
+        check = interaction.user.id == global_utils.my_id
+
+        if not check:
+            await interaction.response.send_message("You do not have permission to use this command", ephemeral=True)
+
+        return check
+
+    async def cog_check(self, ctx: Context) -> bool:
+        """A global check for all text commands in this cog to ensure they are only used by Bizzy
+
+        Parameters
+        ----------
+        ctx : Context
+            The context object to check
+
+        Returns
+        -------
+        bool
+            True if the context is from Bizzy, False otherwise
+        """
+        check = ctx.author.id == global_utils.my_id
+        ctx.message.delete(delay=0)
+
+        if not check:
+            await ctx.send("You do not have permission to use this command", delete_after=3)
+        
+        return check
+
     async def sync_commands(self, guild_id: int = global_utils.debug_server_id) -> int:
         """Syncs the bot's app commands within the given guild
 
@@ -51,9 +93,9 @@ class BizzyCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-        if interaction.guild.id != global_utils.debug_server_id:
+        if interaction.guild.id != global_utils.debug_server_id and interaction.channel.id != global_utils.bot_channel_id:
             await interaction.response.send_message(
-                "This command is not available in this server", ephemeral=True)
+                "This command is not available here.", ephemeral=True)
             return
 
         await interaction.response.defer(ephemeral=True, thinking=True)
@@ -77,9 +119,6 @@ class BizzyCommands(commands.Cog):
         message : str
             The promotion message
         """
-        if not global_utils.is_admin(interaction):
-            return
-
         await interaction.response.send_message(f"New feature: {global_utils.style_text(feature_name, 'b')}\n\n{message}")
 
     @commands.hybrid_command(name="reload", description=global_utils.command_descriptions["reload"])
@@ -102,11 +141,6 @@ class BizzyCommands(commands.Cog):
         sync : int, optional
             Treated as a boolean. Sync the commands after reloading, by default 0
         """
-        if ctx.author.id != global_utils.my_id:
-            content = f'{ctx.author.mention}You do not have permission to use this command'
-            await ctx.response.send_message(content, ephemeral=True)
-            return
-
         async with ctx.typing(ephemeral=True):
 
             self.bot.dispatch("reload_cogs")
