@@ -2,11 +2,12 @@ import sys
 import asyncio
 from os import getenv, listdir, remove
 
-from discord import Interaction, Intents, app_commands
+from discord import Interaction, Intents, app_commands, Message
 from discord.ext import commands
 from discord.ext.commands import Context
 
 from global_utils import global_utils
+from cogs.persistent_buttons import PersistentButtons
 
 bot = commands.Bot(command_prefix='!',
                    intents=Intents.all(), help_command=None)
@@ -27,6 +28,9 @@ async def on_ready() -> None:
     global_utils.log(
         f'Bot "{bot.user.name}" has connected to Discord. Starting log')
 
+async def setup_hook() -> None:
+    """Re-links/syncs the bot's persistent buttons"""
+    bot.add_view(PersistentButtons())
 
 @bot.tree.error
 async def on_app_command_error(interaction: Interaction, error: app_commands.AppCommandError) -> None:
@@ -77,11 +81,31 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
         await m.delete(delay=5)
         await ctx.message.delete(delay=5)
 
+@bot.event
+async def on_message(message: Message) -> None:
+    """[event] Executes when a message is sent
+
+    Parameters
+    ----------
+    message : discord.Message
+        The message object that was sent
+    """
+    if message.author == bot.user or message.channel.id != global_utils.bot_channel_id:
+        return
+    
+    if message.content == "!kill" or message.content == "!reload":
+        await bot.process_commands(message)
+    
+    # if message is in bot channel, and not an approved text command, delete it
+    # note: this does not affect slash commands
+    await message.delete()
+
 
 async def main() -> None:
     """Loads all cogs and starts the bot
     """
     sys.stdout = open(global_utils.log_filepath, 'a')
+    bot.setup_hook = setup_hook
     await global_utils.load_cogs(bot)
     await bot.start(bot_token)
 
