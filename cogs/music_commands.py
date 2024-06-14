@@ -2,9 +2,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import asyncio
 import os
+
 
 from urllib.parse import urlparse
 
@@ -33,6 +34,7 @@ class MusicCommands(commands.Cog):
         self.loop_song = False
         # holds the actual playlist in the form {(title, author): audio_filepath}
         self.playlist = {}
+        # self.playlist.update({("Test Song", "Test Author"): "./local_storage/test.mp3"})
         # simply holds the URLs to avoid downloading the same song multiple times
         self.playlist_urls = {}
 
@@ -44,6 +46,8 @@ class MusicCommands(commands.Cog):
         # self.inactivity_timeout_seconds = 10 # for testing
 
         self.playlist_limit = 10
+        
+        self.buttons = MusicButtons(music_cog=self)
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
@@ -93,6 +97,25 @@ class MusicCommands(commands.Cog):
                 self.owner = None
                 self.last_activity = None
 
+    @app_commands.command(name="music", description="button test")
+    async def music(self, interaction: discord.Interaction) -> None:
+        """[command] Test command for buttons
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        if self.vc is None:
+            await interaction.response.send_message(f"I am not in a voice channel. Use {global_utils.style_text('/join-voice', 'c')} to add me to a voice channel", ephemeral=True)
+            return
+
+        # if len(self.playlist) > 0:
+        #     skip_button = view.children[3]
+        #     skip_button.disabled = False
+        self.buttons.message = interaction
+        await interaction.response.send_message("Music Player", view=self.buttons, ephemeral=True)
+
     @app_commands.command(name="join-voice", description=global_utils.command_descriptions["join-voice"])
     async def join(self, interaction: discord.Interaction) -> None:
         """[command] Joins the user's voice channel
@@ -117,6 +140,7 @@ class MusicCommands(commands.Cog):
         else:
             self.vc = await interaction.user.voice.channel.connect()
 
+    
         self.owner = interaction.user
         self.update_activity()
 
@@ -276,8 +300,8 @@ class MusicCommands(commands.Cog):
 
         await interaction.followup.send("Added to playlist", ephemeral=True)
 
-    @app_commands.command(name="playlist", description=global_utils.command_descriptions["playlist"])
-    async def playlist(self, interaction: discord.Interaction) -> None:
+    # @app_commands.command(name="playlist", description=global_utils.command_descriptions["playlist"])
+    async def show_songs(self, interaction: discord.Interaction) -> None:
         """[command] Display the current song as well as the songs in the playlist
 
         Parameters
@@ -292,6 +316,7 @@ class MusicCommands(commands.Cog):
         if interaction.user == self.owner:
             self.update_activity()
 
+        await interaction.response.defer(ephemeral=True)
         playlist = ""
         for i, info in enumerate(self.playlist, start=1):
             title = info[0]
@@ -307,11 +332,10 @@ class MusicCommands(commands.Cog):
 
         playlist = f"Currently playing: {current_str}\n\nNext up:\n{playlist if playlist != '' else global_utils.style_text('Playlist Empty', 'i')}"
 
-        await interaction.response.send_message(playlist, ephemeral=True)
+        await interaction.followup.send(playlist, ephemeral=True)
 
-    @app_commands.command(name="play-song", description=global_utils.command_descriptions["play-song"])
     async def play(self, interaction: discord.Interaction) -> None:
-        """[command] Begins/resumes playback of current song (or next song if current is None)
+        """Begins/resumes playback of current song (or next song if current is None)
 
         Parameters
         ----------
@@ -319,36 +343,26 @@ class MusicCommands(commands.Cog):
             The interaction object that initiated the command
         """
         if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
             return
 
         if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
             return
 
         self.update_activity()
 
         if self.vc.is_playing():
-            await interaction.response.send_message("I am already playing audio", ephemeral=True)
             return
 
         if self.vc.is_paused():
             self.vc.resume()
-            self.update_activity()
-            await interaction.response.send_message("Resumed audio", ephemeral=True)
             return
-
-        await interaction.response.defer(ephemeral=True)
 
         title, author = self.play_next_song()
 
         if title is None:
-            await interaction.followup.send(f"Playlist is empty. Use {global_utils.style_text('/add-song', 'c')} to add songs", ephemeral=True)
+            # await interaction.followup.send(f"Playlist is empty. Use {global_utils.style_text('/add-song', 'c')} to add songs", ephemeral=True)
             return
 
-        await interaction.followup.send(f"Starting audio. Use {global_utils.style_text('/playlist', 'c')} to see what's playing.", ephemeral=True)
-
-    @app_commands.command(name="pause-song", description=global_utils.command_descriptions["pause-song"])
     async def pause(self, interaction: discord.Interaction) -> None:
         """[command] Pauses playback of current song
 
@@ -401,7 +415,6 @@ class MusicCommands(commands.Cog):
     #     self.vc.resume()
     #     await interaction.response.send_message("Resumed audio", ephemeral=True)
 
-    @app_commands.command(name="stop-song", description=global_utils.command_descriptions["stop-song"])
     async def stop(self, interaction: discord.Interaction) -> None:
         """[command] Stops playback of current song (cannot resume)
 
@@ -427,7 +440,6 @@ class MusicCommands(commands.Cog):
         self.vc.stop()
         await interaction.response.send_message("Stopped audio", ephemeral=True)
 
-    @app_commands.command(name="skip-song", description=global_utils.command_descriptions["skip-song"])
     async def skip(self, interaction: discord.Interaction) -> None:
         """[command] Skips current song and play next song in playlist (if any)
 
@@ -495,6 +507,7 @@ class MusicCommands(commands.Cog):
                 self.current_song = None
 
         if len(self.playlist) == 0:
+            self.buttons.hit_pause()
             return None, None
 
         info = next(iter(self.playlist))
@@ -502,15 +515,15 @@ class MusicCommands(commands.Cog):
         audio_filepath = self.playlist.pop(info)
         audio = discord.FFmpegPCMAudio(source=audio_filepath, stderr=open(
             "./local_storage/debug_log.txt", "w"))
+        url = self.playlist_urls.pop(info)
 
         self.current_song = {"info": info, "audio": audio,
-                             "audio_filepath": audio_filepath}
+                             "audio_filepath": audio_filepath, "url": url}
 
         self.vc.play(audio, after=self.play_next_song)
 
         return info
 
-    @app_commands.command(name="loop-song", description=global_utils.command_descriptions["loop-song"])
     async def loop(self, interaction: discord.Interaction) -> None:
         """[command] Toggles looping of the current song
 
@@ -567,6 +580,11 @@ class MusicCommands(commands.Cog):
         self.playlist = {}
         self.playlist_urls = {}
 
+        await self.buttons.disable()
+        self.buttons.stop()
+        self.buttons = MusicButtons(music_cog=self)
+
+
     def update_activity(self, error: Exception = None) -> None:
         """Updates the last activity time of the bot to prevent inactivity timeout
 
@@ -576,6 +594,234 @@ class MusicCommands(commands.Cog):
             The error that occurred, if any
         """
         self.last_activity = datetime.now()
+
+
+class MusicButtons(discord.ui.View):
+    def __init__(self, *, timeout: float | None = None, music_cog: MusicCommands) -> None:
+        """Initializes the MusicButtons class
+
+        Parameters
+        ----------
+        timeout : float | None, optional
+            The number of seconds to listen for an interaction before timing out, by default None (no timeout)
+        music_cog : MusicCommands
+            The MusicCommands cog that drives the button functionality
+        """
+        super().__init__(timeout=timeout)
+        self.cog = music_cog
+        self.bot = music_cog.bot
+
+    # @discord.ui.button(label="Join Voice", style=discord.ButtonStyle.primary, custom_id="join_voice", emoji="🔊")
+    # async def join_voice(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
+    #     """[button] Joins the user's voice channel
+
+    #     Parameters
+    #     ----------
+    #     button : discord.ui.Button
+    #         The button that was clicked
+    #     interaction : discord.Interaction
+    #         The interaction object that initiated the command
+    #     """
+    #     await self.cog.join(interaction)
+
+    # @discord.ui.button(label="Leave Voice", style=discord.ButtonStyle.danger, custom_id="leave_voice", emoji="🔈")
+    # async def leave_voice(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
+    #     """[button] Leaves the user's voice channel
+
+    #     Parameters
+    #     ----------
+    #     button : discord.ui.Button
+    #         The button that was clicked
+    #     interaction : discord.Interaction
+    #         The interaction object that initiated the command
+    #     """
+    #     await self.cog.leave(interaction)
+    
+    async def disable(self) -> None:
+        """Disables all buttons
+        """
+        for child in self.children:
+            child.disabled = True
+        
+        await self.message.edit_original_response(content="Music Player closed", view=self)
+
+    async def generate_embed(self) -> discord.Embed:
+        """Generates an embed for the current song
+
+        Returns
+        -------
+        discord.Embed
+            The embed for the current song
+        """
+        yt_dlp_opts = {
+            "playlist_items": "0"
+        }
+        url = self.cog.current_song["url"]
+
+        with yt_dlp.YoutubeDL({}) as ydl:
+            info = ydl.extract_info(url, download=False)
+            title = info['title'][:150] + "..." if len(info['title']) > 150 else info['title']
+            if title.endswith("..."):
+                title += " (Read more)"
+            desc = info['description'].split("\n")[0]
+            desc = desc[:253] + "..." if len(desc) > 256 else desc
+            if desc == "":
+                desc = "No description"
+            elif len(desc) < len(info["description"]) + 1:
+                desc += f" [Read more]({url})"
+            url = info['webpage_url']
+            author = info['uploader']
+            author_url = info['uploader_url']
+            img_url = info['thumbnail']
+            views = info['view_count']
+            likes = info['like_count']
+            duration = info['duration']
+            timestamp = datetime.strptime(info['upload_date'], "%Y%m%d")
+        
+        with yt_dlp.YoutubeDL(yt_dlp_opts) as ydl:
+            info = ydl.extract_info(author_url)
+            author_pfp = info['thumbnails'][-1]['url']
+
+        color = discord.Color.red()
+        footer_text = f"Added by {self.cog.owner.display_name}"
+        footer_url = self.cog.owner.avatar.url
+
+        desc = desc[:101] + "..." if len(desc) > 101 else desc
+            
+        embed = discord.Embed(title=title, description=desc, url=url,
+                                timestamp=datetime.now(), color=color)
+        (
+            embed.set_author(name=author, url=author_url, icon_url=author_pfp)
+            .set_image(url=img_url)
+            .add_field(name="Duration", value=str(timedelta(seconds=duration)), inline=True)
+            .add_field(name="Uploaded", value=timestamp.strftime("%B %d, %Y"), inline=True)
+            .add_field(name="Views", value=f"{views:,}", inline=True)
+            .add_field(name="Likes", value=f"{likes:,}", inline=True)
+            .set_footer(text=footer_text, icon_url=footer_url)
+        )
+
+        return embed
+    
+    @discord.ui.button(label="Play/Resume", style=discord.ButtonStyle.secondary, custom_id="play_song", emoji="▶️")
+    async def play_song(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
+        """[button] Plays or resumes the current song
+
+        Parameters
+        ----------
+        button : discord.ui.Button
+            The button that was clicked
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        await interaction.response.defer(ephemeral=True)
+        await self.cog.play(interaction)
+        await self.hit_play()
+        await interaction.followup.send("Playing audio", ephemeral=True, delete_after=3)
+
+    async def hit_play(self) -> None:
+        """Toggles all buttons that need to be toggled when the play button is clicked, and then updates the view
+        """
+        play_button = self.children[0]
+        pause_button = self.children[1]
+        stop_button = self.children[2]
+        skip_button = self.children[3]
+
+        play_button.disabled = True
+        play_button.style = discord.ButtonStyle.success
+        pause_button.disabled = False
+        pause_button.style = discord.ButtonStyle.secondary
+        stop_button.disabled = False
+        skip_button.disabled = False
+
+        status = "Resuming" if self.cog.vc.is_paused() else "Playing"
+        embed = await self.generate_embed()
+        await self.message.edit_original_response(content=status, view=self, embed=embed)
+
+        # await self.message.edit_original_response(content=status, view=self)   
+
+    @discord.ui.button(label="Pause", style=discord.ButtonStyle.secondary, custom_id="pause_song", emoji="⏸️", disabled=True)
+    async def pause_song(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
+        """[button] Pauses the current song
+
+        Parameters
+        ----------
+        button : discord.ui.Button
+            The button that was clicked
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        await self.cog.pause(interaction)
+        await self.hit_pause()
+    
+    async def hit_pause(self):
+        """Toggles all buttons that need to be toggled when the pause button is clicked
+        """
+        play_button = self.children[0]
+        pause_button = self.children[1]
+
+        play_button.disabled = False
+        play_button.style = discord.ButtonStyle.secondary
+        pause_button.disabled = True
+        pause_button.style = discord.ButtonStyle.success
+
+        await self.message.edit_original_response(view=self)
+
+    @discord.ui.button(label="Stop", style=discord.ButtonStyle.danger, custom_id="stop_song", emoji="⏹️", disabled=True)
+    async def stop_song(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
+        """[button] Stops the current song
+
+        Parameters
+        ----------
+        button : discord.ui.Button
+            The button that was clicked
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        await self.cog.stop(interaction)
+        self.hit_pause()
+
+    @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary, custom_id="skip_song", emoji="⏭️", disabled=True)
+    async def skip_song(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
+        """[button] Skips the current song
+
+        Parameters
+        ----------
+        button : discord.ui.Button
+            The button that was clicked
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        await self.cog.skip(interaction)
+        await self.hit_play()
+    
+    @discord.ui.button(label="Loop Song", style=discord.ButtonStyle.secondary, custom_id="loop_song", emoji="🔁")
+    async def loop_song(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
+        """[button] Toggles looping of the current song
+
+        Parameters
+        ----------
+        button : discord.ui.Button
+            The button that was clicked
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        await self.cog.loop(interaction)
+        loop_button = self.children[4]
+        loop_button.style = discord.ButtonStyle.success if loop_button.style == discord.ButtonStyle.secondary else discord.ButtonStyle.secondary
+        await self.message.edit_original_response(view=self)
+                             
+    @discord.ui.button(label="Playlist", style=discord.ButtonStyle.primary, custom_id="playlist", emoji="💿")
+    async def show_songs(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
+        """[button] Displays the current playlist
+
+        Parameters
+        ----------
+        button : discord.ui.Button
+            The button that was clicked
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        await self.cog.show_songs(interaction)
 
 
 async def setup(bot: commands.Bot) -> None:
