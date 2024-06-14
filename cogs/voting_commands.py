@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from global_utils import global_utils
-
+from .voting_buttons import VotingButtons
 
 class VotingCommands(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -24,75 +24,17 @@ class VotingCommands(commands.Cog):
         pass
 
     @app_commands.command(name="prefer-map", description=global_utils.command_descriptions["prefer-map"])
-    @app_commands.choices(
-        map_name=[
-            discord.app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
-        ],
-
-        preference=[
-            discord.app_commands.Choice(name="Like/Will Play", value=global_utils.positive_preference),
-            discord.app_commands.Choice(name="Neutral/Don't Care", value=global_utils.neutral_preference),
-            discord.app_commands.Choice(name="Dislike/Won't Play", value=global_utils.negative_preference),
-        ]
-
-    )
-    @discord.app_commands.describe(
-        map_name="The map to vote for",
-        preference="Your preference for the map"
-    )
-    async def prefermap(self, interaction: discord.Interaction, map_name: str, preference: str) -> None:
+    async def start_voting(self, interaction: discord.Interaction) -> None:
         """[command] Declares a preference for a map to play in premier playoffs
 
         Parameters
         ----------
         interaction : discord.Interaction
             The interaction object that initiated the command
-        map_name : str
-            The map to mark with a preference
-        preference : str
-            The preference value for the map
         """
-        output = ""
-        like = global_utils.positive_preference
-        neutral = global_utils.neutral_preference
-        dislike = global_utils.negative_preference
-        preference_decoder = {like: "Like", neutral: "Neutral", dislike: "Dislike"}
-
-        old_preference = ""
-        uuid = str(interaction.user.id)
-
-        map_display = global_utils.style_text(map_name.title(), 'i')
-        preference_display = global_utils.style_text(
-            preference_decoder[preference], 'c')
-
-        # if you've voted for this map before, need to remove the old weight
-        if uuid in global_utils.map_preferences[map_name]:
-            old_preference = global_utils.map_preferences[map_name][uuid]
-
-            # no change in preference, return
-            if old_preference == preference:
-                mention = interaction.user.mention
-                message = f"{mention} you have already marked {map_display} with a preference of {preference_display}"
-                await interaction.response.send_message(message, ephemeral=True)
-                return
-
-            old_preference_display = global_utils.style_text(
-                preference_decoder[old_preference], 'c')
-
-            output = f"Your preference for {map_display} has been changed from {old_preference_display} to {preference_display}"
-
-        else:
-            output = f"You marked {map_display} with a preference of {preference_display}"
-
-        global_utils.map_preferences[map_name][uuid] = preference
-
-
-        global_utils.save_preferences()
-
-        await interaction.response.send_message(output, ephemeral=True)
-
-        global_utils.log(
-            f'{interaction.user.name} marked {map_name.title()} with a preference of "{preference_decoder[preference]}"')
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        view = VotingButtons(timeout=None, interaction=interaction)
+        await view.start()
 
     @app_commands.command(name="map-votes", description=global_utils.command_descriptions["map-votes"])
     @app_commands.choices(
