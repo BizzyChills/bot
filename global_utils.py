@@ -148,7 +148,11 @@ class Utils:
             A 2D dictionary containing with the following structure: {map: {user_id: weight}}
         """
         with open("./local_storage/map_preferences.json", "r") as file:
-            return json.load(file)
+            prefs = json.load(file)
+            if prefs == {}:
+                prefs = {map_name: {} for map_name in self.map_pool}
+            
+            return prefs
 
     def save_preferences(self) -> None:
         """Saves any changes to the map preferences during runtime to the map_preferences.json file and also saves the map weights
@@ -169,7 +173,11 @@ class Utils:
             A dictionary containing the weights for each map in the current map pool
         """
         with open("./local_storage/map_weights.json", "r") as file:
-            return json.load(file)
+            weights = json.load(file)
+            if weights == {}:
+                weights = {map_name: 0 for map_name in self.map_preferences}
+            
+            return weights
 
     def save_weights(self) -> None:
         """Saves any changes to the map weights during runtime to the map_weights.json file
