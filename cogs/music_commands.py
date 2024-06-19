@@ -2,16 +2,14 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
-from datetime import datetime, timedelta
 import asyncio
 import os
-
-
 from urllib.parse import urlparse
-
-from global_utils import global_utils
+from datetime import datetime, timedelta
 
 import yt_dlp
+
+from global_utils import global_utils
 
 
 class MusicCommands(commands.Cog):
@@ -46,7 +44,7 @@ class MusicCommands(commands.Cog):
         # self.inactivity_timeout_seconds = 10 # for testing
 
         self.playlist_limit = 10
-        
+
         self.buttons = MusicButtons(music_cog=self)
 
     @commands.Cog.listener()
@@ -97,7 +95,7 @@ class MusicCommands(commands.Cog):
                 self.owner = None
                 self.last_activity = None
 
-    @app_commands.command(name="music", description="button test")
+    @app_commands.command(name="music", description=global_utils.command_descriptions["music"])
     async def music(self, interaction: discord.Interaction) -> None:
         """[command] Test command for buttons
 
@@ -141,7 +139,6 @@ class MusicCommands(commands.Cog):
         else:
             self.vc = await interaction.user.voice.channel.connect()
 
-    
         self.owner = interaction.user
         self.update_activity()
 
@@ -262,11 +259,11 @@ class MusicCommands(commands.Cog):
             Treated as a boolean. Bump the song to the top of the playlist, by default 0
         """
         if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True,delete_after=global_utils.delete_after_seconds)
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True,delete_after=global_utils.delete_after_seconds)
+            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         self.update_activity()
@@ -559,7 +556,6 @@ class MusicCommands(commands.Cog):
         self.buttons.stop()
         self.buttons = MusicButtons(music_cog=self)
 
-
     def update_activity(self, error: Exception = None) -> None:
         """Updates the last activity time of the bot to prevent inactivity timeout
 
@@ -611,13 +607,13 @@ class MusicButtons(discord.ui.View):
     #         The interaction object that initiated the command
     #     """
     #     await self.cog.leave(interaction)
-    
+
     async def disable(self) -> None:
         """Disables all buttons
         """
         for child in self.children:
             child.disabled = True
-        
+
         await self.message.edit_original_response(content="Music Player closed", view=self)
 
     async def generate_embed(self) -> discord.Embed:
@@ -635,7 +631,8 @@ class MusicButtons(discord.ui.View):
 
         with yt_dlp.YoutubeDL({}) as ydl:
             info = ydl.extract_info(url, download=False)
-            title = info['title'][:150] + "..." if len(info['title']) > 150 else info['title']
+            title = info['title'][:150] + \
+                "..." if len(info['title']) > 150 else info['title']
             if title.endswith("..."):
                 title += " (Read more)"
             desc = info['description'].split("\n")[0]
@@ -652,7 +649,7 @@ class MusicButtons(discord.ui.View):
             likes = info['like_count']
             duration = info['duration']
             timestamp = datetime.strptime(info['upload_date'], "%Y%m%d")
-        
+
         with yt_dlp.YoutubeDL(yt_dlp_opts) as ydl:
             info = ydl.extract_info(author_url)
             author_pfp = info['thumbnails'][-1]['url']
@@ -662,9 +659,9 @@ class MusicButtons(discord.ui.View):
         footer_url = self.cog.owner.avatar.url
 
         desc = desc[:101] + "..." if len(desc) > 101 else desc
-            
+
         embed = discord.Embed(title=title, description=desc, url=url,
-                                timestamp=datetime.now(), color=color)
+                              timestamp=datetime.now(), color=color)
         (
             embed.set_author(name=author, url=author_url, icon_url=author_pfp)
             .set_image(url=img_url)
@@ -676,7 +673,7 @@ class MusicButtons(discord.ui.View):
         )
 
         return embed
-    
+
     @discord.ui.button(label="Play/Resume", style=discord.ButtonStyle.secondary, custom_id="play_song", emoji="▶️")
     async def play_song(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
         """[button] Plays or resumes the current song
@@ -712,7 +709,7 @@ class MusicButtons(discord.ui.View):
         embed = await self.generate_embed()
         await self.message.edit_original_response(content=status, view=self, embed=embed)
 
-        # await self.message.edit_original_response(content=status, view=self)   
+        # await self.message.edit_original_response(content=status, view=self)
 
     @discord.ui.button(label="Pause", style=discord.ButtonStyle.secondary, custom_id="pause_song", emoji="⏸️", disabled=True)
     async def pause_song(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
@@ -727,7 +724,7 @@ class MusicButtons(discord.ui.View):
         """
         await self.cog.pause(interaction)
         await self.hit_pause()
-    
+
     async def hit_pause(self):
         """Toggles all buttons that need to be toggled when the pause button is clicked
         """
@@ -768,7 +765,7 @@ class MusicButtons(discord.ui.View):
         """
         await self.cog.skip(interaction)
         await self.hit_play()
-    
+
     @discord.ui.button(label="Loop Song", style=discord.ButtonStyle.secondary, custom_id="loop_song", emoji="🔁")
     async def loop_song(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
         """[button] Toggles looping of the current song
@@ -784,7 +781,7 @@ class MusicButtons(discord.ui.View):
         loop_button = self.children[4]
         loop_button.style = discord.ButtonStyle.success if loop_button.style == discord.ButtonStyle.secondary else discord.ButtonStyle.secondary
         await self.message.edit_original_response(view=self)
-                             
+
     @discord.ui.button(label="Playlist", style=discord.ButtonStyle.primary, custom_id="playlist", emoji="💿")
     async def show_songs(self, interaction: discord.Interaction, button: discord.ui.Button,) -> None:
         """[button] Displays the current playlist

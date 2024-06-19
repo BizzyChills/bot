@@ -188,8 +188,7 @@ class InfoCommands(commands.Cog):
                 else:
                     await interaction.response.send_message(f'{map_display_name} is not in the map pool', ephemeral=True, delete_after=global_utils.delete_after_seconds)
                     return
-            
-        
+
         delete_time = global_utils.delete_after_seconds if ephem else None
 
         await interaction.response.send_message(output, ephemeral=ephem, delete_after=delete_time)

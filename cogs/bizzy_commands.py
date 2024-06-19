@@ -32,7 +32,7 @@ class BizzyCommands(commands.Cog):
         ----------
         interaction : discord.Interaction
             The interaction object to check
-        
+
         Returns
         -------
         bool
@@ -63,7 +63,7 @@ class BizzyCommands(commands.Cog):
 
         if not check:
             await ctx.send("You do not have permission to use this command", delete_after=global_utils.delete_after_seconds)
-        
+
         return check
 
     async def sync_commands(self, guild_id: int = global_utils.debug_server_id) -> int:

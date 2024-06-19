@@ -7,25 +7,30 @@ from datetime import datetime
 
 from global_utils import global_utils
 
+
 class SelectMenu(discord.ui.Select):
     def __init__(self, buttons_view):
         options = [discord.SelectOption(label="The basic commands", value="basic"),
-                   discord.SelectOption(label="All user commands", value="user"),
+                   discord.SelectOption(
+                       label="All user commands", value="user"),
                    discord.SelectOption(label="Admin commands", value="admin"),
-                   discord.SelectOption(label="Basic + Admin", value="basic_admin"),
-                   discord.SelectOption(label="User + Admin", value="user_admin"),
+                   discord.SelectOption(
+                       label="Basic + Admin", value="basic_admin"),
+                   discord.SelectOption(
+                       label="User + Admin", value="user_admin"),
                    discord.SelectOption(label="All commands", value="all"),]
         placeholder = "Command list to display (default: user commands)"
         custom_id = "commands_list_type"
         self.buttons_view = buttons_view
         super().__init__(options=options, placeholder=placeholder, custom_id=custom_id)
-    
+
     async def callback(self, interaction: discord.Interaction) -> None:
         selected = self.values[0] if self.values else "user"
         self.buttons_view.list_type = selected
         await interaction.response.edit_message(view=self.view)
 
 
+# this will get merged with bot_cog.py eventually to avoid all of this redundancy
 class PersistentButtons(discord.ui.View):
     def __init__(self, *, timeout: float | None = None) -> None:
         """Initializes the PersistentButton class
@@ -103,13 +108,6 @@ class PersistentButtons(discord.ui.View):
                           f" - {global_utils.style_text('/leave-voice', 'c')}",
                           f" - {global_utils.style_text('/add-song', 'c')}",
                           f" - {global_utils.style_text('/music (WIP)', 'c')}",
-                        #   f" - {global_utils.style_text('/playlist', 'c')}",
-                        #   f" - {global_utils.style_text('/play-song', 'c')}",
-                        #   f" - {global_utils.style_text('/pause-song', 'c')}",
-                        #   #   f" - {global_utils.style_text('/resume-song', 'c')}", # deprecated. just use /play-song
-                        #   f" - {global_utils.style_text('/stop-song', 'c')}",
-                        #   f" - {global_utils.style_text('/skip-song', 'c')}",
-                        #   f" - {global_utils.style_text('/loop-song', 'c')}",
                           ]
 
         user_commands = basic_commands + music_commands + misc_commands
@@ -242,10 +240,10 @@ class PersistentCommands(commands.Cog):
             The interaction object that initiated the command
         """
         view = PersistentButtons()
-        source_code_button = discord.ui.Button(label="Source Code", style=discord.ButtonStyle.link, url=global_utils.source_code)
+        source_code_button = discord.ui.Button(
+            label="Source Code", style=discord.ButtonStyle.link, url=global_utils.source_code)
         view.add_item(source_code_button)
         await interaction.response.send_message("Help:", view=view)
-
 
 
 async def setup(bot: commands.Bot) -> None:

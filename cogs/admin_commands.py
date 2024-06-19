@@ -572,7 +572,7 @@ class AdminMessageCommands(commands.Cog):
         """
         # global_utils.log("AdminManage cog loaded")
         pass
-    
+
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         """A global check for all app commands in this cog to ensure the user is an admin
 
@@ -587,7 +587,7 @@ class AdminMessageCommands(commands.Cog):
             True if the user is an admin, False otherwise
         """
         return await global_utils.is_admin(interaction)
-    
+
     async def cog_check(self, ctx: Context) -> bool:
         """A global check for all text commands in this cog to ensure the user is an admin
 

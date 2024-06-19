@@ -2,9 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from random import sample, randint
-
 from asyncio import sleep, TimeoutError
+from random import sample, randint
 
 from global_utils import global_utils
 

@@ -70,10 +70,6 @@ class Utils:
         # When using delete_after argument, the message will not be deleted if the bot goes offline before the time is up (so be careful setting this too high)
         self.delete_after_seconds = 3
 
-        self.positive_preference = "+"
-        self.neutral_preference = "~"
-        self.negative_preference = "-"
-
         self.command_descriptions = {
             # persist
             "commands": "Display all bot commands",
@@ -95,14 +91,6 @@ class Utils:
             "leave-voice": "Leave your voice channel",
             "add-song": "Add a song (or any video really) to the playlist via YouTube URL (can take a while!)",
             "music": "Display the music controls",
-            # "play-song": "Begin/resume playback of current song (or next song if current is None)",
-            # "pause-song": "Pause playback of current song",
-            # # "resume-song": "Resume playback of current song", # deprecated, just use play-song
-            # "stop-song": "Stop playback of current song (cannot resume)",
-            # "skip-song": "Skip current song and play next song in playlist (if any)",
-            # "loop-song": "Toggle looping of the current song",
-            # "playlist": "Display the current song as well as the songs in the playlist",
-
 
             # admin
             "map-pool-admin": "Modify the map pool",
