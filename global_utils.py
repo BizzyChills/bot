@@ -66,9 +66,9 @@ class Utils:
         self.reminders = self.get_reminders()
         self.practice_notes = self.get_notes()
 
-        # delete messages after 3 seconds.
+        # delete messages after n seconds.
         # When using delete_after argument, the message will not be deleted if the bot goes offline before the time is up (so be careful setting this too high)
-        self.delete_after_seconds = 3
+        self.delete_after_seconds = 5
 
         self.command_descriptions = {
             # persist
@@ -122,7 +122,7 @@ class Utils:
         }
 
     def get_pool(self) -> list[str]:
-        """Extracts the map pool from the map_pool.txt file
+        """Extracts the map pool from ./local_storage/map_pool.txt
 
         Returns
         -------
@@ -133,14 +133,14 @@ class Utils:
             return file.read().splitlines()
 
     def save_pool(self) -> None:
-        """Saves any changes to the map pool during runtime to the map_pool.txt file
+        """Saves any changes made to the map pool during runtime to ./local_storage/map_pool.txt
         """
         self.map_pool.sort()
         with open("./local_storage/map_pool.txt", "w") as file:
             file.write("\n".join(self.map_pool))
 
     def get_preferences(self) -> dict:
-        """Extracts the map preferences from the map_preferences.json file
+        """Extracts the map preferences from ./local_storage/map_preferences.json
 
         Returns
         -------
@@ -155,7 +155,7 @@ class Utils:
             return prefs
 
     def save_preferences(self) -> None:
-        """Saves any changes to the map preferences during runtime to the map_preferences.json file and also saves the map weights
+        """Saves any changes made to the map preferences during runtime to ./local_storage/map_preferences.json and also saves the map weights
         """
         self.map_preferences = {
             k: self.map_preferences[k] for k in sorted(self.map_preferences)}
@@ -165,7 +165,7 @@ class Utils:
         self.save_weights()
 
     def get_weights(self) -> dict:
-        """Extracts the map weights from the map_weights.json file
+        """Extracts the map weights from ./local_storage/map_weights.json
 
         Returns
         -------
@@ -180,7 +180,7 @@ class Utils:
             return weights
 
     def save_weights(self) -> None:
-        """Saves any changes to the map weights during runtime to the map_weights.json file
+        """Saves any changes made to the map weights during runtime to ./local_storage/map_weights.json
         """
         for map_name, user_weights in self.map_preferences.items():
             self.map_weights[map_name] = sum(
@@ -193,7 +193,7 @@ class Utils:
             json.dump(self.map_weights, file)
 
     def get_reminders(self) -> dict:
-        """Extracts the reminders from the reminders.json file
+        """Extracts the reminders from ./local_storage/reminders.json
 
         Returns
         -------
@@ -204,13 +204,13 @@ class Utils:
             return json.load(file)
 
     def save_reminders(self) -> None:
-        """Saves any changes to the reminders during runtime to the reminders.json file
+        """Saves any changes made to the reminders during runtime to ./local_storage/reminders.json
         """
         with open("./local_storage/reminders.json", "w") as file:
             json.dump(self.reminders, file)
 
     def get_notes(self) -> dict:
-        """Extracts the practice notes from the notes.json file. This file does not actually contain the notes, but rather the message IDs of the notes in the notes channel.
+        """Extracts the practice notes from ./local_storage/notes.json file. This does not actually contain the notes, but rather the message IDs of the notes in the notes channel.
 
         Returns
         -------
@@ -221,7 +221,7 @@ class Utils:
             return json.load(file)
 
     def save_notes(self) -> None:
-        """Saves any changes to the practice notes during runtime to the notes.json file
+        """Saves any changes made to the practice notes during runtime to ./local_storage/notes.json
         """
         with open("./local_storage/notes.json", "w") as file:
             json.dump(self.notes, file)

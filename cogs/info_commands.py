@@ -149,8 +149,8 @@ class InfoCommands(commands.Cog):
             if len(global_utils.map_pool) == 0:
                 output = f'The map pool is empty'
             else:
-                output = 'Current map pool\n- ' + \
-                    "\n- ".join([m.title() for m in global_utils.map_pool])
+                output = 'Current map pool:\n- ' + \
+                    "\n- ".join([global_utils.style_text(m.title(), 'i') for m in global_utils.map_pool])
 
             await interaction.response.send_message(output, ephemeral=ephem)
             return
@@ -227,7 +227,7 @@ class InfoCommands(commands.Cog):
         """
         ephem = interaction.channel.id != global_utils.notes_channel_id or not announce
 
-        map_display_name = global_utils.style_text(map_display_name, 'i')
+        map_display_name = global_utils.style_text(map_name, 'i').title()
 
         if map_name not in global_utils.practice_notes or len(global_utils.practice_notes[map_name]) == 0:
             await interaction.response.send_message(f'No notes found for {map_display_name}', ephemeral=True, delete_after=global_utils.delete_after_seconds)
@@ -240,7 +240,7 @@ class InfoCommands(commands.Cog):
         if note_number == 0:
             notes_list = global_utils.practice_notes[map_name]
             output = global_utils.style_text("Practice notes for ", 'b')
-            output += global_utils.style_text(map_display_name, 'b') + ":\n"
+            output += map_display_name + ":\n"
             for i, note_id in enumerate(notes_list.keys()):
                 note_number = f"Note {i+1}"
                 output += f"- {global_utils.style_text(note_number, 'b')}: {global_utils.style_text(notes_list[note_id], 'i')}\n"

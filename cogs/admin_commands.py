@@ -86,11 +86,16 @@ class AdminPremierCommands(commands.Cog):
         # note: this function also calls save_weights
         global_utils.save_preferences()
 
-        await interaction.response.send_message(f'Map "{map_display_name}" has been added to the game', ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        await interaction.response.send_message(f'{map_display_name} has been added to the game. Some commands will not list it as a choice until the bot is reloaded (tell Bizzy).', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="remove-map", description=global_utils.command_descriptions["remove-map"])
     @app_commands.describe(
         map_name="The name of the map that was removed from the game"
+    )
+    @app_commands.choices(
+        map_name=[
+            app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
+        ]
     )
     async def remove_map(self, interaction: discord.Interaction, map_name: str) -> None:
         """[command] Removes a new map to the list of all maps in the game
@@ -103,15 +108,17 @@ class AdminPremierCommands(commands.Cog):
         map_name = map_name.lower()
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
-        if map_name not in global_utils.map_preferences.keys():
-            await interaction.response.send_message(f'No map named "{map_display_name}" in the game.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
-            return
-
         # if its in the mappool, remove it
         try:
             where = global_utils.map_pool.index(map_name)
             global_utils.map_pool.pop(where)
         except ValueError:
+            pass
+        # if there is a practice note for it, remove the reference
+        try:
+            global_utils.practice_notes.pop(map_name)
+            global_utils.save_notes()
+        except KeyError:
             pass
 
         global_utils.map_preferences.pop(map_name)
@@ -121,7 +128,7 @@ class AdminPremierCommands(commands.Cog):
         # note: this function also calls save_weights
         global_utils.save_preferences()
 
-        await interaction.response.send_message(f'Map "{map_display_name}" removed from the game', ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        await interaction.response.send_message(f'{map_display_name} removed from the game. Some commands will continue to list it as a choice until the bot is reloaded (tell Bizzy).', ephemeral=True, delete_after=global_utils.delete_after_seconds + 3)
 
     @app_commands.command(name="add-events", description=global_utils.command_descriptions["add-events"])
     @app_commands.describe(
