@@ -65,7 +65,7 @@ class BotCog(commands.Cog):
                           f" - {global_utils.style_text('/notes', 'c')}",
 
                           f"- {global_utils.style_text('VOTING', 'b')}:",
-                          f" - {global_utils.style_text('/prefer-map', 'c')}",
+                          f" - {global_utils.style_text('/prefer-maps', 'c')}",
                           f" - {global_utils.style_text('/map-votes', 'c')}",
                           f" - {global_utils.style_text('/map-weights', 'c')}",]
 

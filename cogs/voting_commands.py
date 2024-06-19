@@ -143,7 +143,7 @@ class VotingCommands(commands.Cog):
         # global_utils.log("Voting cog loaded")
         pass
 
-    @app_commands.command(name="prefer-map", description=global_utils.command_descriptions["prefer-map"])
+    @app_commands.command(name="prefer-maps", description=global_utils.command_descriptions["prefer-maps"])
     async def start_voting(self, interaction: discord.Interaction) -> None:
         """[command] Declares a preference for a map to play in premier playoffs
 
@@ -239,8 +239,11 @@ class VotingCommands(commands.Cog):
         for map_name in global_utils.map_weights.keys():
             if map_name not in global_utils.map_pool:
                 continue
+        
+            map_display_name = global_utils.style_text(map_name.title(), 'i')
+            weight = global_utils.style_text(global_utils.map_weights[map_name], 'b')
 
-            output += f'{map_name.title()}: {global_utils.map_weights[map_name]}\n'
+            output += f'{map_display_name}: {weight}\n'
 
         if output == "":
             output = "No weights to show for maps in the map pool."

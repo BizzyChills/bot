@@ -82,7 +82,7 @@ class Utils:
             "notes": "Display a practice note from the notes channel. Leave note_id blank to display all options",
 
             # voting
-            "prefer-map": "Declare your preference for a map to play for premier playoffs",
+            "prefer-maps": "Declare your preference for a map to play for premier playoffs",
             "map-votes": "Display each member's map preferences",
             "map-weights": "Display the total weights for each map in the map pool",
 
