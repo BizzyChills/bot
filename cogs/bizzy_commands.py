@@ -99,7 +99,8 @@ class BizzyCommands(commands.Cog):
 
         await interaction.response.defer(ephemeral=True, thinking=True)
         await interaction.channel.purge(limit=None, bulk=True)
-        await interaction.followup.send("Cleared the entire channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        m =await interaction.followup.send("Cleared the entire channel", ephemeral=True)
+        await m.delete(delay=global_utils.delete_after_seconds)
 
     @app_commands.command(name="feature", description=global_utils.command_descriptions["feature"])
     @app_commands.describe(

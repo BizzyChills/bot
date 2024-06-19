@@ -253,10 +253,10 @@ class InfoCommands(commands.Cog):
         try:
             note = await interaction.channel.fetch_message(int(note_id))
         except errors.NotFound:
-            await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             global_utils.practice_notes[map_name].pop(note_id)
             global_utils.save_notes()
-            return
+            m = await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True)
+            return await m.delete(delay=global_utils.delete_after_seconds)
 
         output = f'Practice note for {map_display_name} (created by {note.author.display_name}):\n\n{note.content}'
 

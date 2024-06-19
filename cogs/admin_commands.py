@@ -217,7 +217,9 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.log(
             f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
-        await interaction.followup.send(f'The Premier schedule has been created.\n{output}', ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        
+        m = await interaction.followup.send(f'The Premier schedule has been created.\n{output}', ephemeral=True)
+        await m.delete(delay=global_utils.delete_after_seconds)
 
     @app_commands.command(name="cancel-event", description=global_utils.command_descriptions["cancel-event"])
     @app_commands.choices(
@@ -285,7 +287,8 @@ class AdminPremierCommands(commands.Cog):
             global_utils.log(
                 f'{interaction.user.display_name} cancelled event - {message}')
 
-        await interaction.followup.send(message, ephemeral=ephem, delete_after=global_utils.delete_after_seconds)
+        m = await interaction.followup.send(message, ephemeral=ephem)
+        await m.delete(delay=global_utils.delete_after_seconds)
 
         global_utils.log(
             f"{interaction.user.display_name} cancelled event - {message}")
@@ -307,8 +310,8 @@ class AdminPremierCommands(commands.Cog):
         events = guild.scheduled_events
 
         if len([event for event in events if event.name == "Premier" and event.description != "Playoffs"]) == 0:
-            await interaction.followup.send(f'Please add the premier events first using the `/addevents` command', ephemeral=True, delete_after=global_utils.delete_after_seconds)
-            return
+            m = await interaction.followup.send(f'Please add the premier events first using the `/addevents` command', ephemeral=True)
+            return await m.delete(delay=global_utils.delete_after_seconds)
 
         wed_hour = global_utils.est_to_utc(time(hour=22)).hour
         fri_hour = wed_hour + 1
@@ -335,7 +338,9 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.log(
             f'{interaction.user.display_name} has posted the premier practice schedule')
-        await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        
+        m = await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True)
+        await m.delete(delay=global_utils.delete_after_seconds)
 
     @app_commands.command(name="cancel-practice", description=global_utils.command_descriptions["cancel-practice"])
     @app_commands.choices(
@@ -404,7 +409,8 @@ class AdminPremierCommands(commands.Cog):
             global_utils.log(
                 f'{interaction.user.display_name} cancelled practice: {message}')
 
-        await interaction.followup.send(message, ephemeral=ephem, delete_after=global_utils.delete_after_seconds)
+        m = await interaction.followup.send(message, ephemeral=ephem)
+        await m.delete(delay=global_utils.delete_after_seconds)
 
         global_utils.log(
             f"{interaction.user.display_name} cancelled practice(s) - {message}")
@@ -455,7 +461,9 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.log(
             f'{interaction.user.display_name} has cleared the premier schedule')
-        await interaction.followup.send(f'Cleared the premier schedule', ephemeral=ephem, delete_after=global_utils.delete_after_seconds)
+        
+        m = await interaction.followup.send(f'Cleared the premier schedule', ephemeral=ephem)
+        await m.delete(delay=global_utils.delete_after_seconds)
 
     @app_commands.command(name="add-note", description=global_utils.command_descriptions["add-note"])
     @app_commands.choices(

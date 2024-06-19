@@ -297,7 +297,8 @@ class MusicCommands(commands.Cog):
         else:
             self.playlist.update({info: audio_filepath})
 
-        await interaction.followup.send("Added to playlist", ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        m = await interaction.followup.send("Added to playlist", ephemeral=True)
+        await m.delete(delay=global_utils.delete_after_seconds)
 
     # @app_commands.command(name="playlist", description=global_utils.command_descriptions["playlist"])
     async def show_songs(self, interaction: discord.Interaction) -> None:
@@ -359,7 +360,8 @@ class MusicCommands(commands.Cog):
         title, author = self.play_next_song()
 
         if title is None:
-            # await interaction.followup.send(f"Playlist is empty. Use {global_utils.style_text('/add-song', 'c')} to add songs", ephemeral=True, delete_after=global_utils.delete_after_seconds)
+            # m = await interaction.followup.send(f"Playlist is empty. Use {global_utils.style_text('/add-song', 'c')} to add songs", ephemeral=True)
+            # await m.delete(delay=global_utils.delete_after_seconds)
             return
 
     async def pause(self, interaction: discord.Interaction) -> None:
@@ -576,7 +578,7 @@ class MusicButtons(discord.ui.View):
         timeout : float | None, optional
             The number of seconds to listen for an interaction before timing out, by default None (no timeout)
         music_cog : MusicCommands
-            The MusicCommands cog that drives the button functionality
+            The MusicCommands instance that is using the buttons
         """
         super().__init__(timeout=timeout)
         self.cog = music_cog
@@ -688,7 +690,8 @@ class MusicButtons(discord.ui.View):
         await interaction.response.defer(ephemeral=True)
         await self.cog.play(interaction)
         await self.hit_play()
-        await interaction.followup.send("Playing audio", ephemeral=True, delete_after=3)
+        m = await interaction.followup.send("Playing audio", ephemeral=True)
+        await m.delete(delay=global_utils.delete_after_seconds)
 
     async def hit_play(self) -> None:
         """Toggles all buttons that need to be toggled when the play button is clicked, and then updates the view
