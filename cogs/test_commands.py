@@ -45,7 +45,7 @@ class MusicCommands(commands.Cog):
 
         self.playlist_limit = 10
 
-        self.buttons = MusicButtons(music_cog=self)
+        self.player = MusicPlayer(music_cog=self)
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
@@ -109,11 +109,16 @@ class MusicCommands(commands.Cog):
             await interaction.response.send_message(f"I am not in a voice channel. {join_hint}", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
-        # if len(self.playlist) > 0:
-        #     skip_button = view.children[3]
-        #     skip_button.disabled = False
-        self.buttons.message = interaction
-        await interaction.response.send_message("Music Player", view=self.buttons, ephemeral=True)
+        if interaction.user != self.owner:
+            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True, delete_after=global_utils.delete_after_seconds)
+            return
+
+        if len(self.playlist) > 0:
+            skip_button = self.player.children[3]
+            skip_button.disabled = False
+
+        self.player.message = interaction
+        await interaction.response.send_message("Music Player", view=self.player, ephemeral=True)
 
     @app_commands.command(name="join-voice", description=global_utils.command_descriptions["join-voice"])
     async def join(self, interaction: discord.Interaction) -> None:
@@ -300,7 +305,6 @@ class MusicCommands(commands.Cog):
         m = await interaction.followup.send("Added to playlist", ephemeral=True)
         await m.delete(delay=global_utils.delete_after_seconds)
 
-    # @app_commands.command(name="playlist", description=global_utils.command_descriptions["playlist"])
     async def show_songs(self, interaction: discord.Interaction) -> None:
         """[command] Display the current song as well as the songs in the playlist
 
@@ -481,7 +485,7 @@ class MusicCommands(commands.Cog):
                 self.current_song = None
 
         if len(self.playlist) == 0:
-            self.buttons.hit_pause()
+            self.player.hit_pause()
             return None, None
 
         info = next(iter(self.playlist))
@@ -554,9 +558,9 @@ class MusicCommands(commands.Cog):
         self.playlist = {}
         self.playlist_urls = {}
 
-        await self.buttons.disable()
-        self.buttons.stop()
-        self.buttons = MusicButtons(music_cog=self)
+        await self.player.disable()
+        self.player.stop()
+        self.player = MusicPlayer(music_cog=self)
 
     def update_activity(self, error: Exception = None) -> None:
         """Updates the last activity time of the bot to prevent inactivity timeout
@@ -568,8 +572,54 @@ class MusicCommands(commands.Cog):
         """
         self.last_activity = datetime.now()
 
+class RandomCommands(commands.Cog):
+    def __init__(self, bot: commands.Bot) -> None:
+        self.bot = bot
+    
+    @commands.Cog.listener()
+    async def on_ready(self) -> None:
+        # global_utils.log("Random commands cog loaded")
+        pass
 
-class MusicButtons(discord.ui.View):
+    @app_commands.command(name="embed", description="test embed")
+    async def embed(self, interaction: discord.Interaction) -> None:
+        """[command] Generates a test embed
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+
+        title = "This is a title"
+        desc = "This is a description"
+        url = "https://www.google.com"
+        timestamp = datetime.now()
+        author = "This is an author"
+
+        thumbnail_url = "https://media.post.rvohealth.io/wp-content/uploads/2020/09/732x549_How_to_Identify_and_Treat_Nail_Pitting.jpg"
+
+        img_url = "https://bestfriends.org/sites/default/files/styles/hero_mobile/public/hero-dash/Asana3808_Dashboard_Standard.jpg?h=ebad9ecf&itok=cWevo33k"
+
+        footer = "This is a footer"
+        footer_url = "https://images.everydayhealth.com/images/foot-health/common-foot-problems-plantar-fasciitis-1440x810.jpg?w=720"
+
+        embed = discord.Embed(title=title, description=desc, url=url,
+                              timestamp=timestamp, color=discord.Color.blurple())
+        (
+            embed.set_author(name=author, url="https://www.youtube.com",
+                             icon_url="https://bestfriends.org/sites/default/files/styles/hero_mobile/public/hero-dash/Asana3808_Dashboard_Standard.jpg?h=ebad9ecf&itok=cWevo33k")
+            .set_image(url=img_url)
+            .set_thumbnail(url=thumbnail_url)
+            .set_footer(text=footer, icon_url=footer_url)
+            .add_field(name="Embed Field 1 (inline)", value="1", inline=True)
+            .add_field(name="Embed Field 2 (inline)", value="2", inline=True)
+            .add_field(name="Embed Field 3 (there is a max of 25)", value="3", inline=False)
+        )
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+class MusicPlayer(discord.ui.View):
     def __init__(self, *, timeout: float | None = None, music_cog: MusicCommands) -> None:
         """Initializes the MusicButtons class
 
