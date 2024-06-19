@@ -129,21 +129,6 @@ class TriviaCommands(commands.Cog):
         await sleep(5)
         await user.send(f"Just kidding. Here is your actual prize, no foolin': {global_utils.style_text('https://cs.indstate.edu/~cs60901/final/', 'c')}")
 
-    async def clear_dm(self, user: discord.User) -> None:
-        """Clears all bot messages in the user's DMs
-
-        Parameters
-        ----------
-        user : discord.User
-            The user to clear the DMs with
-        """
-        if user.dm_channel is None:
-            await user.create_dm()
-
-        async for message in user.dm_channel.history(limit=None):
-            if message.author == self.bot.user:
-                await message.delete(delay=5)
-
     async def trivia(self, user: discord.User) -> None:
         """[command] Plays a game of trivia with the user
 
@@ -174,25 +159,29 @@ class TriviaCommands(commands.Cog):
                 f"Question {i + 1}:\n", 'b')
             question_body = global_utils.style_text(
                 questions[i]['question'], 'i')
-            await user.send(f"{question_header}{question_body}", delete_after=10)
+            q = await user.send(f"{question_header}{question_body}")
+
+            go_back = f"Go back to the server and use {global_utils.style_text('/trivia', 'c')} to try again (yes this is intentionally tedious)"
             try:
                 answer = await self.bot.wait_for("message", check=lambda m: m.author == user, timeout=10)
             except TimeoutError as e:
-                await user.send("You took too long to answer. Go back to the server and use /trivia to try again", delete_after=5)
-                # return await self.clear_dm(user)
+                await q.delete()
+
+                await user.send(f"You took too long to answer. {go_back}", delete_after=5)
                 return
+
+            await q.delete()
 
             if answer.content.lower() == questions[i]['answer'].lower():
                 await user.send("Correct!", delete_after=2)
-                sleep(2)
+                await sleep(2)
             else:
-                go_back = f"Go back to the server and use {global_utils.style_text('/trivia', 'c')} to try again (yes this is intentionally tedious)"
+
                 if questions[i]["question"] == "What is Bizzy's name?":
                     await user.send(f"Lol, nt gamer. {go_back}", delete_after=global_utils.delete_after_seconds)
                 else:
                     await user.send(f"Incorrect. {go_back}", delete_after=global_utils.delete_after_seconds)
 
-                # return await self.clear_dm(user)
                 return
 
         await self.delayed_gratification(user)

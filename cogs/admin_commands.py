@@ -294,7 +294,7 @@ class AdminPremierCommands(commands.Cog):
             f"{interaction.user.display_name} cancelled event - {message}")
 
     @app_commands.command(name="add-practices", description=global_utils.command_descriptions["add-practices"])
-    async def addpractices(self, interaction: discord.Interaction):
+    async def addpractices(self, interaction: discord.Interaction) -> None:
         """[command] Adds all premier practice events to the schedule at a rate of 5 practices/minute. Ensure that the premier events have been added first using /addevents
 
         Parameters
@@ -311,7 +311,8 @@ class AdminPremierCommands(commands.Cog):
 
         if len([event for event in events if event.name == "Premier" and event.description != "Playoffs"]) == 0:
             m = await interaction.followup.send(f'Please add the premier events first using the `/addevents` command', ephemeral=True)
-            return await m.delete(delay=global_utils.delete_after_seconds)
+            await m.delete(delay=global_utils.delete_after_seconds)
+            return
 
         wed_hour = global_utils.est_to_utc(time(hour=22)).hour
         fri_hour = wed_hour + 1

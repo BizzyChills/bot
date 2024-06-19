@@ -26,86 +26,87 @@ class InfoCommands(commands.Cog):
         # global_utils.log("Info cog loaded")
         pass
 
-    def format_schedule(self, schedule: list[tuple[str, datetime, str]], header: str = None) -> str:
-        """Formats the schedule for display in Discord
+    # def format_schedule(self, schedule: list[tuple[str, datetime, str]], header: str = None) -> str:
+    #     """Formats the schedule for display in Discord
 
-        Parameters
-        ----------
-        schedule : list[tuple[str, datetime, str]]
-            The schedule to format. This should be a list of tuples with the following structure: [(event_display_string, event_datetime, event_map), ...]
-        header : str, optional
-            The header to display at the top of the schedule, by default None
+    #     Parameters
+    #     ----------
+    #     schedule : list[tuple[str, datetime, str]]
+    #         The schedule to format. This should be a list of tuples with the following structure: [(event_display_string, event_datetime, event_map), ...]
+    #     header : str, optional
+    #         The header to display at the top of the schedule, by default None
 
-        Returns
-        -------
-        str
-            The formatted schedule as a string to display in Discord
-        """
-        schedule = sorted(schedule, key=lambda x: x[1])
+    #     Returns
+    #     -------
+    #     str
+    #         The formatted schedule as a string to display in Discord
+    #     """
+    #     schedule = sorted(schedule, key=lambda x: x[1])
 
-        subsections = {entry[2]: [] for entry in schedule}
+    #     subsections = {entry[2]: [] for entry in schedule}
 
-        for m in schedule:
-            map_name = m[2]
-            event_display = m[0]  # just use variables for readability
+    #     for m in schedule:
+    #         map_name = m[2]
+    #         event_display = m[0]  # just use variables for readability
 
-            subsections[map_name].append(event_display)
+    #         subsections[map_name].append(event_display)
 
-        output = ""
-        for map_name, event_displays in subsections.items():
-            subheader = f"- {global_utils.style_text(map_name, 'iu')}:"
-            event_displays = " - " + '\n - '.join(event_displays)
+    #     output = ""
+    #     for map_name, event_displays in subsections.items():
+    #         subheader = f"- {global_utils.style_text(map_name, 'iu')}:"
+    #         event_displays = " - " + '\n - '.join(event_displays)
 
-            output += f"{subheader}\n{event_displays}\n"
+    #         output += f"{subheader}\n{event_displays}\n"
 
-        return f"{header}\n{output}" if header else output
+    #     return f"{header}\n{output}" if header else output
 
-    @app_commands.command(name="schedule", description=global_utils.command_descriptions["schedule"])
-    async def schedule(self, interaction: discord.Interaction) -> None:
-        """[command] Displays the premier schedule from server events
+    # deprecated in favor of the persistent button with the same functionality
+    # @app_commands.command(name="schedule", description=global_utils.command_descriptions["schedule"])
+    # async def schedule(self, interaction: discord.Interaction) -> None:
+    #     """[command] Displays the premier schedule from server events
 
-        Parameters
-        ----------
-        interaction : discord.Interaction
-            The interaction object that initiated the command
-        """
-        ephem = True
+    #     Parameters
+    #     ----------
+    #     interaction : discord.Interaction
+    #         The interaction object that initiated the command
+    #     """
+    #     ephem = True
 
-        await interaction.response.defer(ephemeral=ephem, thinking=True)
+    #     await interaction.response.defer(ephemeral=ephem, thinking=True)
 
-        guild = interaction.guild
-        events = guild.scheduled_events
+    #     guild = interaction.guild
+    #     events = guild.scheduled_events
 
-        event_header = f"{global_utils.style_text('Upcoming Premier Events:', 'b')}"
-        practice_header = f"\n\n{global_utils.style_text('Upcoming Premier Practices:', 'b')}"
-        message = []
-        practice_message = []
+    #     event_header = f"{global_utils.style_text('Upcoming Premier Events:', 'b')}"
+    #     practice_header = f"\n\n{global_utils.style_text('Upcoming Premier Practices:', 'b')}"
+    #     message = []
+    #     practice_message = []
 
-        for event in events:
-            map_name = event.description if "playoffs" not in event.name.lower(
-            ) else "Playoffs"
+    #     for event in events:
+    #         map_name = event.description if "playoffs" not in event.name.lower(
+    #         ) else "Playoffs"
 
-            if "premier practice" in event.name.lower():
-                practice_message.append(
-                    (f"{global_utils.discord_local_time(event.start_time, with_date=True)}", event.start_time, map_name))
-            elif "premier" in event.name.lower():
-                message.append(
-                    (f"{global_utils.discord_local_time(event.start_time, with_date=True)}", event.start_time, map_name))
+    #         if "premier practice" in event.name.lower():
+    #             practice_message.append(
+    #                 (f"{global_utils.discord_local_time(event.start_time, with_date=True)}", event.start_time, map_name))
+    #         elif "premier" in event.name.lower():
+    #             message.append(
+    #                 (f"{global_utils.discord_local_time(event.start_time, with_date=True)}", event.start_time, map_name))
 
-        if message == []:
-            message = f"{global_utils.style_text('No premier events scheduled', 'b')}"
-        else:
-            message = self.format_schedule(message, event_header)
+    #     if message == []:
+    #         message = f"{global_utils.style_text('No premier events scheduled', 'b')}"
+    #     else:
+    #         message = self.format_schedule(message, event_header)
 
-        if practice_message == []:
-            practice_message = f"\n\n{global_utils.style_text('No premier practices scheduled', 'b')}"
-        else:
-            practice_message = self.format_schedule(
-                practice_message, practice_header)
+    #     if practice_message == []:
+    #         practice_message = f"\n\n{global_utils.style_text('No premier practices scheduled', 'b')}"
+    #     else:
+    #         practice_message = self.format_schedule(
+    #             practice_message, practice_header)
 
-        message += practice_message
+    #     message += practice_message
 
-        await interaction.followup.send(message, ephemeral=ephem)
+    #     await interaction.followup.send(message, ephemeral=ephem)
 
     @app_commands.command(name="map-pool", description=global_utils.command_descriptions["map-pool-common"])
     @app_commands.choices(
@@ -125,12 +126,12 @@ class InfoCommands(commands.Cog):
         ]
     )
     @app_commands.describe(
-        action="The action to take on the map pool (ADMIN ONLY)",
+        action="The action to take on the premier map pool (ADMIN ONLY)",
         map_name="The map to add or remove (ADMIN ONLY)",
         announce="Show the output of the command to everyone (only used in the premier channel)"
     )
     async def mappool(self, interaction: discord.Interaction, action: str = "", map_name: str = "", announce: int = 0) -> None:
-        """[command] Adds/removes maps from the map pool or display the map pool
+        """[command] Displays/Adds/Removes maps from the premier map pool
 
         Parameters
         ----------
@@ -257,7 +258,8 @@ class InfoCommands(commands.Cog):
             global_utils.practice_notes[map_name].pop(note_id)
             global_utils.save_notes()
             m = await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True)
-            return await m.delete(delay=global_utils.delete_after_seconds)
+            await m.delete(delay=global_utils.delete_after_seconds)
+            return
 
         output = f'Practice note for {map_display_name} (created by {note.author.display_name}):\n\n{note.content}'
 

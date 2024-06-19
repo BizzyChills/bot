@@ -74,11 +74,10 @@ class Utils:
             # persist
             "commands": "Display all bot commands",
             "schedule": "Display the premier event and practice schedules",
-            "source-code": "Link the repo containing the source code for the bot",
-            "persist": "Display the persistent buttons",
+            "persist": "Display the persistent help buttons",
 
             # info
-            "map-pool-common": "Display the current competitive map pool",
+            "map-pool-common": "Display the current premier map pool",
             "notes": "Display a practice note from the notes channel. Leave note_id blank to display all options",
 
             # voting
@@ -93,7 +92,7 @@ class Utils:
             "music": "Display the music controls",
 
             # admin
-            "map-pool-admin": "Modify the map pool",
+            "map-pool-admin": "Modify the premier map pool",
             "add-map": "Add a map to the list of all maps in the game",
             "remove-map": "Remove a map from the list of all maps in the game",
             "add-events": "Add all premier events to the schedule",
@@ -223,8 +222,10 @@ class Utils:
     def save_notes(self) -> None:
         """Saves any changes made to the practice notes during runtime to ./local_storage/notes.json
         """
+        if type(self.practice_notes) != dict:
+            self.practice_notes = {}
         with open("./local_storage/notes.json", "w") as file:
-            json.dump(self.notes, file)
+            json.dump(self.practice_notes, file)
 
     def log(self, message: str) -> None:
         """Logs a message to the current stdout log file
