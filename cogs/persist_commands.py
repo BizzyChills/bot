@@ -86,14 +86,7 @@ class PersistCommands(commands.Cog):
                          f" - {global_utils.style_text('/feed', 'c')}",
                          f" - {global_utils.style_text('/unfeed', 'c')}",]
 
-        music_commands = [f"- {global_utils.style_text('MUSIC', 'b')}:",
-                          f" - {global_utils.style_text('/join-voice', 'c')}",
-                          f" - {global_utils.style_text('/leave-voice', 'c')}",
-                          f" - {global_utils.style_text('/add-song', 'c')}",
-                          f" - {global_utils.style_text('/music (WIP)', 'c')}",
-                          ]
-
-        user_commands = basic_commands + music_commands + misc_commands
+        user_commands = basic_commands + misc_commands
         basic_admin_commands = basic_commands + admin_commands
         user_admin_commands = user_commands + admin_commands
         all_commands = user_admin_commands + my_commands
