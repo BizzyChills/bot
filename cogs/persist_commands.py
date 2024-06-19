@@ -1,62 +1,40 @@
-from typing import Any, Coroutine
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from datetime import datetime
-
 from global_utils import global_utils
 
 
-class SelectMenu(discord.ui.Select):
-    def __init__(self, buttons_view):
-        options = [discord.SelectOption(label="The basic commands", value="basic"),
-                   discord.SelectOption(
-                       label="All user commands", value="user"),
-                   discord.SelectOption(label="Admin commands", value="admin"),
-                   discord.SelectOption(
-                       label="Basic + Admin", value="basic_admin"),
-                   discord.SelectOption(
-                       label="User + Admin", value="user_admin"),
-                   discord.SelectOption(label="All commands", value="all"),]
-        placeholder = "Command list to display (default: user commands)"
-        custom_id = "commands_list_type"
-        self.buttons_view = buttons_view
-        super().__init__(options=options, placeholder=placeholder, custom_id=custom_id)
-
-    async def callback(self, interaction: discord.Interaction) -> None:
-        selected = self.values[0] if self.values else "user"
-        self.buttons_view.list_type = selected
-        await interaction.response.edit_message(view=self.view)
-
-
-# this will get merged with bot_cog.py eventually to avoid all of this redundancy
-class PersistentButtons(discord.ui.View):
-    def __init__(self, *, timeout: float | None = None) -> None:
-        """Initializes the PersistentButton class
+class PersistCommands(commands.Cog):
+    def __init__(self, bot: commands.Bot) -> None:
+        """Initializes the BotCog cog
 
         Parameters
         ----------
-        timeout : float | None, optional
-            The number of seconds to listen for an interaction before timing out, by default None (no timeout)
+        bot : discord.ext.commands.Bot
+            The bot to add the cog to. Automatically passed with the bot.load_extension method
         """
-        super().__init__(timeout=timeout)
-        self.menu = SelectMenu(self)
-        self.add_item(self.menu)
-        self.list_type = "user"
+        self.bot = bot
 
-    @discord.ui.button(label="Commands", style=discord.ButtonStyle.primary, custom_id="commands_button", emoji="❔")
-    async def commands_button(self, interaction: discord.Object, button: discord.ui.Button) -> None:
-        """[button] Sends a list of all bot commands (that a general user can use)
+    @commands.Cog.listener()
+    async def on_ready(self) -> None:
+        """[event] Executes when the BotCog cog is ready
+        """
+        # global_utils.log("Bot cog loaded")
+        pass
+
+    async def commands(self, interaction: discord.Interaction, list_type: str = "all") -> None:
+        """[command] Displays all bot commands
 
         Parameters
         ----------
-        button : discord.ui.Button
-            The button object that was clicked
         interaction : discord.Interaction
-            The interaction object from the button click
+            The interaction object that initiated the command
+        list_type : str, optional
+            The type of command list to display, by default "user"
         """
         ephem = True
+
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
         basic_commands = [f"{global_utils.style_text('Commands', 'b')} (start typing the command to see its description):",
@@ -115,7 +93,7 @@ class PersistentButtons(discord.ui.View):
         user_admin_commands = user_commands + admin_commands
         all_commands = user_admin_commands + my_commands
 
-        match self.list_type:
+        match list_type:
             case "basic":
                 output = basic_commands
             case "user":
@@ -128,23 +106,21 @@ class PersistentButtons(discord.ui.View):
                     output += my_commands
             case "user_admin":
                 output = user_admin_commands
+            case "all":
+                output = all_commands
             case _:
                 output = all_commands
 
         await interaction.followup.send('\n'.join(output), ephemeral=ephem, silent=True)
 
-    @discord.ui.button(label="Schedule", style=discord.ButtonStyle.primary, custom_id="schedule_button", emoji="📅")
-    async def schedule_button(self, interaction: discord.Object, button: discord.ui.Button) -> None:
-        """[button] Sends the schedule for the val server
+    async def schedule(self, interaction: discord.Interaction) -> None:
+        """[command] Displays the premier schedule from server events
 
         Parameters
         ----------
-        interaction : discord.Object
-            The interaction object from the button click
-        button : discord.ui.Button
-            The button object that was clicked
+        interaction : discord.Interaction
+            The interaction object that initiated the command
         """
-        # ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
         ephem = True
 
         await interaction.response.defer(ephemeral=ephem, thinking=True)
@@ -183,75 +159,96 @@ class PersistentButtons(discord.ui.View):
 
         await interaction.followup.send(message, ephemeral=ephem)
 
-    def format_schedule(self, schedule: list[tuple[str, datetime, str]], header: str = None) -> str:
-        """Formats the schedule for display in Discord
-
-        Parameters
-        ----------
-        schedule : list[tuple[str, datetime, str]]
-            The schedule to format. This should be a list of tuples with the following structure: [(event_display_string, event_datetime, event_map), ...]
-        header : str, optional
-            The header to display at the top of the schedule, by default None
-
-        Returns
-        -------
-        str
-            The formatted schedule as a string to display in Discord
-        """
-        schedule = sorted(schedule, key=lambda x: x[1])
-
-        subsections = {entry[2]: [] for entry in schedule}
-
-        for m in schedule:
-            map_name = m[2]
-            event_display = m[0]  # just use variables for readability
-
-            subsections[map_name].append(event_display)
-
-        output = ""
-        for map_name, event_displays in subsections.items():
-            subheader = f"- {global_utils.style_text(map_name, 'iu')}:"
-            event_displays = " - " + '\n - '.join(event_displays)
-
-            output += f"{subheader}\n{event_displays}\n"
-
-        return f"{header}\n{output}" if header else output
-
-
-class PersistentCommands(commands.Cog):
-    def __init__(self) -> None:
-        """Initializes the PersistentCommands class"""
-        pass
-
-    @commands.Cog.listener()
-    async def on_ready(self) -> None:
-        """[listener] Executes when the PersistentCommands cog is ready
-        """
-        # global_utils.log("PersistentCommands cog loaded")
-        pass
-
     @app_commands.command(name="persist", description=global_utils.command_descriptions["persist"])
     async def persist(self, interaction: discord.Interaction) -> None:
-        """[command] Adds the persistent buttons to the bot
+        """[command] Sends the persistent buttons view
 
         Parameters
         ----------
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-        view = PersistentButtons()
-        source_code_button = discord.ui.Button(
-            label="Source Code", style=discord.ButtonStyle.link, url=global_utils.source_code)
-        view.add_item(source_code_button)
+        view = PersistentButtons(cog=self)
+        source_button = discord.ui.Button(
+            style=discord.ButtonStyle.link, label="Source code", url=global_utils.source_code, row=1)
+        view.add_item(source_button)
         await interaction.response.send_message("Help:", view=view)
 
 
-async def setup(bot: commands.Bot) -> None:
-    """Adds the PersistentCommands cog to the bot
+class SelectMenu(discord.ui.Select):
+    def __init__(self, buttons_view):
+        options = [discord.SelectOption(label="Minimum commands", value="basic"),
+                   discord.SelectOption(
+                       label="User commands", value="user"),
+                   discord.SelectOption(label="Admin commands", value="admin"),
+                   discord.SelectOption(
+                       label="Minimum + Admin", value="basic_admin"),
+                   discord.SelectOption(
+                       label="User + Admin", value="user_admin"),
+                   discord.SelectOption(label="All commands", value="all"),]
+        placeholder = "Commands"
+        custom_id = "commands_list_type"
+        self.buttons_view = buttons_view
+        super().__init__(options=options, placeholder=placeholder, custom_id=custom_id, )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        selected = self.values[0] if self.values else "user"
+        await self.buttons_view.cog.commands(interaction, list_type=selected)
+        return
+
+
+# this will get merged with bot_cog.py eventually to avoid all of this redundancy
+class PersistentButtons(discord.ui.View):
+    def __init__(self, *, timeout: float | None = None, cog: PersistCommands) -> None:
+        """Initializes the PersistentButton class
+
+        Parameters
+        ----------
+        timeout : float | None, optional
+            The number of seconds to listen for an interaction before timing out, by default None (no timeout)
+        cog : BotCog
+            The BotCog instance that is using the buttons
+        """
+        super().__init__(timeout=timeout)
+        self.cog = cog
+        self.menu = SelectMenu(self)
+        self.menu.row = 0
+        self.add_item(self.menu)
+        self.list_type = "user"
+
+    # @discord.ui.button(label="Commands", style=discord.ButtonStyle.primary, custom_id="commands_button", emoji="❔")
+    # async def commands_button(self, interaction: discord.Object, button: discord.ui.Button) -> None:
+    #     """[button] Sends a list of all bot commands (that a general user can use)
+
+    #     Parameters
+    #     ----------
+    #     button : discord.ui.Button
+    #         The button object that was clicked
+    #     interaction : discord.Interaction
+    #         The interaction object from the button click
+    #     """
+    #     await self.cog.commands(interaction, list_type=self.list_type)
+
+    @discord.ui.button(label="Schedule", style=discord.ButtonStyle.primary, custom_id="schedule_button", emoji="📅", row=1)
+    async def schedule_button(self, interaction: discord.Object, button: discord.ui.Button) -> None:
+        """[button] Sends the schedule for the val server
+
+        Parameters
+        ----------
+        interaction : discord.Object
+            The interaction object from the button click
+        button : discord.ui.Button
+            The button object that was clicked
+        """
+        await self.cog.schedule(interaction)
+
+
+async def setup(bot: commands.bot) -> None:
+    """Adds the BotCog cog to the bot
 
     Parameters
     ----------
-    bot : discord.ext.commands.Bot
+    bot : discord.ext.commands.bot
         The bot to add the cog to. Automatically passed with the bot.load_extension method
     """
-    await bot.add_cog(PersistentCommands(), guilds=[discord.Object(global_utils.val_server_id), discord.Object(global_utils.debug_server_id)])
+    await bot.add_cog(PersistCommands(bot), guilds=[discord.Object(global_utils.val_server_id), discord.Object(global_utils.debug_server_id)])
