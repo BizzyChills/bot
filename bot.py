@@ -7,7 +7,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from global_utils import global_utils
-from cogs.persistent_buttons import PersistentButtons
+from cogs.persist_commands import PersistentButtons, PersistCommands
 
 
 bot = commands.Bot(command_prefix='!',
@@ -32,7 +32,8 @@ async def on_ready() -> None:
 
 async def setup_hook() -> None:
     """Re-links/syncs the bot's persistent buttons"""
-    bot.add_view(PersistentButtons())
+    cog = PersistCommands(bot)
+    bot.add_view(PersistentButtons(cog=cog))
 
 
 @bot.tree.error

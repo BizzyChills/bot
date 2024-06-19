@@ -150,7 +150,8 @@ class InfoCommands(commands.Cog):
                 output = f'The map pool is empty'
             else:
                 output = 'Current map pool:\n- ' + \
-                    "\n- ".join([global_utils.style_text(m.title(), 'i') for m in global_utils.map_pool])
+                    "\n- ".join([global_utils.style_text(m.title(), 'i')
+                                for m in global_utils.map_pool])
 
             await interaction.response.send_message(output, ephemeral=ephem)
             return

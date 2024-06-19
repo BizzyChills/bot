@@ -217,7 +217,7 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.log(
             f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
-        
+
         m = await interaction.followup.send(f'The Premier schedule has been created.\n{output}', ephemeral=True)
         await m.delete(delay=global_utils.delete_after_seconds)
 
@@ -338,7 +338,7 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.log(
             f'{interaction.user.display_name} has posted the premier practice schedule')
-        
+
         m = await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True)
         await m.delete(delay=global_utils.delete_after_seconds)
 
@@ -461,7 +461,7 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.log(
             f'{interaction.user.display_name} has cleared the premier schedule')
-        
+
         m = await interaction.followup.send(f'Cleared the premier schedule', ephemeral=ephem)
         await m.delete(delay=global_utils.delete_after_seconds)
 

@@ -151,7 +151,7 @@ class Utils:
             prefs = json.load(file)
             if prefs == {}:
                 prefs = {map_name: {} for map_name in self.map_pool}
-            
+
             return prefs
 
     def save_preferences(self) -> None:
@@ -176,7 +176,7 @@ class Utils:
             weights = json.load(file)
             if weights == {}:
                 weights = {map_name: 0 for map_name in self.map_preferences}
-            
+
             return weights
 
     def save_weights(self) -> None:

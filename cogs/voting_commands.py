@@ -239,9 +239,10 @@ class VotingCommands(commands.Cog):
         for map_name in global_utils.map_weights.keys():
             if map_name not in global_utils.map_pool:
                 continue
-        
+
             map_display_name = global_utils.style_text(map_name.title(), 'i')
-            weight = global_utils.style_text(global_utils.map_weights[map_name], 'b')
+            weight = global_utils.style_text(
+                global_utils.map_weights[map_name], 'b')
 
             output += f'{map_display_name}: {weight}\n'
 
