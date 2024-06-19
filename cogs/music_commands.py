@@ -107,7 +107,8 @@ class MusicCommands(commands.Cog):
             The interaction object that initiated the command
         """
         if self.vc is None:
-            await interaction.response.send_message(f"I am not in a voice channel. Use {global_utils.style_text('/join-voice', 'c')} to add me to a voice channel", ephemeral=True)
+            join_hint = f"Use {global_utils.style_text('/join-voice', 'c')} to add me to a voice channel"
+            await interaction.response.send_message(f"I am not in a voice channel. {join_hint}", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         # if len(self.playlist) > 0:
@@ -126,15 +127,15 @@ class MusicCommands(commands.Cog):
             The interaction object that initiated the command
         """
         if interaction.user.voice is None:
-            await interaction.response.send_message("You must be in a voice channel to use this command", ephemeral=True)
+            await interaction.response.send_message("You must be in a voice channel to use this command", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if self.vc is not None:
             if interaction.user != self.owner:
-                await interaction.response.send_message(f"I am already in a voice channel with {self.owner.display_name}", ephemeral=True)
+                await interaction.response.send_message(f"I am already in a voice channel with {self.owner.display_name}", ephemeral=True, delete_after=global_utils.delete_after_seconds)
                 return
             if interaction.user.voice.channel == self.vc.channel:
-                await interaction.response.send_message("I am already in the voice channel", ephemeral=True)
+                await interaction.response.send_message("I am already in the voice channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
                 return
             await self.vc.move_to(interaction.user.voice.channel)
         else:
@@ -171,11 +172,11 @@ class MusicCommands(commands.Cog):
             The interaction object that initiated the command
         """
         if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
+            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if self.current_song is not None:
@@ -188,7 +189,7 @@ class MusicCommands(commands.Cog):
                                  f"./local_storage/temp_music/{file}")
 
         await self.reset_state()
-        await interaction.response.send_message("Left the voice channel", ephemeral=True)
+        await interaction.response.send_message("I left the voice channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     def download_song(self, url: str) -> tuple[str, str]:
         """Downloads a song from a YouTube URL and returns the title and author of the song
@@ -261,26 +262,27 @@ class MusicCommands(commands.Cog):
             Treated as a boolean. Bump the song to the top of the playlist, by default 0
         """
         if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True,delete_after=global_utils.delete_after_seconds)
             return
 
         if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
+            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True,delete_after=global_utils.delete_after_seconds)
             return
 
         self.update_activity()
 
         if len(self.playlist) == self.playlist_limit:
-            await interaction.response.send_message(f"The playlist is currently limited to only {self.playlist_limit} songs. Use {global_utils.style_text('/skip', 'c')} to make space.")
+            make_space_hint = f"Use {global_utils.style_text('/skip', 'c')} to make space."
+            await interaction.response.send_message(f"The playlist is currently limited to only {self.playlist_limit} songs. {make_space_hint}", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if url in self.playlist_urls.values():
-            await interaction.response.send_message("Song already in playlist. Wait for it to play before adding it again", ephemeral=True)
+            await interaction.response.send_message("Song already in playlist. Wait for it to play before adding it again", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         domain = urlparse(url).netloc
         if domain != "www.youtube.com" and domain != "youtu.be":
-            await interaction.response.send_message("Not a YouTube link", ephemeral=True)
+            await interaction.response.send_message("Not a YouTube link", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         await interaction.response.defer(ephemeral=True)
@@ -298,7 +300,7 @@ class MusicCommands(commands.Cog):
         else:
             self.playlist.update({info: audio_filepath})
 
-        await interaction.followup.send("Added to playlist", ephemeral=True)
+        await interaction.followup.send("Added to playlist", ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     # @app_commands.command(name="playlist", description=global_utils.command_descriptions["playlist"])
     async def show_songs(self, interaction: discord.Interaction) -> None:
@@ -310,7 +312,7 @@ class MusicCommands(commands.Cog):
             The interaction object that initiated the command
         """
         if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if interaction.user == self.owner:
@@ -360,7 +362,7 @@ class MusicCommands(commands.Cog):
         title, author = self.play_next_song()
 
         if title is None:
-            # await interaction.followup.send(f"Playlist is empty. Use {global_utils.style_text('/add-song', 'c')} to add songs", ephemeral=True)
+            # await interaction.followup.send(f"Playlist is empty. Use {global_utils.style_text('/add-song', 'c')} to add songs", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
     async def pause(self, interaction: discord.Interaction) -> None:
@@ -372,48 +374,21 @@ class MusicCommands(commands.Cog):
             The interaction object that initiated the command
         """
         if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
+            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         self.update_activity()
 
         if not self.vc.is_playing():
-            await interaction.response.send_message("I am not playing audio", ephemeral=True)
+            await interaction.response.send_message("I am not playing audio", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         self.vc.pause()
-        await interaction.response.send_message("Paused audio", ephemeral=True)
-
-    # deprecated, just use /play-song to resume
-    # @app_commands.command(name="resume-song", description=global_utils.command_descriptions["resume-song"])
-    # async def resume(self, interaction: discord.Interaction) -> None:
-    #     """[command] Resumes playback of current song
-
-    #     Parameters
-    #     ----------
-    #     interaction : discord.Interaction
-    #         The interaction object that initiated the command
-    #     """
-    #     if self.vc is None:
-    #         await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
-    #         return
-
-    #     if interaction.user != self.owner:
-    #         await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
-    #         return
-
-    #     self.update_activity()
-
-    #     if not self.vc.is_paused():
-    #         await interaction.response.send_message("I am not paused", ephemeral=True)
-    #         return
-
-    #     self.vc.resume()
-    #     await interaction.response.send_message("Resumed audio", ephemeral=True)
+        await interaction.response.send_message("Paused audio", ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     async def stop(self, interaction: discord.Interaction) -> None:
         """[command] Stops playback of current song (cannot resume)
@@ -424,21 +399,21 @@ class MusicCommands(commands.Cog):
             The interaction object that initiated the command
         """
         if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
+            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         self.update_activity()
 
         if not self.vc.is_playing() and not self.vc.is_paused():
-            await interaction.response.send_message("I am not playing audio", ephemeral=True)
+            await interaction.response.send_message("I am not playing audio", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         self.vc.stop()
-        await interaction.response.send_message("Stopped audio", ephemeral=True)
+        await interaction.response.send_message("Stopped audio", ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     async def skip(self, interaction: discord.Interaction) -> None:
         """[command] Skips current song and play next song in playlist (if any)
@@ -449,11 +424,11 @@ class MusicCommands(commands.Cog):
             The interaction object that initiated the command
         """
         if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
+            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         self.update_activity()
@@ -469,7 +444,7 @@ class MusicCommands(commands.Cog):
         else:
             message += f"Now playing: {title} - {author}"
 
-        await interaction.response.send_message(message, ephemeral=True)
+        await interaction.response.send_message(message, ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     def play_next_song(self, error: Exception = None) -> str:
         """Plays the next song in the playlist if there is one
@@ -533,18 +508,18 @@ class MusicCommands(commands.Cog):
             The interaction object that initiated the command
         """
         if self.vc is None:
-            await interaction.response.send_message("I am not in a voice channel", ephemeral=True)
+            await interaction.response.send_message("I am not in a voice channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if interaction.user != self.owner:
-            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True)
+            await interaction.response.send_message("You must be the one who added me to the voice channel to use this command", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         self.update_activity()
 
         self.loop_song = not self.loop_song
         message = "Looping" + (" enabled" if self.loop_song else " disabled")
-        await interaction.response.send_message(message, ephemeral=True)
+        await interaction.response.send_message(message, ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     # I don't know the performance impact of this, but it's the only way I can think of to check for inactivity
     @tasks.loop(seconds=5)

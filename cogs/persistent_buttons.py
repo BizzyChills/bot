@@ -48,10 +48,9 @@ class PersistentButtons(discord.ui.View):
         ----------
         button : discord.ui.Button
             The button object that was clicked
-        interaction : discord.Object
+        interaction : discord.Interaction
             The interaction object from the button click
         """
-
         ephem = True
         await interaction.response.defer(ephemeral=ephem, thinking=True)
 
@@ -135,19 +134,6 @@ class PersistentButtons(discord.ui.View):
                 output = all_commands
 
         await interaction.followup.send('\n'.join(output), ephemeral=ephem, silent=True)
-
-    # @discord.ui.button(label="Source Code", style=discord.ButtonStyle.link, custom_id="source_code_button", emoji="💾")
-    # async def source_code_button(self, interaction: discord.Object, button: discord.ui.Button) -> None:
-    #     """[button] Sends the source code for the bot
-
-    #     Parameters
-    #     ----------
-    #     interaction : discord.Object
-    #         The interaction object from the button click
-    #     button : discord.ui.Button
-    #         The button object that was clicked
-    #     """
-    #     pass
 
     @discord.ui.button(label="Schedule", style=discord.ButtonStyle.primary, custom_id="schedule_button", emoji="📅")
     async def schedule_button(self, interaction: discord.Object, button: discord.ui.Button) -> None:

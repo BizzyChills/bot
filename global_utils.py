@@ -66,6 +66,10 @@ class Utils:
         self.reminders = self.get_reminders()
         self.practice_notes = self.get_notes()
 
+        # delete messages after 3 seconds.
+        # When using delete_after argument, the message will not be deleted if the bot goes offline before the time is up (so be careful setting this too high)
+        self.delete_after_seconds = 3
+
         self.positive_preference = "+"
         self.neutral_preference = "~"
         self.negative_preference = "-"

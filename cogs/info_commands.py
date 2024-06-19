@@ -161,34 +161,38 @@ class InfoCommands(commands.Cog):
         def xor(a, b): return bool(a) != bool(b)
 
         if xor(action, map_name):  # if one is set but not the other
-            await interaction.response.send_message(f"Please provide an action {global_utils.style_text('and', 'bu')} a map.", ephemeral=True)
+            await interaction.response.send_message(f"Please provide both an action {global_utils.style_text('and', 'bu')} a map.", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         output = ""
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
-        if action == "clear":
-            global_utils.map_pool.clear()
-            output = f'The map pool has been cleared'
-            log_message = f'{interaction.user.display_name} has cleared the map pool'
-        elif action == "add":
-            if map_name not in global_utils.map_pool:
-                global_utils.map_pool.append(map_name)
-                output = f'{map_display_name} has been added to the map pool'
-                log_message = f'{interaction.user.display_name} has added {map_name} to the map pool'
-            else:
-                await interaction.response.send_message(f'{map_display_name} is already in the map pool', ephemeral=True)
-                return
-        elif action == "remove":
-            if map_name in global_utils.map_pool:
-                global_utils.map_pool.remove(map_name)
-                output = f'{map_display_name} has been removed from the map pool'
-                log_message = f'{interaction.user.display_name} has removed {map_name} from the map pool'
-            else:
-                await interaction.response.send_message(f'{map_display_name} is not in the map pool', ephemeral=True)
-                return
+        match action:
+            case "clear":
+                global_utils.map_pool.clear()
+                output = f'The map pool has been cleared'
+                log_message = f'{interaction.user.display_name} has cleared the map pool'
+            case "add":
+                if map_name not in global_utils.map_pool:
+                    global_utils.map_pool.append(map_name)
+                    output = f'{map_display_name} has been added to the map pool'
+                    log_message = f'{interaction.user.display_name} has added {map_name} to the map pool'
+                else:
+                    await interaction.response.send_message(f'{map_display_name} is already in the map pool', ephemeral=True, delete_after=global_utils.delete_after_seconds)
+                    return
+            case "remove":
+                if map_name in global_utils.map_pool:
+                    global_utils.map_pool.remove(map_name)
+                    output = f'{map_display_name} has been removed from the map pool'
+                    log_message = f'{interaction.user.display_name} has removed {map_name} from the map pool'
+                else:
+                    await interaction.response.send_message(f'{map_display_name} is not in the map pool', ephemeral=True, delete_after=global_utils.delete_after_seconds)
+                    return
+            
+        
+        delete_time = global_utils.delete_after_seconds if ephem else None
 
-        await interaction.response.send_message(output, ephemeral=ephem)
+        await interaction.response.send_message(output, ephemeral=ephem, delete_after=delete_time)
 
         global_utils.log(log_message)
 
@@ -227,11 +231,11 @@ class InfoCommands(commands.Cog):
         map_display_name = global_utils.style_text(map_display_name, 'i')
 
         if map_name not in global_utils.practice_notes or len(global_utils.practice_notes[map_name]) == 0:
-            await interaction.response.send_message(f'No notes found for {map_display_name}', ephemeral=True)
+            await interaction.response.send_message(f'No notes found for {map_display_name}', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if note_number < 0 or note_number > len(global_utils.practice_notes[map_name]):
-            await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
+            await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if note_number == 0:
@@ -250,7 +254,7 @@ class InfoCommands(commands.Cog):
         try:
             note = await interaction.channel.fetch_message(int(note_id))
         except errors.NotFound:
-            await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True)
+            await interaction.followup.send(f'This note has been deleted by the author. Removing it from the notes list.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             global_utils.practice_notes[map_name].pop(note_id)
             global_utils.save_notes()
             return

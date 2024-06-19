@@ -112,6 +112,8 @@ class TriviaCommands(commands.Cog):
         user : discord.User
             The user who has completed the trivia game
         """
+        await user.send(f"Congratulations, you win! Here is your prize: \*{global_utils.style_text('gives you a pat on the back', 'i')}\*", delete_after=60)
+
         taunts = [
             "Are you mad at me? Good.",
             "You went through all of that just for a pat on the back. How does that make you feel?",
@@ -121,12 +123,12 @@ class TriviaCommands(commands.Cog):
 
         for taunt in taunts:
             await sleep(60)
-            await user.send(taunt)
+            await user.send(taunt, delete_after=60)
 
-        await user.send("Alright, I thought hard about my actions and I've decided to give you an actual prize. Here it is: \*gives you a pat on the back\* Congratulations!")
+        await user.send("Alright, I've thought long and hard (giggity) about my actions and I've decided to give you an actual prize. Here it is: \*gives you a pat on the back\* Congratulations!", delete_after=5)
 
         await sleep(5)
-        await user.send(f"Just kidding. Here is your actual prize, no foolin: {global_utils.style_text('https://cs.indstate.edu/~cs60901/final/', 'c')}")
+        await user.send(f"Just kidding. Here is your actual prize, no foolin': {global_utils.style_text('https://cs.indstate.edu/~cs60901/final/', 'c')}")
 
     async def clear_dm(self, user: discord.User) -> None:
         """Clears all bot messages in the user's DMs
@@ -153,7 +155,7 @@ class TriviaCommands(commands.Cog):
         """
         await user.send((f"Welcome to trivia! You will have {global_utils.style_text('10 seconds', 'c')} to answer each question.\n\n"
                          "Since I'm nice, I'll let you know that almost every answer can be found in the server (or with a simple Google search). Good luck!"
-                         ))
+                         ), delete_after=10)
 
         await sleep(10)  # give the user time to read the message
 
@@ -173,24 +175,26 @@ class TriviaCommands(commands.Cog):
                 f"Question {i + 1}:\n", 'b')
             question_body = global_utils.style_text(
                 questions[i]['question'], 'i')
-            await user.send(f"{question_header}{question_body}")
+            await user.send(f"{question_header}{question_body}", delete_after=10)
             try:
                 answer = await self.bot.wait_for("message", check=lambda m: m.author == user, timeout=10)
             except TimeoutError as e:
-                await user.send("You took too long to answer. Go back to the server and use /trivia to try again")
-                return await self.clear_dm(user)
+                await user.send("You took too long to answer. Go back to the server and use /trivia to try again", delete_after=5)
+                # return await self.clear_dm(user)
+                return
 
             if answer.content.lower() == questions[i]['answer'].lower():
-                await user.send("Correct!")
+                await user.send("Correct!", delete_after=2)
+                sleep(2)
             else:
+                go_back = f"Go back to the server and use {global_utils.style_text('/trivia', 'c')} to try again (yes this is intentionally tedious)"
                 if questions[i]["question"] == "What is Bizzy's name?":
-                    await user.send("Awwww, you tried. Go back to the server and use /trivia to try again")
+                    await user.send(f"Lol, nt gamer. {go_back}", delete_after=global_utils.delete_after_seconds)
                 else:
-                    await user.send(f"Incorrect. Go back to the server and use {global_utils.style_text('/trivia', 'c')} to try again (yes this is intentionally tedious)")
+                    await user.send(f"Incorrect. {go_back}", delete_after=global_utils.delete_after_seconds)
 
-                return await self.clear_dm(user)
-
-        await user.send(f"Congratulations, you win! Here is your prize: \*{global_utils.style_text('gives you a pat on the back', 'i')}\*")
+                # return await self.clear_dm(user)
+                return
 
         await self.delayed_gratification(user)
 
@@ -204,9 +208,9 @@ class TriviaCommands(commands.Cog):
             The interaction object that initiated the command
         """
         user = interaction.user
-        await interaction.response.send_message("Please open the DM with the bot to play trivia. It may take a few minutes to start.", ephemeral=True)
+        await interaction.response.send_message("Please open the DM with the bot to play trivia. It may take a few minutes to start.", ephemeral=True, delete_after=global_utils.delete_after_seconds)
         # give the user time to read the message and move to the DMs
-        await sleep(2)
+        await sleep(global_utils.delete_after_seconds)
         await self.trivia(user)
 
 

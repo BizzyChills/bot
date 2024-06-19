@@ -76,7 +76,7 @@ class AdminPremierCommands(commands.Cog):
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name in global_utils.map_preferences:
-            await interaction.response.send_message(f'Map "{map_display_name}" is already in the game.', ephemeral=True)
+            await interaction.response.send_message(f'Map "{map_display_name}" is already in the game.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         global_utils.map_preferences = {
@@ -86,7 +86,7 @@ class AdminPremierCommands(commands.Cog):
         # note: this function also calls save_weights
         global_utils.save_preferences()
 
-        await interaction.response.send_message(f'Map "{map_display_name}" has been added to the game', ephemeral=True)
+        await interaction.response.send_message(f'Map "{map_display_name}" has been added to the game', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="remove-map", description=global_utils.command_descriptions["remove-map"])
     @app_commands.describe(
@@ -104,7 +104,7 @@ class AdminPremierCommands(commands.Cog):
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name not in global_utils.map_preferences.keys():
-            await interaction.response.send_message(f'No map named "{map_display_name}" in the game.', ephemeral=True)
+            await interaction.response.send_message(f'No map named "{map_display_name}" in the game.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         # if its in the mappool, remove it
@@ -121,7 +121,7 @@ class AdminPremierCommands(commands.Cog):
         # note: this function also calls save_weights
         global_utils.save_preferences()
 
-        await interaction.response.send_message(f'Map "{map_display_name}" removed from the game', ephemeral=True)
+        await interaction.response.send_message(f'Map "{map_display_name}" removed from the game', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="add-events", description=global_utils.command_descriptions["add-events"])
     @app_commands.describe(
@@ -152,18 +152,22 @@ class AdminPremierCommands(commands.Cog):
             if map_name not in global_utils.map_pool:
                 map_list = global_utils.style_text('map_list', 'c')
                 map_pool = global_utils.style_text('/mappool', 'c')
-                await interaction.response.send_message(f"{map_display_name} is not in the map pool. I only add premier events. Ensure that {map_list} is formatted properly and that {map_pool} has been updated.", ephemeral=True)
+                part_1 = f"{map_display_name} is not in the map pool and I only add premier events."
+                part_2 = f"Ensure that {map_list} is formatted properly and that {map_pool} has been updated."
+                await interaction.response.send_message(f"{part_1} {part_2}", ephemeral=True, delete_after=global_utils.delete_after_seconds)
                 return
 
         try:
             input_date = global_utils.tz.localize(datetime.strptime(
                 date, "%m/%d").replace(year=datetime.now().year))
         except ValueError:
-            await interaction.response.send_message(f'Invalid date format. Please provide a date in the format mm/dd (ex: "07/10" for July 10th)', ephemeral=True)
+            example = f"(ex. {global_utils.style_text('07/10', 'c')} for July 10th)"
+            format_hint = f"Please provide a date in the format {global_utils.style_text('mm/dd', 'c')}. {example}"
+            await interaction.response.send_message(f'Invalid date format. {format_hint}', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if input_date.weekday() != 3:
-            await interaction.response.send_message(f'Date is not a Thursday. Please provide a Thursday date (mm/dd)', ephemeral=True)
+            await interaction.response.send_message(f'Date is not a Thursday. Please provide a Thursday date.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         thur_time = datetime(year=datetime.now(
@@ -206,7 +210,7 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.log(
             f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
-        await interaction.followup.send(f'The Premier schedule has been created.\n{output}', ephemeral=True)
+        await interaction.followup.send(f'The Premier schedule has been created.\n{output}', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="cancel-event", description=global_utils.command_descriptions["cancel-event"])
     @app_commands.choices(
@@ -241,7 +245,7 @@ class AdminPremierCommands(commands.Cog):
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name not in global_utils.map_pool and map_name != "playoffs":
-            await interaction.response.send_message(f'{map_display_name} is not in the map pool. I only cancel premier events.', ephemeral=True)
+            await interaction.response.send_message(f'{map_display_name} is not in the map pool and I only cancel premier events.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
@@ -274,7 +278,7 @@ class AdminPremierCommands(commands.Cog):
             global_utils.log(
                 f'{interaction.user.display_name} cancelled event - {message}')
 
-        await interaction.followup.send(message, ephemeral=ephem)
+        await interaction.followup.send(message, ephemeral=ephem, delete_after=global_utils.delete_after_seconds)
 
         global_utils.log(
             f"{interaction.user.display_name} cancelled event - {message}")
@@ -296,7 +300,7 @@ class AdminPremierCommands(commands.Cog):
         events = guild.scheduled_events
 
         if len([event for event in events if event.name == "Premier" and event.description != "Playoffs"]) == 0:
-            await interaction.followup.send(f'Please add the premier events first using the `/addevents` command', ephemeral=True)
+            await interaction.followup.send(f'Please add the premier events first using the `/addevents` command', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         wed_hour = global_utils.est_to_utc(time(hour=22)).hour
@@ -324,7 +328,7 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.log(
             f'{interaction.user.display_name} has posted the premier practice schedule')
-        await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True)
+        await interaction.followup.send(f'Added premier practice events to the schedule', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="cancel-practice", description=global_utils.command_descriptions["cancel-practice"])
     @app_commands.choices(
@@ -360,7 +364,8 @@ class AdminPremierCommands(commands.Cog):
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name not in global_utils.map_pool:
-            await interaction.response.send_message(f"{map_display_name} is not in the map pool. I only cancel premier events. Ensure that {global_utils.style_text('/mappool', 'c')} is updated.", ephemeral=True)
+            hint = f"Ensure that {global_utils.style_text('/mappool', 'c')} is updated."
+            await interaction.response.send_message(f"{map_display_name} is not in the map pool and I only cancel premier events. {hint}", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         ephem = interaction.channel.id != global_utils.prem_channel_id or not announce
@@ -392,7 +397,7 @@ class AdminPremierCommands(commands.Cog):
             global_utils.log(
                 f'{interaction.user.display_name} cancelled practice: {message}')
 
-        await interaction.followup.send(message, ephemeral=ephem)
+        await interaction.followup.send(message, ephemeral=ephem, delete_after=global_utils.delete_after_seconds)
 
         global_utils.log(
             f"{interaction.user.display_name} cancelled practice(s) - {message}")
@@ -443,7 +448,7 @@ class AdminPremierCommands(commands.Cog):
 
         global_utils.log(
             f'{interaction.user.display_name} has cleared the premier schedule')
-        await interaction.followup.send(f'Cleared the premier schedule', ephemeral=ephem)
+        await interaction.followup.send(f'Cleared the premier schedule', ephemeral=ephem, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="add-note", description=global_utils.command_descriptions["add-note"])
     @app_commands.choices(
@@ -474,11 +479,11 @@ class AdminPremierCommands(commands.Cog):
         try:
             message = interaction.channel.get_partial_message(note_id)
         except (discord.HTTPException, discord.errors.NotFound):
-            await interaction.response.send_message(f'Message not found', ephemeral=True)
+            await interaction.response.send_message(f'Message not found', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if message.channel.id != global_utils.notes_channel_id:
-            await interaction.response.send_message(f'Invalid message ID. The message must be in the notes channel.', ephemeral=True)
+            await interaction.response.send_message(f'Invalid message ID. The message must be in the notes channel.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if map_name not in global_utils.practice_notes:
@@ -491,9 +496,10 @@ class AdminPremierCommands(commands.Cog):
         global_utils.log(
             f'{interaction.user.display_name} has added a practice note. Note ID: {note_id}')
 
-        map_name = global_utils.style_text(map_name.title(), 'i')
+        display_map_name = global_utils.style_text(map_name.title(), 'i')
+        access_command = global_utils.style_text(f'/notes {map_name}', 'c')
 
-        await interaction.response.send_message(f'Added a practice note for {map_name}. Access using `/notes {map_name}`', ephemeral=True)
+        await interaction.response.send_message(f'Added a practice note for {display_map_name}. Access using {access_command}', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="remove-note", description=global_utils.command_descriptions["remove-note"])
     @app_commands.choices(
@@ -520,11 +526,11 @@ class AdminPremierCommands(commands.Cog):
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         if map_name not in global_utils.practice_notes or len(global_utils.practice_notes[map_name]) == 0:
-            await interaction.response.send_message(f'No notes found for {map_display_name}', ephemeral=True)
+            await interaction.response.send_message(f'No notes found for {map_display_name}', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if note_number < 0 or note_number > len(global_utils.practice_notes[map_name]):
-            await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True)
+            await interaction.response.send_message(f'Invalid note number. Leave blank to see all options.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         if note_number == 0:
@@ -535,14 +541,14 @@ class AdminPremierCommands(commands.Cog):
                 note_number = f"Note {i+1}"
                 output += f"- {global_utils.style_text(note_number, 'b')}: {global_utils.style_text(notes_list[note_id], 'i')}\n"
 
-            await interaction.response.send_message(output, ephemeral=True)
+            await interaction.response.send_message(output, ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         note_id = list(global_utils.practice_notes[map_name].keys())[
             note_number - 1]
         global_utils.practice_notes[map_name].pop(note_id)
 
-        await interaction.response.send_message(f"Removed a practice note for {map_display_name}", ephemeral=True)
+        await interaction.response.send_message(f"Removed a practice note for {map_display_name}", ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
         global_utils.save_notes()
         global_utils.log(
@@ -625,7 +631,7 @@ class AdminMessageCommands(commands.Cog):
             The reminder message to send to the premier role
         """
         if interval <= 0:
-            await interaction.response.send_message(f'Please provide a valid interval greater than 0', ephemeral=True)
+            await interaction.response.send_message(f'Please provide a valid interval greater than 0', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         message = message.strip()
@@ -698,10 +704,10 @@ class AdminMessageCommands(commands.Cog):
             message = interaction.channel.get_partial_message(int(message_id))
             await message.pin()
         except (discord.HTTPException, discord.errors.NotFound):
-            await interaction.response.send_message(f'Message not found.', ephemeral=True)
+            await interaction.response.send_message(f'Message not found.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
-        await interaction.response.send_message(f'Message pinned', ephemeral=True)
+        await interaction.response.send_message(f'Message pinned', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
         global_utils.log(
             f'{interaction.user.display_name} pinned message {message_id}')
@@ -724,10 +730,10 @@ class AdminMessageCommands(commands.Cog):
             message = interaction.channel.get_partial_message(int(message_id))
             await message.unpin()
         except (discord.HTTPException, discord.errors.NotFound):
-            await interaction.response.send_message(f'Message not found.', ephemeral=True)
+            await interaction.response.send_message(f'Message not found.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
-        await interaction.response.send_message(f'Message unpinned', ephemeral=True)
+        await interaction.response.send_message(f'Message unpinned', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
         global_utils.log(
             f'{interaction.user.display_name} unpinned message {message_id}')
@@ -749,10 +755,10 @@ class AdminMessageCommands(commands.Cog):
         try:
             await interaction.channel.get_partial_message(int(message_id)).delete()
         except (ValueError, discord.errors.NotFound):
-            await interaction.response.send_message(f'Message not found.', ephemeral=True)
+            await interaction.response.send_message(f'Message not found.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
-        await interaction.response.send_message(f'Message deleted', ephemeral=True)
+        await interaction.response.send_message(f'Message deleted', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
         global_utils.log(
             f'{interaction.user.display_name} deleted message {message_id}')
@@ -769,10 +775,8 @@ class AdminMessageCommands(commands.Cog):
         reason : str, optional
             The reason for killing the bot, by default "no reason given"
         """
-        m = await ctx.send(f'Goodbye cruel world!', ephemeral=True)
-
-        await ctx.message.delete(delay=3)
-        await m.delete(delay=3)
+        await ctx.send(f'Goodbye cruel world!', ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        await ctx.message.delete(delay=global_utils.delete_after_seconds)
 
         global_utils.log(f"Bot killed. reason: {reason}")
 

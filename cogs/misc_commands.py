@@ -33,7 +33,7 @@ class MiscCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-        await interaction.response.send_message(f'Hello {interaction.user.mention}!', ephemeral=True)
+        await interaction.response.send_message(f'Hello {interaction.user.mention}!', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="feed", description=global_utils.command_descriptions["feed"])
     async def feed(self, interaction: Interaction) -> None:
@@ -44,7 +44,7 @@ class MiscCommands(commands.Cog):
         interaction : discord.Interaction
             The interaction object that initiated the command
         """
-        await interaction.response.send_message("Yum yum! Thanks for the food!", ephemeral=True)
+        await interaction.response.send_message("Yum yum! Thanks for the food!", ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="unfeed", description=global_utils.command_descriptions["unfeed"])
     async def unfeed(self, interaction: Interaction) -> None:
@@ -59,7 +59,7 @@ class MiscCommands(commands.Cog):
 
         option = choice(options)
 
-        await interaction.response.send_message(f'\*looks at you with a deadpan expression\* ... \*{option}\*', ephemeral=True)
+        await interaction.response.send_message(f'\*looks at you with a deadpan expression\* ... \*{option}\*', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
 
 async def setup(bot: commands.bot) -> None:

@@ -38,11 +38,10 @@ class BizzyCommands(commands.Cog):
         bool
             True if the interaction is from Bizzy, False otherwise
         """
-
         check = interaction.user.id == global_utils.my_id
 
         if not check:
-            await interaction.response.send_message("You do not have permission to use this command", ephemeral=True)
+            await interaction.response.send_message("You do not have permission to use this command", ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
         return check
 
@@ -60,10 +59,10 @@ class BizzyCommands(commands.Cog):
             True if the context is from Bizzy, False otherwise
         """
         check = ctx.author.id == global_utils.my_id
-        ctx.message.delete(delay=0)
+        await ctx.message.delete(delay=0)
 
         if not check:
-            await ctx.send("You do not have permission to use this command", delete_after=3)
+            await ctx.send("You do not have permission to use this command", delete_after=global_utils.delete_after_seconds)
         
         return check
 
@@ -95,12 +94,12 @@ class BizzyCommands(commands.Cog):
         """
         if interaction.guild.id != global_utils.debug_server_id and interaction.channel.id != global_utils.bot_channel_id:
             await interaction.response.send_message(
-                "This command is not available here.", ephemeral=True)
+                "This command is not available here.", ephemeral=True, delete_after=global_utils.delete_after_seconds)
             return
 
         await interaction.response.defer(ephemeral=True, thinking=True)
         await interaction.channel.purge(limit=None, bulk=True)
-        await interaction.followup.send("Cleared the entire channel", ephemeral=True)
+        await interaction.followup.send("Cleared the entire channel", ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
     @app_commands.command(name="feature", description=global_utils.command_descriptions["feature"])
     @app_commands.describe(
@@ -152,10 +151,8 @@ class BizzyCommands(commands.Cog):
                 synced = await self.sync_commands(ctx.guild.id)
                 message += f" and {len(synced)} commands synced in {ctx.guild.name}"
 
-        m = await ctx.send(message, ephemeral=True)
-
-        await ctx.message.delete(delay=3)
-        await m.delete(delay=3)
+        await ctx.send(message, ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        await ctx.message.delete(delay=global_utils.delete_after_seconds)
 
 
 async def setup(bot: commands.bot) -> None:
