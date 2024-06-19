@@ -241,8 +241,7 @@ class InfoCommands(commands.Cog):
 
         if note_number == 0:
             notes_list = global_utils.practice_notes[map_name]
-            output = global_utils.style_text("Practice notes for ", 'b')
-            output += map_display_name + ":\n"
+            output = f"{global_utils.style_text('Practice notes', 'b')} for {map_display_name}:\n"
             for i, note_id in enumerate(notes_list.keys()):
                 note_number = f"Note {i+1}"
                 output += f"- {global_utils.style_text(note_number, 'b')}: {global_utils.style_text(notes_list[note_id], 'i')}\n"
@@ -250,6 +249,8 @@ class InfoCommands(commands.Cog):
             await interaction.response.send_message(output, ephemeral=True)
             return
 
+        await interaction.response.defer(ephemeral=ephem)
+        
         note_id = list(global_utils.practice_notes[map_name].keys())[
             note_number - 1]
         try:

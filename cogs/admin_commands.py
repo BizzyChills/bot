@@ -513,7 +513,8 @@ class AdminPremierCommands(commands.Cog):
             f'{interaction.user.display_name} has added a practice note. Note ID: {note_id}')
 
         display_map_name = global_utils.style_text(map_name.title(), 'i')
-        access_command = global_utils.style_text(f'/notes {map_name}', 'c')
+        access_command = global_utils.style_text(
+            f'/notes {map_name.title()}', 'c')
 
         await interaction.response.send_message(f'Added a practice note for {display_map_name}. Access using {access_command}', ephemeral=True, delete_after=global_utils.delete_after_seconds)
 
