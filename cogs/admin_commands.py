@@ -150,13 +150,13 @@ class AdminPremierCommands(commands.Cog):
         # THERE IS A RATELIMIT OF 5 EVENTS/MINUTE
 
         guild = interaction.guild
-        map_display_name = global_utils.style_text(map_name.title(), 'i')
 
         # split by comma and remove extra whitespace
         new_maps = [m.strip().lower() for m in map_list.split(",")]
 
         for map_name in new_maps:
             if map_name not in global_utils.map_pool:
+                map_display_name = global_utils.style_text(map_name.title(), 'i')
                 map_list = global_utils.style_text('map_list', 'c')
                 map_pool = global_utils.style_text('/mappool', 'c')
                 part_1 = f"{map_display_name} is not in the map pool and I only add premier events."
@@ -200,7 +200,7 @@ class AdminPremierCommands(commands.Cog):
                     output = "Detected that input date is in the past. Any maps that are in the past were skipped."
                     continue
                 event_name = "Premier"
-                event_desc = map_display_name
+                event_desc = map_name.title()
 
                 # last map and last day is playoffs
                 if i == len(new_maps) - 1 and j == len(start_times) - 1:
@@ -215,8 +215,9 @@ class AdminPremierCommands(commands.Cog):
             start_times = [start_time + timedelta(days=7)
                            for start_time in start_times]
 
+        new_maps = [global_utils.style_text(m, 'i') for m in ", ".join(new_maps)]
         global_utils.log(
-            f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {", ".join(new_maps)}')
+            f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {new_maps}')
 
         m = await interaction.followup.send(f'The Premier schedule has been created.\n{output}', ephemeral=True)
         await m.delete(delay=global_utils.delete_after_seconds)
@@ -326,7 +327,7 @@ class AdminPremierCommands(commands.Cog):
             fri_time = fri_time.replace(hour=fri_hour) + timedelta(days=1)
 
             for start_time in [wed_time, fri_time]:
-                if start_time < global_utils.tz.localize(datetime.now()):
+                if start_time < datetime.now().astimezone(utc):
                     continue
 
                 event_name = "Premier Practice"
