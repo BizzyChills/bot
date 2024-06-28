@@ -250,7 +250,7 @@ class InfoCommands(commands.Cog):
             return
 
         await interaction.response.defer(ephemeral=ephem)
-        
+
         note_id = list(global_utils.practice_notes[map_name].keys())[
             note_number - 1]
         try:

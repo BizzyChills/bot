@@ -156,7 +156,8 @@ class AdminPremierCommands(commands.Cog):
 
         for map_name in new_maps:
             if map_name not in global_utils.map_pool:
-                map_display_name = global_utils.style_text(map_name.title(), 'i')
+                map_display_name = global_utils.style_text(
+                    map_name.title(), 'i')
                 map_list = global_utils.style_text('map_list', 'c')
                 map_pool = global_utils.style_text('/mappool', 'c')
                 part_1 = f"{map_display_name} is not in the map pool and I only add premier events."
@@ -215,7 +216,8 @@ class AdminPremierCommands(commands.Cog):
             start_times = [start_time + timedelta(days=7)
                            for start_time in start_times]
 
-        new_maps = [global_utils.style_text(m, 'i') for m in ", ".join(new_maps)]
+        new_maps = [global_utils.style_text(m, 'i')
+                    for m in ", ".join(new_maps)]
         global_utils.log(
             f'{interaction.user.display_name} has posted the premier schedule starting on {date} with maps: {new_maps}')
 
