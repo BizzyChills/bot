@@ -22,8 +22,7 @@ class TasksCog(commands.Cog):
 
         """
         self.bot = bot
-
-        self.premier_reminder_types = ["start", "prestart", "day"]
+        self.premier_reminder_types = ["start", "prestart"]
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
@@ -33,12 +32,11 @@ class TasksCog(commands.Cog):
         self.eventreminders.add_exception_type(asyncpg.PostgresConnectionError)
         self.eventreminders.start()
         self.clear_old_reminders.start()
-        self.syncreminders.start()
+        self.remember_reminders.start()
         self.latest_log.start()
 
-    async def get_reminder(self, event: discord.ScheduledEvent) -> tuple[str, str]:
-        """Given an event, returns the type of reminder to send and the message to send
-
+    async def get_reminder_type(self, event: discord.ScheduledEvent) -> str:
+        """Given an event, returns the type of reminder that needs to be sent
         Parameters
         ----------
         event : discord.Event
@@ -46,14 +44,13 @@ class TasksCog(commands.Cog):
 
         Returns
         -------
-        tuple | None
-            A tuple with the structure (reminder_type, message). If there is no reminder to send, each value is empty string
+        str
+            The type of reminder to send (from the list of premier reminder types in self.premier_reminder_types) or an empty string if no reminder is needed
 
         """
-        current_time = datetime.now(pytz.utc)
-        start_time = event.start_time
 
-        time_remaining = (start_time - current_time).total_seconds()
+        time_remaining = (event.start_time -
+                          datetime.now(pytz.utc)).total_seconds()
 
         reminder_type = ""
         if time_remaining <= 0:  # allow this reminder until 10 minutes after the event has already started
@@ -66,34 +63,10 @@ class TasksCog(commands.Cog):
                     await event.end()
                 elif event.status == discord.EventStatus.scheduled:
                     await event.cancel()
-        elif time_remaining <= 60 * 30:
+        elif time_remaining <= 3600:
             reminder_type = self.premier_reminder_types[1]
-        elif time_remaining <= 3600 * 3:
-            reminder_type = self.premier_reminder_types[2]
 
-        if reminder_type == "":
-            return "", ""
-
-        g = event.guild
-        role_name = global_utils.prem_role_name if g.id == global_utils.val_server_id else global_utils.debug_role_name
-        role = discord.utils.get(g.roles, name=role_name)
-
-        if reminder_type == self.premier_reminder_types[0]:
-            message = f"has started (at {global_utils.discord_local_time(start_time)}). JOIN THE VC!"
-        elif reminder_type == self.premier_reminder_types[1]:
-            message = f"is starting in 30 minutes (at {global_utils.discord_local_time(start_time)})!"
-        elif reminder_type == self.premier_reminder_types[2]:
-            message = f"is today at {global_utils.discord_local_time(start_time)}! Make sure you have RSVP'ed if you're joining!"
-
-        message = f"(reminder) {event.name} on {global_utils.style_text(event.description, 'i')} {message}"
-
-        if reminder_type != self.premier_reminder_types[2]:
-            message = message.split()
-            # need "(reminder)" to be the first word, ping the role after it
-            message.insert(1, f"{role.mention}")
-            message = " ".join(message)
-
-        return reminder_type, message
+        return reminder_type
 
     @tasks.loop(time=global_utils.premier_reminder_times)
     async def eventreminders(self) -> None:
@@ -105,20 +78,17 @@ class TasksCog(commands.Cog):
         for g_id in [global_utils.val_server_id, global_utils.debug_server_id]:
             guild = self.bot.get_guild(g_id)
             # the more urgent the reminder, the later it should be sent (since it will be closer to the bottom of the chat)
-            events += sorted(guild.scheduled_events,
+            new_events = [
+                e for e in guild.scheduled_events if "premier" in e.name.lower()]
+            events += sorted(new_events,
                              key=lambda x: x.start_time, reverse=True)
 
         for event in events:
-            if "premier" not in event.name.lower():
-                continue
-
-            start_time = event.start_time
-
-            reminder_type, message = await self.get_reminder(event)
+            reminder_type = await self.get_reminder_type(event)
             if reminder_type == "":  # there is no event reminder to send
                 continue
 
-            log_message = f"Posted '{reminder_type}' reminder for event: {event.name} on {event.description} starting at {start_time.astimezone(global_utils.tz).strftime('%Y-%m-%d %H:%M:%S')} EST"
+            log_message = f"Posted '{reminder_type}' reminder for event: {event.name} on {event.description} starting at {event.start_time.astimezone(global_utils.tz).strftime('%Y-%m-%d %H:%M:%S')} EST"
 
             # if the reminder has already been posted, skip it
             if global_utils.already_logged(log_message):
@@ -128,75 +98,88 @@ class TasksCog(commands.Cog):
             async for user in event.users():
                 subbed_users.append(user)
 
-            channel = self.bot.get_channel(
-                global_utils.prem_channel_id) if event.guild.id == global_utils.val_server_id else self.bot.get_channel(global_utils.debug_channel_id)
+            if event.guild.id == global_utils.val_server_id:
+                channel = self.bot.get_channel(global_utils.prem_channel_id)
+                role = discord.utils.get(
+                    event.guild.roles, name=global_utils.prem_role_name)
+            elif event.guild.id == global_utils.debug_server_id:
+                channel = self.bot.get_channel(global_utils.debug_channel_id)
+                role = discord.utils.get(
+                    event.guild.roles, name=global_utils.debug_role_name)
 
-            await self.send_reminder(channel, message, reminder_type, len(subbed_users))
+            if reminder_type == self.premier_reminder_types[-1]:
+                message = f"(reminder) {role.mention}"
+            else:
+                message = f"(reminder) RSVP'ed Users:\n- " + \
+                    '\n- '.join([user.mention for user in subbed_users])
+
+            embed = await self.gen_embed(event, reminder_type, len(subbed_users))
+
+            button = discord.ui.Button(
+                style=discord.ButtonStyle.link, label="RSVP", url=event.url)
+            view = discord.ui.View()
+
+            if reminder_type == self.premier_reminder_types[-1]:
+                view.add_item(button)
+
+            await channel.send(message, embed=embed, view=view)
 
             # mark the reminder as posted
-            global_utils.log(log_message)
+            # global_utils.log(log_message)
 
-            # don't show RSVP list for the day reminder
-            if reminder_type == self.premier_reminder_types[2]:
-                continue
-
-            # loud ping individual users only for the start reminder
-            is_silent = reminder_type != self.premier_reminder_types[0]
-
-            await self.send_rsvp(channel, is_silent, subbed_users)
-
-    async def send_reminder(self, channel: discord.TextChannel, message: str, reminder_type: str = "", rsvp_len: int = 0) -> None:
-        """Sends a reminder message to a channel
+    async def gen_embed(self, event: discord.ScheduledEvent, reminder_type: str, rsvp_len: int) -> discord.Embed:
+        """Generates an embed for a reminder message
 
         Parameters
         ----------
-        channel : discord.TextChannel
-            The channel to send the reminder message to (not the channel ID)
-        message : str
-            The message to send
+        event : discord.ScheduledEvent
+            The event that the reminder is for
         reminder_type : str
             The class of the reminder message
         rsvp_len : int
             The number of users who have RSVP'ed to the event
+
+        Returns
+        -------
+        discord.Embed
+            The embed to send
         """
-        # who to ping when
-        pings = {"subbed": self.premier_reminder_types[0],
-                 "role": self.premier_reminder_types[1],
-                 "none": self.premier_reminder_types[2]}
+        urls = {m: "" for m in global_utils.map_preferences.keys()}
+        urls["abyss"] = "https://static.wikia.nocookie.net/valorant/images/6/61/Loading_Screen_Abyss.png/revision/latest/scale-to-width-down/1000?cb=20240621121057"
+        urls["ascent"] = "https://static.wikia.nocookie.net/valorant/images/e/e7/Loading_Screen_Ascent.png/revision/latest/scale-to-width-down/1000?cb=20200607180020"
+        urls["bind"] = "https://static.wikia.nocookie.net/valorant/images/2/23/Loading_Screen_Bind.png/revision/latest/scale-to-width-down/1000?cb=20200620202316"
+        urls["breeze"] = "https://static.wikia.nocookie.net/valorant/images/1/10/Loading_Screen_Breeze.png/revision/latest/scale-to-width-down/1000?cb=20210427160616"
+        urls["fracture"] = "https://static.wikia.nocookie.net/valorant/images/f/fc/Loading_Screen_Fracture.png/revision/latest/scale-to-width-down/1000?cb=20210908143656"
+        urls["haven"] = "https://static.wikia.nocookie.net/valorant/images/7/70/Loading_Screen_Haven.png/revision/latest/scale-to-width-down/1000?cb=20200620202335"
+        urls["icebox"] = "https://static.wikia.nocookie.net/valorant/images/1/13/Loading_Screen_Icebox.png/revision/latest/scale-to-width-down/1000?cb=20201015084446"
+        urls["lotus"] = "https://static.wikia.nocookie.net/valorant/images/d/d0/Loading_Screen_Lotus.png/revision/latest/scale-to-width-down/1000?cb=20230106163526"
+        urls["pearl"] = "https://static.wikia.nocookie.net/valorant/images/a/af/Loading_Screen_Pearl.png/revision/latest/scale-to-width-down/1000?cb=20220622132842"
+        urls["split"] = "https://static.wikia.nocookie.net/valorant/images/d/d6/Loading_Screen_Split.png/revision/latest/scale-to-width-down/1000?cb=20230411161807"
+        urls["sunset"] = "https://static.wikia.nocookie.net/valorant/images/5/5c/Loading_Screen_Sunset.png/revision/latest/scale-to-width-down/1000?cb=20230829125442"
 
-        is_silent = reminder_type != pings["role"]
+        map_name = event.description.lower()
+        map_url = urls.get(map_name, "")
+        map_display_name = global_utils.style_text(
+            event.description.title(), 'i')
 
-        if reminder_type == pings["role"] and rsvp_len < 5:
-            message += f"\nWe don't have enough people RSVP'ed yet!"
-            message += " Please RSVP before it's too late!"
+        title = f"Premier match on {map_display_name}"
+        rsvp_hint = f"Please RSVP by clicking the button below and then clicking {global_utils.style_text('interested', 'c')} (if you haven't already)."
+        desc = f"There is a premier match on {map_display_name} in 1 hour (at {global_utils.discord_local_time(event.start_time)})! {rsvp_hint}" if reminder_type == "prestart" else f"The premier match on {map_display_name} has started! JOIN THE VC!"
+        author = self.bot.user
 
-        if is_silent:
-            message += "\n\n(This message was sent silently)"
+        the_little_things = "user" if rsvp_len == 1 else "users"
 
-        await channel.send(message, silent=is_silent)
+        embed = discord.Embed(title=title, description=desc,
+                              color=discord.Color.blurple())
+        (
+            embed.set_author(name=author.display_name,
+                             icon_url=author.avatar.url)
+            .set_image(url=map_url)
+            .add_field(name="RSVP'ed", value=f"{rsvp_len} {the_little_things}", inline=True)
+            .add_field(name="Map Weight", value=f"{global_utils.map_weights[map_name]}", inline=True)
+        )
 
-    async def send_rsvp(self, channel: discord.TextChannel, is_silent: bool, subbed_users: list[discord.User] = []) -> None:
-        """Sends the list of users who have RSVP'ed to an event (to accompany the reminder message)
-
-        Parameters
-        ----------
-        channel : discord.TextChannel
-            The channel to send the list of users to
-        subbed_users : list[discord.User]
-            The list of users who have RSVP'ed to the event
-        """
-        if len(subbed_users) > 0:
-            message = ("RSVP'ed users: \n" +
-                       "- " +
-                       "\n- ".join([user.mention for user in subbed_users]))
-        else:
-            message = "No one has RSVP'ed."
-
-        message = "(reminder) " + message
-
-        message += "\n\n(This message was sent silently)" if is_silent else ""
-
-        await channel.send(message, silent=is_silent)
+        return embed
 
     @tasks.loop(hours=1)
     async def clear_old_reminders(self) -> None:
@@ -224,8 +207,8 @@ class TasksCog(commands.Cog):
                 f"Deleted {len(messages)} old reminder messages from {channel.name}")
 
     @tasks.loop(count=1)
-    async def syncreminders(self) -> None:
-        """[task] Resyncs reminder timers in case the bot went offline with reminders still in the queue"""
+    async def remember_reminders(self) -> None:
+        """[task] Remembers reminder timers (made via /remind) in case the bot went offline with reminders still in the queue"""
         iterable = deepcopy(global_utils.reminders)
 
         for server in iterable.keys():
