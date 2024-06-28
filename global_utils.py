@@ -273,6 +273,7 @@ class Utils:
 
     def discord_local_time(self, date_time: datetime, with_date=False) -> str:
         """Converts a datetime object to a Discord-formatted local time string (shows the time in the user's local time zone)
+        If the datetime object is naive, it will be assumed to be in the bot's local time zone (EST)
 
         Parameters
         ----------
@@ -299,14 +300,14 @@ class Utils:
         text : str
             The text to format
         style : str
-            The style string to apply to the text. Options are "(i)talics", "(u)nderline", "(b)old", or "(c)ode". 
+            The style string to apply to the text. Options are (i)talics, (u)nderline, (b)old, or (c)ode. 
 
             Just use the first letter of the desired style (case-insensitive and spaces are ignored). 
             If a style character is not recognized, it will be ignored.
 
         Example:
         ```python
-        style_text("Hello, World!", 'ib')  # returns "_**Hello, World!**_"
+        style_text("Hello, World!", 'ib')  # returns "**_Hello, World!_**"
         ```
 
         Returns

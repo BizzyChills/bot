@@ -46,9 +46,6 @@ class PersistCommands(commands.Cog):
 
         basic_commands = [f"{global_utils.style_text('Commands', 'b')} (start typing the command to see its description):",
 
-                          f"- {global_utils.style_text('HELP', 'b')}:",
-                          f" - Use the buttons in {self.bot.get_channel(global_utils.bot_channel_id).mention} to see the commands/schedule/source code",
-
                           f"- {global_utils.style_text('INFO', 'b')}:",
                           f" - {global_utils.style_text('/map-pool', 'c')}",
                           f" - {global_utils.style_text('/notes', 'c')}",
@@ -204,7 +201,7 @@ class PersistCommands(commands.Cog):
         source_button = discord.ui.Button(
             style=discord.ButtonStyle.link, label="Source code", url=global_utils.source_code, row=1)
         view.add_item(source_button)
-        await interaction.response.send_message("Help:", view=view)
+        await interaction.response.send_message(global_utils.style_text("HELP:", 'b'), view=view)
 
 
 # this might not need to exist. Might be able to add the schedule button directly to a discord.ui.View object along with the select menu (while still able to get the selected value)
