@@ -125,7 +125,7 @@ class TasksCog(commands.Cog):
             await channel.send(message, embed=embed, view=view)
 
             # mark the reminder as posted
-            # global_utils.log(log_message)
+            global_utils.log(log_message)
 
     async def gen_embed(self, event: discord.ScheduledEvent, reminder_type: str, rsvp_len: int) -> discord.Embed:
         """Generates an embed for a reminder message
