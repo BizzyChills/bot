@@ -111,7 +111,8 @@ class TriviaCommands(commands.Cog):
         user : discord.User
             The user who has completed the trivia game
         """
-        await user.send(f"Congratulations, you win! Here is your prize: \*{global_utils.style_text('gives you a pat on the back', 'i')}\*", delete_after=60)
+        pat = f"\*{global_utils.style_text('gives you a pat on the back', 'i')}\*"
+        await user.send(f"Congratulations, you win! Here is your prize: {pat}", delete_after=60)
 
         taunts = [
             "Are you mad at me? Good.",
@@ -124,7 +125,7 @@ class TriviaCommands(commands.Cog):
             await sleep(60)
             await user.send(taunt, delete_after=60)
 
-        await user.send("Alright, I've thought long and hard (giggity) about my actions and I've decided to give you an actual prize. Here it is: \*gives you a pat on the back\* Congratulations!", delete_after=5)
+        await user.send(f"Alright, I've thought long and hard (giggity) about my actions and I've decided to give you an actual prize. Here it is: {pat}. Congratulations!", delete_after=5)
 
         await sleep(5)
         await user.send(f"Just kidding. Here is your actual prize, no foolin': {global_utils.style_text('https://cs.indstate.edu/~cs60901/final/', 'c')}")
@@ -161,7 +162,8 @@ class TriviaCommands(commands.Cog):
                 questions[i]['question'], 'i')
             q = await user.send(f"{question_header}{question_body}")
 
-            go_back = f"Go back to the server and use {global_utils.style_text('/trivia', 'c')} to try again (yes this is intentionally tedious)"
+            go_back = f"Go back to the server and use {global_utils.style_text('/trivia', 'c')} to try again (yes this is intentionally tedious)."
+            
             try:
                 answer = await self.bot.wait_for("message", check=lambda m: m.author == user, timeout=10)
             except TimeoutError as e:
@@ -196,7 +198,7 @@ class TriviaCommands(commands.Cog):
             The interaction object that initiated the command
         """
         user = interaction.user
-        await interaction.response.send_message("Please open the DM with the bot to play trivia. It may take a few minutes to start.", ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        await interaction.response.send_message("Please open the DM with the bot to play trivia. It may take a some time to start.", ephemeral=True, delete_after=global_utils.delete_after_seconds)
         # give the user time to read the message and move to the DMs
         await sleep(global_utils.delete_after_seconds)
         await self.trivia(user)
