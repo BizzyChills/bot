@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands, Object
-import asyncio
+from asyncio import sleep
 
 from datetime import datetime, time, timedelta
 from pytz import utc
@@ -60,6 +60,37 @@ class AdminPremierCommands(commands.Cog):
         """
         return await global_utils.is_admin(ctx)
 
+    @app_commands.command(name="map-pool", description=global_utils.command_descriptions["map-pool"])
+    async def mappool(self, interaction: discord.Interaction) -> None:
+        """[command] Opens the map pool modification panel
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        await interaction.response.defer(ephemeral=True)
+
+        view = MapPoolPanel(exit_callback=self.apply_changes)
+        embed = discord.Embed(title="Map Pool", description=', '.join([global_utils.style_text(
+            m.title(), 'i') for m in global_utils.map_pool]), color=discord.Color.blurple())
+
+        await interaction.followup.send("Select maps to add/remove (make sure you click out of the dropdown before hitting a button)", view=view, embed=embed, ephemeral=True)
+
+    async def apply_changes(self, interaction: discord.Interaction) -> None:
+        """Saves changes made to the map pool and the overall map list
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            The interaction object that initiated the command
+        """
+        await global_utils.load_cogs(self.bot)
+        await self.bot.tree.sync(guild=Object(id=interaction.guild.id))
+        await interaction.followup.send(content="Map Pool changes applied", ephemeral=True)
+        # don't delete this message. Since it can take a while to apply changes,
+        # the user may miss this notification if it is deleted (ex. they afk)
+
     @app_commands.command(name="add-map", description=global_utils.command_descriptions["add-map"])
     @app_commands.describe(
         map_name="The name of the map that was added to the game"
@@ -72,6 +103,7 @@ class AdminPremierCommands(commands.Cog):
         map_name : str
             The map to add
         """
+        # await interaction.response.defer(ephemeral=True)
         map_name = map_name.lower()
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
@@ -86,7 +118,8 @@ class AdminPremierCommands(commands.Cog):
         # note: this function also calls save_weights
         global_utils.save_preferences()
 
-        await interaction.response.send_message(f'{map_display_name} has been added to the game. Some commands will not list it as a choice until the bot is reloaded (tell Bizzy).', ephemeral=True, delete_after=global_utils.delete_after_seconds)
+        await interaction.response.defer()
+        await self.apply_changes(interaction)
 
     @app_commands.command(name="remove-map", description=global_utils.command_descriptions["remove-map"])
     @app_commands.describe(
@@ -95,9 +128,11 @@ class AdminPremierCommands(commands.Cog):
     @app_commands.choices(
         map_name=[
             app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_preferences.keys()
-        ]
+        ],
+        confirm=[app_commands.Choice(
+            name="I acknowledge that this will remove the map and all of its data from the game (weights, votes, etc.)", value=1)]
     )
-    async def remove_map(self, interaction: discord.Interaction, map_name: str) -> None:
+    async def remove_map(self, interaction: discord.Interaction, map_name: str, confirm: int) -> None:
         """[command] Removes a new map to the list of all maps in the game
 
         Parameters
@@ -105,21 +140,22 @@ class AdminPremierCommands(commands.Cog):
         map_name : str
             The map to remove
         """
+        # confirm is automatically chcecked by discord, so we just need to ensure it is a required argument to "confirm"
+
         map_name = map_name.lower()
         map_display_name = global_utils.style_text(map_name.title(), 'i')
 
-        # if its in the mappool, remove it
-        try:
-            where = global_utils.map_pool.index(map_name)
-            global_utils.map_pool.pop(where)
-        except ValueError:
-            pass
-        # if there is a practice note for it, remove the reference
-        try:
-            global_utils.practice_notes.pop(map_name)
-            global_utils.save_notes()
-        except KeyError:
-            pass
+        if map_name not in global_utils.map_preferences:
+            await interaction.response.send_message(f'Map "{map_display_name}" is not in the game.', ephemeral=True, delete_after=global_utils.delete_after_seconds)
+            return
+
+        # if it's in the mappool, remove it
+        global_utils.map_pool.remove(
+            map_name) if map_name in global_utils.map_pool else None
+
+        # if there are practice notes for it, remove the references
+        global_utils.practice_notes.pop(map_name, None)
+        global_utils.save_notes()
 
         global_utils.map_preferences.pop(map_name)
         global_utils.map_weights.pop(map_name)
@@ -128,7 +164,8 @@ class AdminPremierCommands(commands.Cog):
         # note: this function also calls save_weights
         global_utils.save_preferences()
 
-        await interaction.response.send_message(f'{map_display_name} removed from the game. Some commands will continue to list it as a choice until the bot is reloaded (tell Bizzy).', ephemeral=True, delete_after=global_utils.delete_after_seconds + 3)
+        await interaction.response.defer()
+        await self.apply_changes(interaction)
 
     @app_commands.command(name="add-events", description=global_utils.command_descriptions["add-events"])
     @app_commands.describe(
@@ -227,7 +264,7 @@ class AdminPremierCommands(commands.Cog):
     @app_commands.command(name="cancel-event", description=global_utils.command_descriptions["cancel-event"])
     @app_commands.choices(
         map_name=[
-            app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_pool] + [app_commands.Choice(name="playoffs", value="playoffs")],
+            app_commands.Choice(name=s.title(), value=s) for s in global_utils.map_pool] + [app_commands.Choice(name="Playoffs", value="playoffs")],
         all_events=[
             app_commands.Choice(name="Yes", value=1),
         ],
@@ -266,7 +303,7 @@ class AdminPremierCommands(commands.Cog):
         guild = interaction.guild
         events = guild.scheduled_events
 
-        message = "Event not found in the schedule."
+        message = ""
 
         for event in events:
             if "Premier" in event.name and event.description.lower() == map_name:  # map is already lower
@@ -280,21 +317,28 @@ class AdminPremierCommands(commands.Cog):
                 if not all_events:
                     e_name = event.name
                     e_desc = event.description
-                    e_date = event.start_time.date()
-                    message = f'{e_name} on {e_desc} for {e_date} has been cancelled'
+                    e_date = event.start_time
+                    display_date = global_utils.discord_local_time(
+                        e_date, with_date=True)
+                    log_date = event.start_time.astimezone(
+                        global_utils.tz).isoformat(sep=' ', timespec='seconds')
+                    message = f'{e_name} on {e_desc} on {display_date} has been cancelled'
+                    log_message = f'{e_name} on {e_desc} on {log_date} has been cancelled'
                     break
                 else:
-                    message = f'All events on {map_display_name} have been cancelled'
+                    message = log_message = f'All events on {map_display_name} have been cancelled'
 
-        if message != "Event not found in the schedule.":
+        if message == "":
+            message = f"No events found for {map_display_name} in the schedule."
+            ephem = True
+        else:
             global_utils.log(
-                f'{interaction.user.display_name} cancelled event - {message}')
+                f'{interaction.user.display_name} cancelled event - {log_message}')
 
         m = await interaction.followup.send(message, ephemeral=ephem)
-        await m.delete(delay=global_utils.delete_after_seconds)
 
-        global_utils.log(
-            f"{interaction.user.display_name} cancelled event - {message}")
+        if ephem:
+            await m.delete(delay=global_utils.delete_after_seconds)
 
     @app_commands.command(name="add-practices", description=global_utils.command_descriptions["add-practices"])
     async def addpractices(self, interaction: discord.Interaction) -> None:
@@ -697,7 +741,7 @@ class AdminMessageCommands(commands.Cog):
         global_utils.log(
             f"Saved a reminder from {interaction.user.display_name}: {output}")
 
-        await asyncio.sleep(interval)
+        await sleep(interval)
 
         await reminder_channel.send(message)
         global_utils.log(
@@ -801,6 +845,49 @@ class AdminMessageCommands(commands.Cog):
         global_utils.log(f"Bot killed. reason: {reason}")
 
         await self.bot.close()
+
+
+class MapPoolPanel(discord.ui.View):
+    def __init__(self, *, timeout: float | None = None, exit_callback: callable = None) -> None:
+        super().__init__(timeout=timeout)
+        self.exit = exit_callback
+        self.pool = global_utils.map_pool
+        self.select = self.children[0]
+
+    async def disable(self, interaction: discord.Interaction) -> None:
+        for child in self.children:
+            child.disabled = True
+
+        await self.resend(interaction)
+        self.stop()
+
+    async def resend(self, interaction: discord.Interaction) -> None:
+        self.pool.sort()
+
+        for option in self.select.options:
+            option.default = False if option.value not in self.pool else True
+
+        embed = discord.Embed(title="Map Pool", description=", ".join([global_utils.style_text(m.title(), 'i') for m in self.pool]),
+                              color=discord.Color.blurple())
+        await interaction.response.edit_message(content="Map Pool", embed=embed, view=self)
+
+    @discord.ui.select(custom_id="map_pool", min_values=1, max_values=len(global_utils.map_preferences.keys()), row=0, placeholder="Maps",
+                       options=[discord.SelectOption(label=m.title(), value=m, default=m in global_utils.map_pool) for m in global_utils.map_preferences.keys()])
+    async def map_list(self, interaction: discord.Interaction, select: discord.ui.Select) -> None:
+        self.pool = self.select.values
+        await self.resend(interaction)
+
+    @discord.ui.button(style=discord.ButtonStyle.success, label="Apply Changes", custom_id="apply_changes", row=1, emoji="✅")
+    async def apply_changes(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        global_utils.map_pool = self.pool
+        global_utils.save_pool()
+        await self.disable(interaction)
+        await self.exit(interaction)
+
+    @discord.ui.button(style=discord.ButtonStyle.danger, label="Clear Map Pool", custom_id="clear_map", row=1, emoji="🗑️")
+    async def clear_map(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        self.pool.clear()
+        await self.resend(interaction)
 
 
 async def setup(bot: commands.bot) -> None:

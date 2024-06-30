@@ -77,7 +77,6 @@ class Utils:
             "persist": "Display the persistent help buttons",
 
             # info
-            "map-pool-common": "Display the current premier map pool",
             "notes": "Display a practice note from the notes channel. Leave note_id blank to display all options",
 
             # voting
@@ -92,7 +91,7 @@ class Utils:
             "music": "Display the music controls",
 
             # admin
-            "map-pool-admin": "Modify the premier map pool",
+            "map-pool": "Open the map pool modification panel",
             "add-map": "Add a map to the list of all maps in the game",
             "remove-map": "Remove a map from the list of all maps in the game",
             "add-events": "Add all premier events to the schedule",
@@ -349,7 +348,10 @@ class Utils:
                     await bot.load_extension(f)  # load them
 
     def already_logged(self, log_message: str) -> bool:
-        """Checks if a log message has already been logged in the current stdout log file
+        """Checks if a log message has already been logged in the current stdout log file.
+
+        This is useful for functions that use the log to track state 
+        (ex. eventreminders task to avoid sending duplicate reminders after a restart)
 
         Parameters
         ----------
