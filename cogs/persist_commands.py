@@ -213,7 +213,7 @@ class PersistCommands(commands.Cog):
 
 
 class PersistentView(discord.ui.View):
-    def __init__(self, *, timeout: float | None = None, cog: PersistCommands) -> None:
+    def __init__(self, *, cog: PersistCommands) -> None:
         """Initializes the PersistentButton class
 
         Parameters
@@ -223,7 +223,7 @@ class PersistentView(discord.ui.View):
         cog : BotCog
             The BotCog instance that is using the buttons
         """
-        super().__init__(timeout=timeout)
+        super().__init__(timeout=None)
         source_button = discord.ui.Button(
             style=discord.ButtonStyle.link, label="Source code", url=global_utils.source_code, row=1)
         self.add_item(source_button)
